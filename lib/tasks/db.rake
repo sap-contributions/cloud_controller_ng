@@ -121,6 +121,20 @@ namespace :db do
     end
   end
 
+  desc 'Seed the database with a lot of data for performance testing'
+  task :seed_perf_data do
+    RakeConfig.context = :api
+
+    config_file = ENV['SEED_PERF_DATA_FILE']
+    abort('no SEED_PERF_DATA_FILE specified. use `rake db:seed_perf_data SEED_PERF_DATA_FILE=data.yml`') if !config_file
+    config = VCAP::CloudController::YAMLConfig.safe_load_file(config_file)
+
+    require 'cloud_controller/perf_data_seeds'
+    BackgroundJobEnvironment.new(RakeConfig.config).setup_environment do
+      VCAP::CloudController::PerfDataSeeds.write_seed_data(config)
+    end
+  end
+
   desc 'Migrate and seed database'
   task :setup_database do
     Rake::Task['db:migrate'].invoke

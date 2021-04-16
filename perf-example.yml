@@ -1,0 +1,15 @@
+orgs: 10
+spaces: 20
+apps: 200
+domains: 20
+routes: 300
+route_mappings: 300
+service_brokers: 20
+service_offerings: 100
+service_plans: 500
+managed_service_instances: 500
+user_provided_service_instances: 500
+service_plan_visibilities: 5000
+service_bindings: 300
+security_groups: 40
+security_group_spaces: 80

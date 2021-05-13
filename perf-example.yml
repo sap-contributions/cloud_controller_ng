@@ -13,3 +13,5 @@ service_plan_visibilities: 5000
 service_bindings: 300
 security_groups: 40
 security_group_spaces: 80
+users: 1000
+events: 1000000

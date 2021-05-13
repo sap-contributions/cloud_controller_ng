@@ -10,6 +10,7 @@ module VCAP::CloudController
       def write_seed_data(config)
         create_orgs config.fetch('orgs', 0)
         create_spaces config.fetch('spaces', 0)
+        create_users config.fetch('users', 0)
         create_apps config.fetch('apps', 0)
         create_domains config.fetch('domains', 0)
         create_routes config.fetch('routes', 0)
@@ -23,6 +24,7 @@ module VCAP::CloudController
         create_service_bindings config.fetch('service_bindings', 0)
         create_security_groups config.fetch('security_groups', 0)
         create_security_group_spaces config.fetch('security_group_spaces', 0)
+        create_events config.fetch('events', 0)
       end
 
       def create_orgs(num_orgs)
@@ -42,6 +44,14 @@ module VCAP::CloudController
           Space.new(name: "#{PREFIX}-space-#{space_uuid}", organization: orgs.sample, guid: space_uuid)
         end
         Space.multi_insert(spaces)
+      end
+
+      def create_users(num)
+        puts "Creating #{num} users"
+        users = num.times.map do |i|
+          User.new(guid: SecureRandom.uuid)
+        end
+        User.multi_insert(users)
       end
 
       def create_apps(num_apps)
@@ -139,6 +149,8 @@ module VCAP::CloudController
       end
 
       def create_service_plan_visibilities(num_service_plan_visibilities, num_orgs)
+        return unless num_service_plan_visibilities > 0
+
         puts "Creating #{num_service_plan_visibilities} service plan visibilities"
         all_plans = ServicePlan.all
         service_plan_visibilities = Organization.map do |o|
@@ -154,15 +166,18 @@ module VCAP::CloudController
         spaces = Space.all
         service_instances = ServiceInstance.all
         apps = AppModel.all
+        existing_bindings = Hash.new []
         bindings = num.times.map do |i|
           space = spaces.sample
-          space_apps = apps.select { |a| a.space_guid == space.guid }
-          space_service_instances = service_instances.select { |r| r.space_id == space.id }
-          redo if space_apps.empty? || space_service_instances.empty?
+          app = apps.select { |a| a.space_guid == space.guid }.sample
+          service_instance = service_instances.select { |r| r.space_id == space.id }.sample
+          redo if app.nil? || service_instance.nil?
+          redo if existing_bindings.fetch(app.guid, []).include? service_instance.guid
+          existing_bindings[app.guid] += [service_instance.guid]
           ServiceBinding.new(
             guid: SecureRandom.uuid,
-            app: space_apps.sample,
-            service_instance: space_service_instances.sample,
+            app: app,
+            service_instance: service_instance,
             credentials: '{}'
           )
         end
@@ -186,6 +201,66 @@ module VCAP::CloudController
           SecurityGroupsSpace.new(space_id: spaces.sample, security_group_id: sgs.sample)
         end
         SecurityGroupsSpace.multi_insert sgss
+      end
+
+      def create_events(num)
+        puts "Creating #{num} events"
+        event_types = %w(app.crash audit.app.apply_manifest audit.app.build.create audit.app.create audit.app.delete-request
+                         audit.app.deployment.cancel audit.app.deployment.create audit.app.droplet.create audit.app.droplet.delete
+                         audit.app.droplet.mapped audit.app.environment.show audit.app.map-route audit.app.package.create audit.app.package.delete
+                         audit.app.package.download audit.app.package.upload audit.app.process.crash audit.app.process.create audit.app.process.delete
+                         audit.app.process.scale audit.app.process.terminate_instance audit.app.process.update audit.app.restage audit.app.restart
+                         audit.app.revision.create audit.app.ssh-authorized audit.app.ssh-unauthorized audit.app.start audit.app.stop audit.app.task.cancel
+                         audit.app.task.create audit.app.unmap-route audit.app.update audit.app.upload-bits audit.organization.create
+                         audit.organization.delete-request audit.organization.update audit.route.create audit.route.delete-request audit.route.update
+                         audit.service_binding.create audit.service_binding.delete audit.service_binding.start_create audit.service_binding.start_delete
+                         audit.service_broker.create audit.service_broker.delete audit.service_broker.update audit.service.create audit.service.delete
+                         audit.service_instance.create audit.service_instance.delete audit.service_instance.purge audit.service_instance.start_create
+                         audit.service_instance.start_delete audit.service_instance.start_update audit.service_instance.unbind_route audit.service_instance.update
+                         audit.service_key.create audit.service_key.delete audit.service_plan.create audit.service_plan.delete audit.service_plan.update
+                         audit.service_plan_visibility.create audit.service_plan_visibility.delete audit.service_plan_visibility.update
+                         audit.service_route_binding.create audit.service.update audit.space.create audit.space.delete-request audit.space.update
+                         audit.user.organization_auditor_add audit.user.organization_auditor_remove audit.user.organization_manager_add
+                         audit.user.organization_manager_remove audit.user.organization_user_add audit.user.organization_user_remove
+                         audit.user_provided_service_instance.create audit.user_provided_service_instance.delete audit.user_provided_service_instance.update
+                         audit.user.space_auditor_add audit.user.space_auditor_remove audit.user.space_developer_add audit.user.space_developer_remove
+                         audit.user.space_manager_add audit.user.space_manager_remove blob.remove_orphan)
+        spaces = Space.select_map(:guid)
+        orgs = Organization.select_map(:guid)
+        apps = AppModel.all
+        users = User.all
+        num.times.each_slice(100_000) do |chunk|
+          events = chunk.map do |i|
+            if Random.rand < 0.5
+              app = apps.sample
+              actee_guid = app.guid
+              actee_type = 'app'
+              actee_name = app.name
+            else
+              user = users.sample
+              actee_guid = user.guid
+              actee_type = 'user'
+              actee_name = user.username
+            end
+            actor = users.sample
+            puts "Creating event #{i}"
+            Event.new(
+              guid: SecureRandom.uuid,
+              space_guid: spaces.sample,
+              organization_guid: orgs.sample,
+              type: event_types.sample,
+              timestamp: Sequel::CURRENT_TIMESTAMP,
+              actee: actee_guid,
+              actee_type: actee_type,
+              actee_name: actee_name,
+              actor: actor.guid,
+              actor_type: 'user',
+              actor_name: actor.username,
+              actor_username: actor.username,
+            )
+          end
+          Event.multi_insert events
+        end
       end
     end
   end

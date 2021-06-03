@@ -88,17 +88,15 @@ module VCAP::CloudController
       def create_route_mappings(num)
         puts "Creating #{num} route mappings"
         space_guids = Space.select_map(:guid)
-        routes = Route.all
-        apps = AppModel.all
+        routes = Route.all.group_by(&:space_guid)
+        apps = AppModel.all.group_by(&:space_guid)
         route_mappings = num.times.map do |i|
           space_guid = space_guids.sample
-          space_apps = apps.select { |a| a.space_guid == space_guid }
-          space_routes = routes.select { |r| r.space_guid == space_guid }
-          redo if space_apps.empty? || space_routes.empty?
+          redo if !apps.key?(space_guid) || !routes.key?(space_guid)
           RouteMappingModel.new(
             guid: SecureRandom.uuid,
-            app: space_apps.sample,
-            route: space_routes.sample
+            app: apps[space_guid].sample,
+            route: routes[space_guid].sample
           )
         end
         RouteMappingModel.multi_insert(route_mappings)
@@ -164,13 +162,13 @@ module VCAP::CloudController
       def create_service_bindings(num)
         puts "Creating #{num} service bindings"
         spaces = Space.all
-        service_instances = ServiceInstance.all
-        apps = AppModel.all
+        service_instances = ServiceInstance.all.group_by(&:space_id)
+        apps = AppModel.all.group_by(&:space_guid)
         existing_bindings = Hash.new []
         bindings = num.times.map do |i|
           space = spaces.sample
-          app = apps.select { |a| a.space_guid == space.guid }.sample
-          service_instance = service_instances.select { |r| r.space_id == space.id }.sample
+          app = apps.fetch(space.guid, []).sample
+          service_instance = service_instances.fetch(space.id, []).sample
           redo if app.nil? || service_instance.nil?
           redo if existing_bindings.fetch(app.guid, []).include? service_instance.guid
           existing_bindings[app.guid] += [service_instance.guid]
@@ -243,7 +241,6 @@ module VCAP::CloudController
               actee_name = user.username
             end
             actor = users.sample
-            puts "Creating event #{i}"
             Event.new(
               guid: SecureRandom.uuid,
               space_guid: spaces.sample,

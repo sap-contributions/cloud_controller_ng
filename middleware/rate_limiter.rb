@@ -38,14 +38,18 @@ module CloudFoundry
 
       def create_new_request_count(user_guid, reset_interval_in_minutes)
         requests = 0
-        valid_until = next_reset_interval(reset_interval_in_minutes)
+        valid_until = next_reset_interval(user_guid, reset_interval_in_minutes)
         @data[user_guid] = RequestCount.new(requests, valid_until)
         [requests, valid_until]
       end
 
-      def next_reset_interval(reset_interval_in_minutes)
+      def next_reset_interval(user_guid, reset_interval_in_minutes)
         no_of_intervals = (Time.now.utc.to_f / reset_interval_in_minutes.minutes.to_i).floor + 1
-        Time.at(no_of_intervals * reset_interval_in_minutes.minutes.to_i)
+        user_digest = Digest::MD5.hexdigest(user_guid || '')[..5].to_i(16)
+        # Convert user_digest to decimal between 0.0 and 1.0
+        offset = user_digest.to_f / 16.pow(6) * reset_interval_in_minutes.minutes.to_i
+
+        Time.at(offset.round.seconds + (no_of_intervals * reset_interval_in_minutes.minutes.to_i))
       end
     end
 

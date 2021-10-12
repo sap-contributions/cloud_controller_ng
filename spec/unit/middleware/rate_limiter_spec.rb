@@ -28,6 +28,8 @@ module CloudFoundry
       let(:basic_auth_env) { { 'HTTP_AUTHORIZATION' => ActionController::HttpAuthentication::Basic.encode_credentials('user', 'pass') } }
       let(:user_1_env) { { 'cf.user_guid' => 'user-id-1' } }
       let(:user_2_env) { { 'cf.user_guid' => 'user-id-2' } }
+      # Known offset for 'user-id'
+      let(:user_1_offset) { 2195.seconds }
 
       describe 'headers' do
         describe 'X-RateLimit-Limit' do
@@ -69,7 +71,7 @@ module CloudFoundry
               _, response_headers, _ = middleware.call(user_1_env)
               expect(response_headers['X-RateLimit-Remaining']).to eq('800')
 
-              Timecop.travel(Time.now.utc.beginning_of_hour + (interval + 1).minutes)
+              Timecop.travel(Time.now.utc.beginning_of_hour + user_1_offset + (interval + 1).minutes)
 
               _, response_headers, _ = middleware.call(user_1_env)
               expect(response_headers['X-RateLimit-Remaining']).to eq('900')
@@ -80,11 +82,11 @@ module CloudFoundry
         describe 'X-RateLimit-Reset' do
           it 'shows the user when the interval will expire' do
             Timecop.freeze do
-              valid_until = Time.now.utc.beginning_of_hour + interval.minutes
+              valid_until = Time.now.utc.beginning_of_hour + user_1_offset + interval.minutes
               _, response_headers, _ = middleware.call(user_1_env)
               expect(response_headers['X-RateLimit-Reset'].to_i).to eq(valid_until.utc.to_i)
 
-              Timecop.travel(Time.now.utc.beginning_of_hour + 30.minutes)
+              Timecop.travel(Time.now.utc.beginning_of_hour + user_1_offset + 30.minutes)
 
               _, response_headers, _ = middleware.call(user_1_env)
               expect(response_headers['X-RateLimit-Reset'].to_i).to eq(valid_until.utc.to_i)
@@ -93,12 +95,12 @@ module CloudFoundry
 
           it 'resets after the interval' do
             Timecop.freeze do
-              valid_until = Time.now.utc.beginning_of_hour + interval.minutes
+              valid_until = Time.now.utc.beginning_of_hour + user_1_offset + interval.minutes
               _, response_headers, _ = middleware.call(user_1_env)
               expect(response_headers['X-RateLimit-Reset'].to_i).to eq(valid_until.utc.to_i)
 
-              Timecop.travel(Time.now.utc.beginning_of_hour + (interval + 1).minutes)
-              valid_until = Time.now.utc.beginning_of_hour + interval.minutes
+              Timecop.travel(Time.now.utc.beginning_of_hour + user_1_offset + (interval + 1).minutes)
+              valid_until = Time.now.utc.beginning_of_hour + user_1_offset + interval.minutes
               _, response_headers, _ = middleware.call(user_1_env)
               expect(response_headers['X-RateLimit-Reset'].to_i).to eq(valid_until.utc.to_i)
             end
@@ -121,7 +123,7 @@ module CloudFoundry
         Timecop.freeze do
           _, _, _ = middleware.call(user_1_env)
 
-          Timecop.travel(Time.now.utc.beginning_of_hour + (interval + 1).minutes)
+          Timecop.travel(Time.now.utc.beginning_of_hour + user_1_offset + (interval + 1).minutes)
           _, _, _ = middleware.call(user_1_env)
           expect(logger).to have_received(:info).with "Resetting request count of 1 for user 'user-id-1'"
         end
@@ -217,6 +219,8 @@ module CloudFoundry
         describe 'when the user has a "HTTP_X_FORWARDED_FOR" header from proxy' do
           let(:headers) { ActionDispatch::Http::Headers.from_hash({ 'HTTP_X_FORWARDED_FOR' => 'forwarded_ip' }) }
           let(:headers_2) { ActionDispatch::Http::Headers.from_hash({ 'HTTP_X_FORWARDED_FOR' => 'forwarded_ip_2' }) }
+          let(:forwarded_ip_offset) { 1861.seconds }
+          let(:forwarded_ip_2_offset) { 2129.seconds }
           let(:fake_request) { instance_double(ActionDispatch::Request, headers: headers, ip: 'proxy-ip', fullpath: '/some/path') }
           let(:fake_request_2) { instance_double(ActionDispatch::Request, headers: headers_2, ip: 'proxy-ip', fullpath: '/some/path') }
 
@@ -234,7 +238,7 @@ module CloudFoundry
 
           it 'identifies them by the "HTTP_X_FORWARDED_FOR" header' do
             Timecop.freeze do
-              valid_until = Time.now.utc.beginning_of_hour + interval.minutes
+              valid_until = Time.now.utc.beginning_of_hour + forwarded_ip_offset + interval.minutes
 
               allow(ActionDispatch::Request).to receive(:new).and_return(fake_request)
               _, response_headers, _ = middleware.call(unauthenticated_env)
@@ -247,6 +251,7 @@ module CloudFoundry
               expect(response_headers['X-RateLimit-Remaining']).to eq('80')
               expect(response_headers['X-RateLimit-Reset']).to eq(valid_until.utc.to_i.to_s)
 
+              valid_until = Time.now.utc.beginning_of_hour + forwarded_ip_2_offset + interval.minutes
               allow(ActionDispatch::Request).to receive(:new).and_return(fake_request_2)
               _, response_headers, _ = middleware.call(unauthenticated_env)
               expect(response_headers['X-RateLimit-Limit']).to eq('100')
@@ -260,6 +265,8 @@ module CloudFoundry
           let(:headers) { ActionDispatch::Http::Headers.from_hash({ 'X_HEADER' => 'nope' }) }
           let(:fake_request) { instance_double(ActionDispatch::Request, headers: headers, ip: 'some-ip', fullpath: '/some/path') }
           let(:fake_request_2) { instance_double(ActionDispatch::Request, headers: headers, ip: 'some-ip-2', fullpath: '/some/path') }
+          let(:ip_offset) { 3464.seconds }
+          let(:ip_2_offset) { 1476.seconds }
 
           it 'uses unauthenticated_limit instead of general_limit' do
             allow(ActionDispatch::Request).to receive(:new).and_return(fake_request)
@@ -270,7 +277,7 @@ module CloudFoundry
 
           it 'identifies them by the request ip' do
             Timecop.freeze do
-              valid_until = Time.now.utc.beginning_of_hour + interval.minutes
+              valid_until = Time.now.utc.beginning_of_hour + ip_offset + interval.minutes
 
               allow(ActionDispatch::Request).to receive(:new).and_return(fake_request)
               _, response_headers, _ = middleware.call(unauthenticated_env)
@@ -283,6 +290,7 @@ module CloudFoundry
               expect(response_headers['X-RateLimit-Remaining']).to eq('80')
               expect(response_headers['X-RateLimit-Reset']).to eq(valid_until.utc.to_i.to_s)
 
+              valid_until = Time.now.utc.beginning_of_hour + ip_2_offset + interval.minutes
               allow(ActionDispatch::Request).to receive(:new).and_return(fake_request_2)
               _, response_headers, _ = middleware.call(unauthenticated_env)
               expect(response_headers['X-RateLimit-Limit']).to eq('100')
@@ -333,7 +341,7 @@ module CloudFoundry
             error_presenter = instance_double(ErrorPresenter, to_hash: { foo: 'bar' })
             allow(ErrorPresenter).to receive(:new).and_return(error_presenter)
 
-            valid_until = Time.now.utc.beginning_of_hour + interval.minutes
+            valid_until = Time.now.utc.beginning_of_hour + user_1_offset + interval.minutes
             _, response_headers, _ = middleware.call(middleware_env)
             expect(response_headers['Retry-After']).to eq(valid_until.utc.to_i.to_s)
             expect(response_headers['Content-Type']).to eq('text/plain; charset=utf-8')
@@ -420,6 +428,10 @@ module CloudFoundry
       let(:reset_interval_in_minutes) { 60 }
       let(:logger) { double('logger', info: nil) }
       let(:user_guid) { 'user-id' }
+      let(:user_guid_2) { 'user-id-2' }
+      # Known offsets for 'user-id' and 'user-id-2'
+      let(:user_guid_offset) { 3197.seconds }
+      let(:user_guid_2_offset) { 3342.seconds }
 
       describe 'get' do
         before(:each) do
@@ -428,17 +440,25 @@ module CloudFoundry
         end
         after(:each) do Timecop.return end
 
-        it 'should return next valid until interval and 0 requests for a new user' do
+        it 'should return next offset valid until interval and 0 requests for a new user' do
           count, valid_until = request_counter.get(user_guid, reset_interval_in_minutes, logger)
           expect(count).to eq(0)
-          expect(valid_until).to eq(Time.now.utc.beginning_of_hour + reset_interval_in_minutes.minutes)
+          expect(valid_until).to eq(Time.now.utc.beginning_of_hour + user_guid_offset + reset_interval_in_minutes.minutes)
+        end
+
+        it 'should return offset valid untils for different users' do
+          _, valid_until = request_counter.get(user_guid, reset_interval_in_minutes, logger)
+          expect(valid_until).to eq(Time.now.utc.beginning_of_hour + user_guid_offset + reset_interval_in_minutes.minutes)
+
+          _, valid_until = request_counter.get(user_guid_2, reset_interval_in_minutes, logger)
+          expect(valid_until).to eq(Time.now.utc.beginning_of_hour + user_guid_2_offset + reset_interval_in_minutes.minutes)
         end
 
         it 'should return valid until based on interval not first request' do
           Timecop.travel(Time.now.utc.beginning_of_hour + (reset_interval_in_minutes - 1).minutes) do
             count, valid_until = request_counter.get(user_guid, reset_interval_in_minutes, logger)
             expect(count).to eq(0)
-            expect(valid_until).to eq(Time.now.utc.beginning_of_hour + reset_interval_in_minutes.minutes)
+            expect(valid_until).to eq(Time.now.utc.beginning_of_hour + user_guid_offset + reset_interval_in_minutes.minutes)
           end
         end
 
@@ -461,7 +481,7 @@ module CloudFoundry
             Timecop.freeze do
               count, valid_until = request_counter.get(user_guid, reset_interval_in_minutes, logger)
               expect(count).to eq(0)
-              expect(valid_until).to eq(Time.now.utc.beginning_of_hour + reset_interval_in_minutes.minutes)
+              expect(valid_until).to eq(Time.now.utc.beginning_of_hour + user_guid_offset + reset_interval_in_minutes.minutes)
             end
           end
         end

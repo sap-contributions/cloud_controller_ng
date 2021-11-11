@@ -38,7 +38,10 @@ module VCAP::CloudController
         schema_class = schema_class_for_context(context, config)
         schema_class.validate(config)
 
-        hash = merge_defaults(config)
+        hash = config.dup
+        ensure_config_has_database_parts(hash)
+        sanitize(hash)
+        add_index_to_paths(hash)
         @instance = new(hash, context: context)
       end
 
@@ -63,14 +66,8 @@ module VCAP::CloudController
         end
       end
 
-      def merge_defaults(orig_config)
-        config = orig_config.dup
-        config[:db] ||= {}
-        ensure_config_has_database_parts(config)
-        sanitize(config)
-      end
-
       def ensure_config_has_database_parts(config)
+        config[:db] ||= {}
         abort_no_db_connection! if ENV['DB_CONNECTION_STRING'].nil? && config[:db][:database].nil?
         config[:db][:db_connection_string] ||= ENV['DB_CONNECTION_STRING']
         config[:db][:database] ||= DatabasePartsParser.database_parts_from_connection(config[:db][:db_connection_string])
@@ -86,7 +83,6 @@ module VCAP::CloudController
           auth[:user] = escape_userinfo(auth[:user]) unless valid_in_userinfo?(auth[:user])
           auth[:password] = escape_password(auth[:password]) unless valid_in_userinfo?(auth[:password])
         end
-        config
       end
 
       def escape_password(value)
@@ -99,6 +95,38 @@ module VCAP::CloudController
 
       def valid_in_userinfo?(value)
         URI::REGEXP::PATTERN::USERINFO.match(value)
+      end
+
+      def add_index_to_paths(config)
+        cc_index = ENV['CC_INDEX']
+        if cc_index
+          add_index_to_path(config, cc_index, :logging, :file)
+          add_index_to_path(config, cc_index, :nginx, :instance_socket)
+          add_index_to_path(config, cc_index, :pid_filename)
+          add_index_to_path(config, cc_index, :security_event_logging, :file)
+          add_index_to_path(config, cc_index, :telemetry_log_path)
+        end
+      end
+
+      def add_index_to_path(config, cc_index, *keys)
+        original_path = config.dig(*keys)
+        if original_path
+          modified_path = path_with_index(original_path, cc_index)
+          update_value(config, keys, modified_path)
+        end
+      end
+
+      def path_with_index(path, index)
+        File.dirname(path) + File::SEPARATOR + File.basename(path, '.*') + "_#{index}" + File.extname(path)
+      end
+
+      def update_value(config, keys, value)
+        k = keys[0]
+        if keys.length == 1
+          config[k] = value
+        else
+          update_value(config[k], keys[1..-1], value)
+        end
       end
     end
 

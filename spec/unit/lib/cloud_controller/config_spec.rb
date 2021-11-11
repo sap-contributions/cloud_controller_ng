@@ -48,13 +48,15 @@ module VCAP::CloudController
     subject(:config_instance) { Config.new(test_config_hash) }
 
     describe '.load_from_file' do
-      it 'raises if the file does not exist' do
-        expect {
-          Config.load_from_file('nonexistent.yml', context: :worker)
-        }.to raise_error(Errno::ENOENT, /No such file or directory @ rb_sysopen - nonexistent.yml/)
+      context 'file does not exist' do
+        it 'raises' do
+          expect {
+            Config.load_from_file('nonexistent.yml', context: :worker)
+          }.to raise_error(Errno::ENOENT, /No such file or directory @ rb_sysopen - nonexistent.yml/)
+        end
       end
 
-      context 'merges default values' do
+      context 'file exists' do
         after do
           cc_config_file.unlink
         end
@@ -326,6 +328,37 @@ module VCAP::CloudController
                 expect(VCAP::CloudController::ConfigSchemas::Vms::ApiSchema).to have_received(:validate)
               end
             end
+          end
+        end
+
+        context 'CC_INDEX is set' do
+          let(:cc_config_file) do
+            config = YAMLConfig.safe_load_file('config/cloud_controller.yml')
+
+            file = Tempfile.new('cc_config.yml')
+            file.write(YAML.dump(config))
+            file.close
+            file
+          end
+
+          let(:config) do
+            Config.load_from_file(cc_config_file.path, context: :api).config_hash
+          end
+
+          before do
+            ENV['CC_INDEX'] = '1'
+          end
+
+          after do
+            ENV.delete('CC_INDEX')
+          end
+
+          it 'adds the index to paths' do
+            expect(config[:logging][:file]).to eq('/tmp/cloud_controller_1.log')
+            expect(config[:nginx][:instance_socket]).to eq('/var/vcap/sys/run/cloud_controller_ng/cloud_controller_1.sock')
+            expect(config[:pid_filename]).to eq('/tmp/cloud_controller_1.pid')
+            expect(config[:security_event_logging][:file]).to eq('/tmp/cef_1.log')
+            expect(config[:telemetry_log_path]).to eq('spec/artifacts/cloud_controller_telemetry_1.log')
           end
         end
       end

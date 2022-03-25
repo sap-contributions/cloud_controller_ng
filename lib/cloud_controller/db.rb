@@ -3,6 +3,7 @@ require 'cloud_controller/db_migrator'
 require 'cloud_controller/db_connection/options_factory'
 require 'cloud_controller/db_connection/finalizer'
 require 'sequel/extensions/query_length_logging'
+require 'active_model'
 
 module VCAP::CloudController
   class DB
@@ -231,6 +232,69 @@ module VCAP
       elsif migration.class.name.match?(/postgres/i)
         Sequel.function(:get_uuid)
       end
+    end
+  end
+end
+
+if Rails::VERSION::MAJOR > 5
+  module CompatibleErrors
+    def init_with(coder)
+      super(coder)
+
+      # convert ActiveModel::Errors v5
+      messages = coder.map['messages']
+      return if messages.nil? || !messages.is_a?(Hash)
+
+      messages.each do |key, msgs|
+        next if key.nil? || msgs.nil? || !msgs.is_a?(Array)
+
+        msgs.each do |message|
+          add(key, message: message)
+        end
+      end
+    end
+  end
+
+  module ActiveModel
+    class Errors
+      prepend CompatibleErrors
+    end
+  end
+else
+  module CompatibleErrors
+    def init_with(coder)
+      @messages ||= {} # prevent deserialization error (... for nil:NilClass)
+
+      super(coder)
+
+      # convert ActiveModel::Errors v6
+      errors = instance_variable_get(:@errors)
+      return if errors.nil? || !errors.is_a?(Array)
+
+      errors.each do |error|
+        next if error.nil?
+
+        key = error.instance_variable_get(:@attribute)
+        next if key.nil?
+
+        options = error.instance_variable_get(:@options)
+        next if options.nil?
+
+        message = options[:message]
+        next if message.nil?
+
+        self[key] << message
+      end
+    end
+  end
+
+  module ActiveModel
+    # rubocop:disable Lint/EmptyClass
+    class Error; end
+    # rubocop:enable Lint/EmptyClass
+
+    class Errors
+      prepend CompatibleErrors
     end
   end
 end

@@ -4,4 +4,11 @@ $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 $LOAD_PATH.unshift(File.expand_path('../app', __dir__))
 $LOAD_PATH.unshift(File.expand_path('../middleware', __dir__))
 
+require 'rubygems'
 require 'bundler/setup' # Set up gems listed in the Gemfile.
+
+Bundler.require
+
+OpenTelemetry::SDK.configure do |c|
+  c.use 'OpenTelemetry::Instrumentation::Sinatra'
+end

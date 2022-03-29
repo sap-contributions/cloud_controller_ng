@@ -1,5 +1,14 @@
 #!/usr/bin/env ruby
 
+require 'rubygems'
+require 'bundler/setup'
+
+Bundler.require
+
+OpenTelemetry::SDK.configure do |c|
+  c.use 'OpenTelemetry::Instrumentation::Sinatra'
+end
+
 require File.expand_path('../config/boot', __dir__)
 
 ENV['RAILS_ENV'] ||= 'production'

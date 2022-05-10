@@ -30,12 +30,7 @@ module VCAP::CloudController
         use CloudFoundry::Middleware::Zipkin
         if config.get(:rate_limiter, :enabled)
           use CloudFoundry::Middleware::RateLimiter, {
-            logger: Steno.logger('cc.rate_limiter'),
-            per_process_general_limit: config.get(:rate_limiter, :per_process_general_limit),
-            global_general_limit: config.get(:rate_limiter, :global_general_limit),
-            per_process_unauthenticated_limit: config.get(:rate_limiter, :per_process_unauthenticated_limit),
-            global_unauthenticated_limit: config.get(:rate_limiter, :global_unauthenticated_limit),
-            interval: config.get(:rate_limiter, :reset_interval_in_minutes),
+            logger: Steno.logger('cc.rate_limiter')
           }
         end
         if config.get(:max_concurrent_service_broker_requests) > 0

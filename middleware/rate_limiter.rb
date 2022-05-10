@@ -1,139 +1,69 @@
-require 'mixins/client_ip'
-require 'mixins/user_reset_interval'
+require 'concurrent-ruby'
 
 module CloudFoundry
   module Middleware
-    RequestCount = Struct.new(:requests, :valid_until)
-
     class RequestCounter
       include Singleton
-      include CloudFoundry::Middleware::UserResetInterval
 
       def initialize
-        @mutex = Mutex.new
         @data = {}
       end
 
-      def get(user_guid, reset_interval_in_minutes, logger)
-        @mutex.synchronize do
-          return create_new_request_count(user_guid, reset_interval_in_minutes) unless @data.key? user_guid
-
-          request_count = @data[user_guid]
-          if request_count.valid_until < Time.now.utc
-            logger.info("Resetting request count of #{request_count.requests} for user '#{user_guid}'")
-            return create_new_request_count(user_guid, reset_interval_in_minutes)
-          end
-
-          [request_count.requests, request_count.valid_until]
-        end
+      def try_acquire?(user_guid)
+        @data[user_guid] = Concurrent::Semaphore.new(3) unless @data.key?(user_guid)
+        @data[user_guid].try_acquire
       end
 
-      def increment(user_guid)
-        @mutex.synchronize do
-          request_count = @data[user_guid]
-          request_count.requests += 1
-          @data[user_guid] = request_count
-        end
-      end
-
-      private
-
-      def create_new_request_count(user_guid, reset_interval_in_minutes)
-        requests = 0
-        valid_until = next_reset_interval(user_guid, reset_interval_in_minutes)
-        @data[user_guid] = RequestCount.new(requests, valid_until)
-        [requests, valid_until]
+      def release(user_guid)
+        @data[user_guid].release if @data.key?(user_guid)
       end
     end
 
     class RateLimiter
-      include CloudFoundry::Middleware::ClientIp
-
       def initialize(app, opts)
         @app                               = app
         @logger                            = opts[:logger]
-        @per_process_general_limit         = opts[:per_process_general_limit]
-        @global_general_limit              = opts[:global_general_limit]
-        @per_process_unauthenticated_limit = opts[:per_process_unauthenticated_limit]
-        @global_unauthenticated_limit      = opts[:global_unauthenticated_limit]
-        @interval                          = opts[:interval]
-        @request_counter                   = RequestCounter.instance
+        @request_counter = RequestCounter.instance
       end
 
-      def call(env)
-        rate_limit_headers = {}
-
+      def call(env)        
+        @logger.info("dizzz izzz zuper coooooool")
         request = ActionDispatch::Request.new(env)
+        user_guid = env['cf.user_guid']
 
-        unless skip_rate_limiting?(env, request)
-          user_guid = user_token?(env) ? env['cf.user_guid'] : client_ip(request)
+        return too_many_requests!(env, user_guid) unless @request_counter.try_acquire?(user_guid)
 
-          count, valid_until = @request_counter.get(user_guid, @interval, @logger)
-          new_count = count + 1
-
-          rate_limit_headers['X-RateLimit-Limit']     = global_request_limit(env).to_s
-          rate_limit_headers['X-RateLimit-Reset']     = valid_until.to_i.to_s
-          rate_limit_headers['X-RateLimit-Remaining'] = estimate_remaining(env, new_count)
-
-          return too_many_requests!(env, rate_limit_headers) if exceeded_rate_limit(new_count, env)
-
-          @request_counter.increment(user_guid)
+        begin
+          return @app.call(env)
+        rescue => e
+          raise e
+        ensure
+          @request_counter.release(user_guid)
         end
 
-        status, headers, body = @app.call(env)
-        [status, headers.merge(rate_limit_headers), body]
+
+        @app.call(env)
       end
 
       private
 
-      def skip_rate_limiting?(env, request)
-        auth = Rack::Auth::Basic::Request.new(env)
-        basic_auth?(auth) || internal_api?(request) || root_api?(request) || admin?
-      end
-
-      def root_api?(request)
-        request.fullpath.match(%r{\A(?:/v2/info|/v3|/|/healthz)\z})
-      end
-
-      def internal_api?(request)
-        request.fullpath.match(%r{\A/internal})
-      end
-
-      def basic_auth?(auth)
-        (auth.provided? && auth.basic?)
+      def admin?
+        VCAP::CloudController::SecurityContext.admin? || VCAP::CloudController::SecurityContext.admin_read_only?
       end
 
       def user_token?(env)
         !!env['cf.user_guid']
       end
 
-      def global_request_limit(env)
-        user_token?(env) ? @global_general_limit : @global_unauthenticated_limit
-      end
-
-      def per_process_request_limit(env)
-        user_token?(env) ? @per_process_general_limit : @per_process_unauthenticated_limit
-      end
-
-      def estimate_remaining(env, new_count)
-        global_limit = global_request_limit(env)
-        limit = per_process_request_limit(env)
-        return '0' unless limit > 0
-
-        estimate = ((limit - new_count).to_f / limit).floor(1) * global_limit
-        [0, estimate].max.to_i.to_s
-      end
-
-      def too_many_requests!(env, rate_limit_headers)
-        rate_limit_headers['Retry-After']    = rate_limit_headers['X-RateLimit-Reset']
-        rate_limit_headers['Content-Type']   = 'text/plain; charset=utf-8'
-        message                              = rate_limit_error(env).to_json
-        rate_limit_headers['Content-Length'] = message.length.to_s
+      def too_many_requests!(env, user_guid)
+        rate_limit_headers = {}
+        @logger.info("Concurrent rate limit exceeded for user '#{user_guid}'")
+        message = rate_limit_error(env).to_json
         [429, rate_limit_headers, [message]]
       end
 
       def rate_limit_error(env)
-        error_name = user_token?(env) ? 'RateLimitExceeded' : 'IPBasedRateLimitExceeded'
+        error_name = 'RateLimitExceeded'
         api_error = CloudController::Errors::ApiError.new_from_details(error_name)
         version   = env['PATH_INFO'][0..2]
         if version == '/v2'
@@ -141,14 +71,6 @@ module CloudFoundry
         elsif version == '/v3'
           ErrorPresenter.new(api_error, Rails.env.test?, V3ErrorHasher.new(api_error)).to_hash
         end
-      end
-
-      def exceeded_rate_limit(count, env)
-        count > per_process_request_limit(env)
-      end
-
-      def admin?
-        VCAP::CloudController::SecurityContext.admin? || VCAP::CloudController::SecurityContext.admin_read_only?
       end
     end
   end

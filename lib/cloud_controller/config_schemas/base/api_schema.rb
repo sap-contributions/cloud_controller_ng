@@ -291,6 +291,9 @@ module VCAP::CloudController
               per_process_unauthenticated_limit: Integer,
               global_unauthenticated_limit: Integer,
               reset_interval_in_minutes: Integer,
+            },
+            concurrency_rate_limiter: {
+              enabled: bool,
               concurrency_rate_limit_per_cc_instance: Integer,
             },
             max_concurrent_service_broker_requests: Integer,

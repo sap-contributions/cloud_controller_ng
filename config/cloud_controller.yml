@@ -263,6 +263,9 @@ rate_limiter:
   per_process_unauthenticated_limit: 100
   global_unauthenticated_limit: 1000
   reset_interval_in_minutes: 60
+
+concurrency_rate_limiter:
+  enabled: false
   concurrency_rate_limit_per_cc_instance: 5
 
 max_concurrent_service_broker_requests: 0

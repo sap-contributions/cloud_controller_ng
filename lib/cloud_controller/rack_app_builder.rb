@@ -28,10 +28,20 @@ module VCAP::CloudController
         use CloudFoundry::Middleware::SecurityContextSetter, configurer
         use CloudFoundry::Middleware::RequestLogs, request_logs
         use CloudFoundry::Middleware::Zipkin
+        if config.get(:concurrency_rate_limiter, :enabled)
+          CloudFoundry::Middleware::ConcurrencyRequestCounter.instance.limit = config.get(:concurrency_rate_limiter, :concurrency_rate_limit_per_cc_instance)
+          use CloudFoundry::Middleware::ConcurrencyRateLimiter, {
+            logger: Steno.logger('cc.concurrency_rate_limiter')
+          }
+        end
         if config.get(:rate_limiter, :enabled)
-          CloudFoundry::Middleware::RequestCounter.instance.limit = config.get(:rate_limiter, :concurrency_rate_limit_per_cc_instance)
           use CloudFoundry::Middleware::RateLimiter, {
-            logger: Steno.logger('cc.rate_limiter')
+            logger: Steno.logger('cc.rate_limiter'),
+            per_process_general_limit: config.get(:rate_limiter, :per_process_general_limit),
+            global_general_limit: config.get(:rate_limiter, :global_general_limit),
+            per_process_unauthenticated_limit: config.get(:rate_limiter, :per_process_unauthenticated_limit),
+            global_unauthenticated_limit: config.get(:rate_limiter, :global_unauthenticated_limit),
+            interval: config.get(:rate_limiter, :reset_interval_in_minutes),
           }
         end
         if config.get(:max_concurrent_service_broker_requests) > 0

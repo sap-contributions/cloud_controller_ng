@@ -29,6 +29,7 @@ module VCAP::CloudController
         use CloudFoundry::Middleware::RequestLogs, request_logs
         use CloudFoundry::Middleware::Zipkin
         if config.get(:rate_limiter, :enabled)
+          CloudFoundry::Middleware::RequestCounter.instance.limit = config.get(:concurrency_rate_limit_per_cc_instance)
           use CloudFoundry::Middleware::RateLimiter, {
             logger: Steno.logger('cc.rate_limiter')
           }

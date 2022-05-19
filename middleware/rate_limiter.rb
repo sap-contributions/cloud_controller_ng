@@ -9,8 +9,12 @@ module CloudFoundry
         @data = {}
       end
 
+      def limit=(limit)
+        @limit = limit
+      end
+
       def try_acquire?(user_guid)
-        @data[user_guid] = Concurrent::Semaphore.new(3) unless @data.key?(user_guid)
+        @data[user_guid] = Concurrent::Semaphore.new(@limit) unless @data.key?(user_guid)
         @data[user_guid].try_acquire
       end
 

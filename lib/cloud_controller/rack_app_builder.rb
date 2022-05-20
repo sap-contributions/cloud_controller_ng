@@ -6,6 +6,7 @@ require 'request_logs'
 require 'cef_logs'
 require 'security_context_setter'
 require 'rate_limiter'
+require 'concurrency_rate_limiter'
 require 'service_broker_rate_limiter'
 require 'new_relic_custom_attributes'
 require 'zipkin'
@@ -16,25 +17,14 @@ module VCAP::CloudController
     def build(config, request_metrics, request_logs)
       token_decoder = VCAP::CloudController::UaaTokenDecoder.new(config.get(:uaa))
       configurer = VCAP::CloudController::Security::SecurityContextConfigurer.new(token_decoder)
-
       logger = access_log(config)
 
+      concurrency_limiter_enabled = config.get(:concurrency_rate_limiter, :enabled)
+      concurrency_rate_limiter_first = config.get(:concurrency_rate_limiter, :goes_first)
+      regular_rate_limiter_enabled = config.get(:rate_limiter, :enabled)
+
       Rack::Builder.new do
-        use CloudFoundry::Middleware::RequestMetrics, request_metrics
-        use CloudFoundry::Middleware::Cors, config.get(:allowed_cors_domains)
-        use CloudFoundry::Middleware::VcapRequestId
-        use CloudFoundry::Middleware::NewRelicCustomAttributes if config.get(:newrelic_enabled)
-        use Honeycomb::Rack::Middleware, client: Honeycomb.client if config.get(:honeycomb)
-        use CloudFoundry::Middleware::SecurityContextSetter, configurer
-        use CloudFoundry::Middleware::RequestLogs, request_logs
-        use CloudFoundry::Middleware::Zipkin
-        if config.get(:concurrency_rate_limiter, :enabled)
-          CloudFoundry::Middleware::ConcurrencyRequestCounter.instance.limit = config.get(:concurrency_rate_limiter, :concurrency_rate_limit_per_cc_instance)
-          use CloudFoundry::Middleware::ConcurrencyRateLimiter, {
-            logger: Steno.logger('cc.concurrency_rate_limiter')
-          }
-        end
-        if config.get(:rate_limiter, :enabled)
+        enable_regular_rate_limiter = Proc.new do
           use CloudFoundry::Middleware::RateLimiter, {
             logger: Steno.logger('cc.rate_limiter'),
             per_process_general_limit: config.get(:rate_limiter, :per_process_general_limit),
@@ -43,6 +33,33 @@ module VCAP::CloudController
             global_unauthenticated_limit: config.get(:rate_limiter, :global_unauthenticated_limit),
             interval: config.get(:rate_limiter, :reset_interval_in_minutes),
           }
+        end
+        enable_concurrency_rate_limiter = Proc.new do
+          CloudFoundry::Middleware::ConcurrencyRequestCounter.instance.limit = config.get(:concurrency_rate_limiter, :concurrency_rate_limit_per_cc_instance)
+          use CloudFoundry::Middleware::ConcurrencyRateLimiter, {
+            logger: Steno.logger('cc.concurrency_rate_limiter')
+          }
+        end
+        use CloudFoundry::Middleware::RequestMetrics, request_metrics
+        use CloudFoundry::Middleware::Cors, config.get(:allowed_cors_domains)
+        use CloudFoundry::Middleware::VcapRequestId
+        use CloudFoundry::Middleware::NewRelicCustomAttributes if config.get(:newrelic_enabled)
+        use Honeycomb::Rack::Middleware, client: Honeycomb.client if config.get(:honeycomb)
+        use CloudFoundry::Middleware::SecurityContextSetter, configurer
+        use CloudFoundry::Middleware::RequestLogs, request_logs
+        use CloudFoundry::Middleware::Zipkin
+        if concurrency_limiter_enabled and regular_rate_limiter_enabled
+          if concurrency_rate_limiter_first
+            enable_concurrency_rate_limiter.call
+            enable_regular_rate_limiter.call
+          else
+            enable_regular_rate_limiter.call
+            enable_concurrency_rate_limiter.call
+          end
+        elsif concurrency_limiter_enabled and not regular_rate_limiter_enabled
+          enable_concurrency_rate_limiter.call
+        elsif regular_rate_limiter_enabled and not concurrency_limiter_enabled
+          enable_regular_rate_limiter.call
         end
         if config.get(:max_concurrent_service_broker_requests) > 0
           CloudFoundry::Middleware::ServiceBrokerRequestCounter.instance.limit = config.get(:max_concurrent_service_broker_requests)

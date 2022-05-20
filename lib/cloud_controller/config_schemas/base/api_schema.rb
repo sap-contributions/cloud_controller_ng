@@ -294,6 +294,7 @@ module VCAP::CloudController
             },
             concurrency_rate_limiter: {
               enabled: bool,
+              goes_first: bool,
               concurrency_rate_limit_per_cc_instance: Integer,
             },
             max_concurrent_service_broker_requests: Integer,

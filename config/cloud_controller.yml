@@ -266,6 +266,7 @@ rate_limiter:
 
 concurrency_rate_limiter:
   enabled: false
+  goes_first: false
   concurrency_rate_limit_per_cc_instance: 5
 
 max_concurrent_service_broker_requests: 0

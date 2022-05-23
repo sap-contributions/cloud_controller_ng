@@ -63,7 +63,7 @@ module CloudFoundry
         rate_limit_headers = {}
         @logger.info("Concurrent rate limit exceeded for user '#{user_guid}'")
         message = rate_limit_error(env).to_json
-        [429, rate_limit_headers, [message]]
+        [428, rate_limit_headers, [message]]
       end
 
       def rate_limit_error(env)

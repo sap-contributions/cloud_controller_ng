@@ -31,6 +31,7 @@ module CloudFoundry
       end
 
       def call(env)        
+        @logger.info("dizzz izzz zuper coooooool")
         request = ActionDispatch::Request.new(env)
         user_guid = env['cf.user_guid']
 
@@ -62,7 +63,7 @@ module CloudFoundry
         rate_limit_headers = {}
         @logger.info("Concurrent rate limit exceeded for user '#{user_guid}'")
         message = rate_limit_error(env).to_json
-        [428, rate_limit_headers, [message]]
+        [429, rate_limit_headers, [message]]
       end
 
       def rate_limit_error(env)

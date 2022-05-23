@@ -19,14 +19,14 @@ module VCAP::CloudController
       configurer = VCAP::CloudController::Security::SecurityContextConfigurer.new(token_decoder)
       logger = access_log(config)
 
-      concurrency_limiter_enabled = config.get(:rate_limiter, :concurrency, :enabled)
-      concurrency_rate_limiter_first = config.get(:rate_limiter, :concurrency, :goes_first)
+      concurrency_limiter_enabled = config.get(:concurrency_rate_limiter, :enabled)
+      concurrency_rate_limiter_first = config.get(:concurrency_rate_limiter, :goes_first)
       regular_rate_limiter_enabled = config.get(:rate_limiter, :enabled)
 
       Rack::Builder.new do
         enable_regular_rate_limiter = Proc.new do
           use CloudFoundry::Middleware::RateLimiter, {
-            logger: Steno.logger('cc.rate_limiter.existing'),
+            logger: Steno.logger('cc.rate_limiter'),
             per_process_general_limit: config.get(:rate_limiter, :per_process_general_limit),
             global_general_limit: config.get(:rate_limiter, :global_general_limit),
             per_process_unauthenticated_limit: config.get(:rate_limiter, :per_process_unauthenticated_limit),
@@ -35,9 +35,9 @@ module VCAP::CloudController
           }
         end
         enable_concurrency_rate_limiter = Proc.new do
-          CloudFoundry::Middleware::ConcurrencyRequestCounter.instance.limit = config.get(:rate_limiter, :concurrency, :max_concurrent_requests_per_cc_instance)
+          CloudFoundry::Middleware::ConcurrencyRequestCounter.instance.limit = config.get(:concurrency_rate_limiter, :concurrency_rate_limit_per_cc_instance)
           use CloudFoundry::Middleware::ConcurrencyRateLimiter, {
-            logger: Steno.logger('cc.rate_limiter.concurrency')
+            logger: Steno.logger('cc.concurrency_rate_limiter')
           }
         end
         use CloudFoundry::Middleware::RequestMetrics, request_metrics

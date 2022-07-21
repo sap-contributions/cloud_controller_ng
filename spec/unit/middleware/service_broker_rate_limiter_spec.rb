@@ -11,12 +11,12 @@ module CloudFoundry
       let(:concurrent_limit) { 1 }
       let(:broker_timeout) { 60 }
       let(:middleware) {
-        ServiceBrokerRequestCounter.instance.limit = concurrent_limit
+        ServiceBrokerRequestCounter.limit = concurrent_limit
         ServiceBrokerRateLimiter.new(app, logger: logger, broker_timeout_seconds: broker_timeout)
       }
 
       before(:each) do
-        Singleton.__init__(ServiceBrokerRequestCounter)
+        ServiceBrokerRequestCounter.reset
         allow(ActionDispatch::Request).to receive(:new).and_return(fake_request)
         allow(logger).to receive(:info)
         allow(app).to receive(:call) do
@@ -108,7 +108,7 @@ module CloudFoundry
           context 'when broker_client_timeout_seconds is reduced' do
             let(:broker_timeout) { 3 }
             let(:middleware) {
-              ServiceBrokerRequestCounter.instance.limit = concurrent_limit
+              ServiceBrokerRequestCounter.limit = concurrent_limit
               ServiceBrokerRateLimiter.new(app, logger: logger, broker_timeout_seconds: broker_timeout)
             }
 

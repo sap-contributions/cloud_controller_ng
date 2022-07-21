@@ -2,11 +2,9 @@ require 'concurrent-ruby'
 
 module CloudFoundry
   module Middleware
-    class ServiceBrokerRequestCounter
-      include Singleton
-
+    class ConcurrentRequestsCounter
       def initialize
-        @data = {}
+        reset
       end
 
       def limit=(limit)
@@ -21,14 +19,22 @@ module CloudFoundry
       def release(user_guid)
         @data[user_guid].release if @data.key?(user_guid)
       end
+
+      # needed for testing
+      def reset
+        @data = {}
+      end
     end
+
+    # constant = instance => singleton!
+    ServiceBrokerRequestCounter = ConcurrentRequestsCounter.new
 
     class ServiceBrokerRateLimiter
       def initialize(app, opts)
         @app                               = app
         @logger                            = opts[:logger]
         @broker_timeout_seconds            = opts[:broker_timeout_seconds]
-        @request_counter = ServiceBrokerRequestCounter.instance
+        @request_counter = ServiceBrokerRequestCounter
       end
 
       def call(env)

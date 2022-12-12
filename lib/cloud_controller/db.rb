@@ -102,6 +102,19 @@ Sequel::Model.include VCAP::CloudController::Encryptor::FieldEncryptor
 Sequel.split_symbols = true
 
 class Sequel::Model
+  # rubocop:disable Style/ClassVars
+  @@sub_classes = Set[]
+  # rubocop:enable Style/ClassVars
+
+  def self.sub_classes
+    @@sub_classes.to_a
+  end
+
+  def self.inherited(sub_class)
+    @@sub_classes.add(sub_class) unless sub_class.name.nil?
+    super
+  end
+
   private
 
   # monkey patch sequel to make it easier to map validation failures to custom

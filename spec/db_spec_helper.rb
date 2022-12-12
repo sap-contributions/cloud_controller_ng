@@ -4,12 +4,15 @@ unless defined?(SPEC_HELPER_LOADED)
   require 'rspec/collection_matchers'
 
   require 'rails'
+  require 'support/compatibility/schema_helper'
   require 'support/bootstrap/spec_bootstrap'
   require 'support/database_isolation'
   require 'sequel_plugins/sequel_plugins'
 
   require 'machinist/sequel'
   require 'machinist/object'
+
+  VCAP::CloudController::SchemaHelper.record_accessed_columns
 
   VCAP::CloudController::SpecBootstrap.init(recreate_tables: false)
 
@@ -22,6 +25,10 @@ unless defined?(SPEC_HELPER_LOADED)
   RSpec.configure do |rspec_config|
     rspec_config.before :suite do
       VCAP::CloudController::SpecBootstrap.seed
+    end
+
+    rspec_config.after :suite do
+      VCAP::CloudController::SchemaHelper.dump_used_columns
     end
 
     rspec_config.around :each do |example|

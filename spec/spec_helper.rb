@@ -75,6 +75,7 @@ init_block = proc do
   require 'rspec_api_documentation'
   require 'services'
 
+  require 'support/compatibility/schema_helper'
   require 'support/bootstrap/spec_bootstrap'
   require 'rspec/collection_matchers'
   require 'rspec/its'
@@ -82,6 +83,8 @@ init_block = proc do
 end
 
 each_run_block = proc do
+  VCAP::CloudController::SchemaHelper.record_accessed_columns
+
   # Moving this line into the init-block means that changes in code files aren't detected.
   VCAP::CloudController::SpecBootstrap.init
 
@@ -149,6 +152,10 @@ each_run_block = proc do
 
     rspec_config.before :suite do
       VCAP::CloudController::SpecBootstrap.seed
+    end
+
+    rspec_config.after :suite do
+      VCAP::CloudController::SchemaHelper.dump_used_columns
     end
 
     rspec_config.before :each do

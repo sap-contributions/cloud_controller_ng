@@ -18,6 +18,14 @@ namespace :spec do
     run_specs('spec/integration')
   end
 
+  task used_columns: ['db:pick', 'db:recreate'] do
+    ENV['USED_COLUMNS'] = 'true'
+    run_specs('spec')
+    sh 'diff spec/artifacts/used_columns.json db/used_columns.json'
+  ensure
+    ENV.delete('USED_COLUMNS')
+  end
+
   desc 'Run only previously failing tests'
   task failed: 'db:pick' do
     run_failed_specs

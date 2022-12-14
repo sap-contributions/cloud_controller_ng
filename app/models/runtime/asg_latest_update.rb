@@ -2,7 +2,7 @@ module VCAP::CloudController
   class AsgLatestUpdate
     class AsgTimestamp < Sequel::Model
     end
-    private_constant :AsgTimestamp
+    # private_constant :AsgTimestamp
 
     def self.renew
       old_update = AsgTimestamp.first

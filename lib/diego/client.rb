@@ -125,14 +125,12 @@ module Diego
     end
 
     def request_with_error_handling(req)
-      attempt ||= 1
+      tries ||= 3
       http_client.ipaddr = bbs_ip # tell the HTTP client which exact IP to target
-      logger.info("attempt #{attempt}: trying bbs endpoint #{req.path} on #{bbs_ip}")
       http_client.request(req)
     rescue => e
-      eliminated_ip = ips_remaining.shift
-      logger.info("attempt #{attempt}: failed to reach bbs server on #{eliminated_ip}, removing from list")
-      retry unless ips_remaining.empty? && (attempt += 1) > 3
+      ips_remaining.shift
+      retry unless ips_remaining.empty? && (tries -= 1).zero?
       raise RequestError.new(e.message)
     end
 
@@ -145,10 +143,6 @@ module Diego
 
     attr_reader :http_client, :bbs_url
     attr_accessor :ips_remaining
-
-    def logger
-      @logger ||= Steno.logger('cc.diego.client')
-    end
 
     def protobuf_encode!(hash, protobuf_message_class)
       # See below link to understand proto3 message encoding

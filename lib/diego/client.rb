@@ -21,7 +21,7 @@ module Diego
     end
 
     def ping
-      req = post_request(path: Routes::PING)
+      req = request(path: Routes::PING)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -29,7 +29,7 @@ module Diego
     end
 
     def upsert_domain(domain:, ttl:)
-      req = post_request(body: protobuf_encode!({ domain: domain, ttl: ttl.to_i }, Bbs::Models::UpsertDomainRequest), path: Routes::UPSERT_DOMAIN)
+      req = request(body: protobuf_encode!({ domain: domain, ttl: ttl.to_i }, Bbs::Models::UpsertDomainRequest), path: Routes::UPSERT_DOMAIN)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -37,8 +37,7 @@ module Diego
     end
 
     def desire_task(task_definition:, domain:, task_guid:)
-      req = post_request(body: protobuf_encode!({ task_definition: task_definition, domain: domain, task_guid: task_guid }, Bbs::Models::DesireTaskRequest),
-path: Routes::DESIRE_TASK)
+      req = request(body: protobuf_encode!({ task_definition: task_definition, domain: domain, task_guid: task_guid }, Bbs::Models::DesireTaskRequest), path: Routes::DESIRE_TASK)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -46,7 +45,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def task_by_guid(task_guid)
-      req = post_request(body: protobuf_encode!({ task_guid: task_guid }, Bbs::Models::TaskByGuidRequest), path: Routes::TASK_BY_GUID)
+      req = request(body: protobuf_encode!({ task_guid: task_guid }, Bbs::Models::TaskByGuidRequest), path: Routes::TASK_BY_GUID)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -54,7 +53,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def tasks(domain: '', cell_id: '')
-      req = post_request(body: protobuf_encode!({ domain: domain, cell_id: cell_id }, Bbs::Models::TasksRequest), path: Routes::LIST_TASKS)
+      req = request(body: protobuf_encode!({ domain: domain, cell_id: cell_id }, Bbs::Models::TasksRequest), path: Routes::LIST_TASKS)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -62,7 +61,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def cancel_task(task_guid)
-      req = post_request(body: protobuf_encode!({ task_guid: task_guid }, Bbs::Models::TaskGuidRequest), path: Routes::CANCEL_TASK)
+      req = request(body: protobuf_encode!({ task_guid: task_guid }, Bbs::Models::TaskGuidRequest), path: Routes::CANCEL_TASK)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -70,7 +69,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def desire_lrp(lrp)
-      req = post_request(body: protobuf_encode!({ desired_lrp: lrp }, Bbs::Models::DesireLRPRequest), path: Routes::DESIRE_LRP)
+      req = request(body: protobuf_encode!({ desired_lrp: lrp }, Bbs::Models::DesireLRPRequest), path: Routes::DESIRE_LRP)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -78,7 +77,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def desired_lrp_by_process_guid(process_guid)
-      req = post_request(body: protobuf_encode!({ process_guid: process_guid }, Bbs::Models::DesiredLRPByProcessGuidRequest), path: Routes::DESIRED_LRP_BY_PROCESS_GUID)
+      req = request(body: protobuf_encode!({ process_guid: process_guid }, Bbs::Models::DesiredLRPByProcessGuidRequest), path: Routes::DESIRED_LRP_BY_PROCESS_GUID)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -86,7 +85,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def update_desired_lrp(process_guid, lrp_update)
-      req = post_request(body: protobuf_encode!({ process_guid: process_guid, update: lrp_update }, Bbs::Models::UpdateDesiredLRPRequest), path: Routes::UPDATE_DESIRED_LRP)
+      req = request(body: protobuf_encode!({ process_guid: process_guid, update: lrp_update }, Bbs::Models::UpdateDesiredLRPRequest), path: Routes::UPDATE_DESIRED_LRP)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -94,7 +93,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def remove_desired_lrp(process_guid)
-      req = post_request(body: protobuf_encode!({ process_guid: process_guid }, Bbs::Models::RemoveDesiredLRPRequest), path: Routes::REMOVE_DESIRED_LRP)
+      req = request(body: protobuf_encode!({ process_guid: process_guid }, Bbs::Models::RemoveDesiredLRPRequest), path: Routes::REMOVE_DESIRED_LRP)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -102,7 +101,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def retire_actual_lrp(actual_lrp_key)
-      req = post_request(body: protobuf_encode!({ actual_lrp_key: actual_lrp_key }, Bbs::Models::RetireActualLRPRequest), path: Routes::RETIRE_ACTUAL_LRP)
+      req = request(body: protobuf_encode!({ actual_lrp_key: actual_lrp_key }, Bbs::Models::RetireActualLRPRequest), path: Routes::RETIRE_ACTUAL_LRP)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -110,7 +109,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def desired_lrp_scheduling_infos(domain)
-      req = post_request(body: protobuf_encode!({ domain: domain }, Bbs::Models::DesiredLRPsRequest), path: Routes::DESIRED_LRP_SCHEDULING_INFOS)
+      req = request(body: protobuf_encode!({ domain: domain }, Bbs::Models::DesiredLRPsRequest), path: Routes::DESIRED_LRP_SCHEDULING_INFOS)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -118,7 +117,7 @@ path: Routes::DESIRE_TASK)
     end
 
     def actual_lrps_by_process_guid(process_guid)
-      req = post_request(body: protobuf_encode!({ process_guid: process_guid }, Bbs::Models::ActualLRPsRequest), path: Routes::ACTUAL_LRPS)
+      req = request(body: protobuf_encode!({ process_guid: process_guid }, Bbs::Models::ActualLRPsRequest), path: Routes::ACTUAL_LRPS)
       response = request_with_error_handling(req)
 
       validate_status!(response)
@@ -128,12 +127,11 @@ path: Routes::DESIRE_TASK)
     def request_with_error_handling(req)
       attempt ||= 1
       http_client.ipaddr = bbs_ip # tell the HTTP client which exact IP to target
+      logger.info("attempt #{attempt}: trying bbs endpoint #{req.path} on #{bbs_ip}")
       http_client.request(req)
-    rescue Resolv::ResolvError, Resolv::ResolvTimeout => e
-      raise DnsResolutionError.new("dns resolution failed for #{bbs_url.host}: #{e.message}")
     rescue => e
       eliminated_ip = ips_remaining.shift
-      logger.debug("attempt #{attempt} of 3: failed to reach the active bbs server on #{eliminated_ip}, removing from list")
+      logger.info("attempt #{attempt}: failed to reach bbs server on #{eliminated_ip}, removing from list")
       retry unless ips_remaining.empty? && (attempt += 1) > 3
       raise RequestError.new(e.message)
     end
@@ -160,7 +158,7 @@ path: Routes::DESIRE_TASK)
       raise EncodeError.new(e.message)
     end
 
-    def post_request(body: nil, path:)
+    def request(body: nil, path:)
       req = Net::HTTP::Post.new(path)
       req.body = body if body
       req['Content-Type'.freeze] = 'application/x-protobuf'.freeze

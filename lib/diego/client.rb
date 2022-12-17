@@ -1,8 +1,6 @@
 require 'diego/bbs/bbs'
 require 'diego/errors'
 require 'diego/routes'
-require 'uri'
-require 'resolv'
 
 module Diego
   class Client
@@ -11,8 +9,8 @@ module Diego
     def initialize(url:, ca_cert_file:, client_cert_file:, client_key_file:,
       connect_timeout:, send_timeout:, receive_timeout:)
       ENV['PB_IGNORE_DEPRECATIONS'] ||= 'true'
-      @bbs_url = url
       @client = build_client(
+        url,
         ca_cert_file,
         client_cert_file,
         client_key_file,
@@ -23,7 +21,7 @@ module Diego
 
     def ping
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::PING))
+        client.post(Routes::PING)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -34,7 +32,7 @@ module Diego
       request = protobuf_encode!({ domain: domain, ttl: ttl.to_i }, Bbs::Models::UpsertDomainRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::UPSERT_DOMAIN), request, PROTOBUF_HEADER)
+        client.post(Routes::UPSERT_DOMAIN, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -45,7 +43,7 @@ module Diego
       request = protobuf_encode!({ task_definition: task_definition, domain: domain, task_guid: task_guid }, Bbs::Models::DesireTaskRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::DESIRE_TASK), request, PROTOBUF_HEADER)
+        client.post(Routes::DESIRE_TASK, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -56,7 +54,7 @@ module Diego
       request = protobuf_encode!({ task_guid: task_guid }, Bbs::Models::TaskByGuidRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::TASK_BY_GUID), request, PROTOBUF_HEADER)
+        client.post(Routes::TASK_BY_GUID, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -67,7 +65,7 @@ module Diego
       request = protobuf_encode!({ domain: domain, cell_id: cell_id }, Bbs::Models::TasksRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::LIST_TASKS), request, PROTOBUF_HEADER)
+        client.post(Routes::LIST_TASKS, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -78,7 +76,7 @@ module Diego
       request = protobuf_encode!({ task_guid: task_guid }, Bbs::Models::TaskGuidRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::CANCEL_TASK), request, PROTOBUF_HEADER)
+        client.post(Routes::CANCEL_TASK, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -89,7 +87,7 @@ module Diego
       request = protobuf_encode!({ desired_lrp: lrp }, Bbs::Models::DesireLRPRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::DESIRE_LRP), request, PROTOBUF_HEADER)
+        client.post(Routes::DESIRE_LRP, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -100,7 +98,7 @@ module Diego
       request = protobuf_encode!({ process_guid: process_guid }, Bbs::Models::DesiredLRPByProcessGuidRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::DESIRED_LRP_BY_PROCESS_GUID), request, PROTOBUF_HEADER)
+        client.post(Routes::DESIRED_LRP_BY_PROCESS_GUID, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -111,7 +109,7 @@ module Diego
       request = protobuf_encode!({ process_guid: process_guid, update: lrp_update }, Bbs::Models::UpdateDesiredLRPRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::UPDATE_DESIRED_LRP), request, PROTOBUF_HEADER)
+        client.post(Routes::UPDATE_DESIRED_LRP, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -122,7 +120,7 @@ module Diego
       request = protobuf_encode!({ process_guid: process_guid }, Bbs::Models::RemoveDesiredLRPRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::REMOVE_DESIRED_LRP), request, PROTOBUF_HEADER)
+        client.post(Routes::REMOVE_DESIRED_LRP, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -133,7 +131,7 @@ module Diego
       request = protobuf_encode!({ actual_lrp_key: actual_lrp_key }, Bbs::Models::RetireActualLRPRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::RETIRE_ACTUAL_LRP), request, PROTOBUF_HEADER)
+        client.post(Routes::RETIRE_ACTUAL_LRP, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -144,7 +142,7 @@ module Diego
       request = protobuf_encode!({ domain: domain }, Bbs::Models::DesiredLRPsRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::DESIRED_LRP_SCHEDULING_INFOS), request, PROTOBUF_HEADER)
+        client.post(Routes::DESIRED_LRP_SCHEDULING_INFOS, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -155,7 +153,7 @@ module Diego
       request = protobuf_encode!({ process_guid: process_guid }, Bbs::Models::ActualLRPsRequest)
 
       response = with_request_error_handling do
-        client.post(URI.join(bbs_url_from_ip, Routes::ACTUAL_LRPS), request, PROTOBUF_HEADER)
+        client.post(Routes::ACTUAL_LRPS, request, PROTOBUF_HEADER)
       end
 
       validate_status!(response: response, statuses: [200])
@@ -166,20 +164,13 @@ module Diego
       tries ||= 3
       yield
     rescue => e
-      ips_remaining.shift
-      retry unless ips_remaining.empty? && (tries -= 1).zero?
+      retry unless (tries -= 1).zero?
       raise RequestError.new(e.message)
-    end
-
-    def bbs_ip
-      self.ips_remaining = bbs_ip_addresses if ips_remaining.nil? || ips_remaining.empty?
-      ips_remaining.first
     end
 
     private
 
-    attr_reader :client, :bbs_url
-    attr_accessor :ips_remaining
+    attr_reader :client
 
     def protobuf_encode!(hash, protobuf_message_class)
       # See below link to understand proto3 message encoding
@@ -199,19 +190,9 @@ module Diego
       raise DecodeError.new(e.message)
     end
 
-    def bbs_ip_addresses
-      Resolv.getaddresses(URI(bbs_url).host).dup
-    end
-
-    def bbs_url_from_ip
-      uri = URI(bbs_url)
-      uri.host = bbs_ip
-      uri.to_s
-    end
-
-    def build_client(ca_cert_file, client_cert_file, client_key_file,
+    def build_client(url, ca_cert_file, client_cert_file, client_key_file,
       connect_timeout, send_timeout, receive_timeout)
-      client                 = HTTPClient.new
+      client                 = HTTPClient.new(base_url: url)
       client.connect_timeout = connect_timeout
       client.send_timeout    = send_timeout
       client.receive_timeout = receive_timeout

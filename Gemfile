@@ -67,6 +67,11 @@ gem 'fog-core', '~> 2.1.2'
 gem 'cf-uaa-lib', '~> 4.0.1'
 gem 'vcap-concurrency', git: 'https://github.com/cloudfoundry/vcap-concurrency.git', ref: '2a5b0179'
 
+gem 'net-http-persistent'
+gem 'faraday-net_http_persistent', '~> 2.0'
+gem 'faraday'
+
+
 group :db do
   gem 'mysql2', '~> 0.5.4'
   gem 'pg'

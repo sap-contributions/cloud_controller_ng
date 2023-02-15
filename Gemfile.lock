@@ -168,9 +168,9 @@ GEM
       fog-core (~> 2.1)
       fog-json (~> 1.1)
       fog-xml (~> 0.1)
-    fog-core (2.1.2)
+    fog-core (2.2.4)
       builder
-      excon (~> 0.58)
+      excon (~> 0.71)
       formatador (~> 0.2)
       mime-types
     fog-google (1.19.0)
@@ -558,7 +558,7 @@ DEPENDENCIES
   fog-aliyun
   fog-aws
   fog-azure-rm!
-  fog-core (~> 2.1.2)
+  fog-core (~> 2.2.4)
   fog-google (~> 1.19.0)
   fog-local
   fog-openstack

@@ -62,7 +62,7 @@ gem 'fog-azure-rm', git: 'https://github.com/fog/fog-azure-rm.git', branch: 'fog
 gem 'fog-google', '~> 1.19.0'
 gem 'fog-local'
 gem 'fog-openstack'
-gem 'fog-core', '~> 2.1.2'
+gem 'fog-core', '~> 2.2.4'
 
 gem 'cf-uaa-lib', '~> 4.0.1'
 gem 'vcap-concurrency', git: 'https://github.com/cloudfoundry/vcap-concurrency.git', ref: '2a5b0179'

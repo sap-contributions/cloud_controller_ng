@@ -34,6 +34,9 @@ module VCAP::CloudController
                  all
           break if rows.count == 0
 
+          klass.instance_exec do
+            @allow_manual_timestamp_update = true
+          end
           rotate_batch(klass, rows)
           logger.info("Rotated batch of #{rows.count} rows of #{klass}")
         end
@@ -45,6 +48,7 @@ module VCAP::CloudController
           row.db.transaction do
             row.lock!
             encrypt_row(encrypted_fields, row)
+            row.modified!(:updated_at)
             row.save(validate: false)
           rescue Sequel::NoExistingObject
             raise Sequel::Rollback

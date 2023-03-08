@@ -7,26 +7,46 @@ module VCAP::CloudController
         # Apps are an example of a single encrypted field
         let(:historical_app) { AppModel.make }
         let(:historical_app_with_no_environment) { AppModel.make }
-        let(:app) { AppModel.make }
+        let(:app) { AppModel.make(:all_fields) }
         let(:app_the_second) { AppModel.make }
         let(:app_new_key_label) { AppModel.make }
         let(:env_vars) { { 'environment' => 'vars', 'PORT' => 344, 'longstring' => 'x' * 4097 } } # PORT is invalid!
         let(:env_vars_2) { { 'vars' => 'environment' } }
 
         # Service bindings are an example of multiple encrypted fields
-        let(:service_binding) { ServiceBinding.make }
+        let(:service_binding) { ServiceBinding.make(syslog_drain_url: Sham.url, name: Sham.name) }
         let(:service_binding_new_key_label) { ServiceBinding.make }
         let(:credentials) { { 'secret' => 'creds' } }
         let(:credentials_2) { { 'more' => 'secrets' } }
 
         # Service instances are an example of single table inheritance
-        let(:service_instance) { ManagedServiceInstance.make }
+        let(:service_instance) { ManagedServiceInstance.make(:all_fields) }
         let(:service_instance_new_key_label) { ManagedServiceInstance.make }
         let(:instance_credentials) { { 'instance' => 'credentials' } }
         let(:instance_credentials_2) { { 'instance_credentials' => 'live here' } }
-
-        let(:task) { TaskModel.make }
+        let(:task) { TaskModel.make(disk_in_mb: 256, failure_reason: 'error') }
         let(:task_the_second) { TaskModel.make }
+
+        let(:service_broker) { ServiceBroker.make(:space_scoped) }
+        let(:service_broker_update_request) { ServiceBrokerUpdateRequest.make(service_broker_id: service_broker.id, fk_service_brokers_id: service_broker.id) }
+
+        let(:encrypted_models) {
+          {
+            'VCAP::CloudController::AppModel' => app,
+            'VCAP::CloudController::PackageModel' => PackageModel.make(type: 'docker', package_hash: Sham.guid, error: 'a-error', docker_image: 'image', docker_username: 'user'),
+            'VCAP::CloudController::DropletModel' => DropletModel.make(:all_fields),
+            'VCAP::CloudController::BuildpackLifecycleDataModel' => BuildpackLifecycleDataModel.make(:all_fields),
+            'VCAP::CloudController::BuildpackLifecycleBuildpackModel' => BuildpackLifecycleBuildpackModel.make(:all_fields),
+            'VCAP::CloudController::TaskModel' => task,
+            'VCAP::CloudController::EnvironmentVariableGroup' => EnvironmentVariableGroup.make,
+            'VCAP::CloudController::RevisionModel' => RevisionModel.make,
+            'VCAP::CloudController::ServiceBinding' => service_binding,
+            'VCAP::CloudController::ServiceInstance' => service_instance,
+            'VCAP::CloudController::ServiceBroker' => service_broker,
+            'VCAP::CloudController::ServiceBrokerUpdateRequest' => service_broker_update_request,
+            'VCAP::CloudController::ServiceKey' => ServiceKey.make,
+          }
+        }
 
         let(:database_encryption_keys) { { old: 'old-key', new: 'new-key' } }
 
@@ -90,6 +110,28 @@ module VCAP::CloudController
           ])
         end
 
+        def encrypted_columns(model_klass)
+          [:encryption_key_label] + model_klass.all_encrypted_fields.map(&:values).flatten
+        end
+
+        shared_examples 'unencrypted fields' do
+          it 'do not change their values' do
+            entity = encrypted_models[klass]
+            vals = entity.reload.values.except(*encrypted_columns(entity.class))
+            expect(vals.values.all? { |x| !x.nil? }).to be_truthy, "all fields of #{entity.class} need to have values"
+
+            RotateDatabaseKey.perform(batch_size: 1)
+
+            expect(entity.reload.values.except(*encrypted_columns(entity.class))).to eq(vals)
+          end
+        end
+
+        describe 'all models with encrypted fields' do
+          Encryptor.encrypted_classes.each do |klass|
+            context("model #{klass}") { it_behaves_like('unencrypted fields') { let(:klass) { klass } } }
+          end
+        end
+
         context 'no current encryption key label is set' do
           before do
             allow(Encryptor).to receive(:current_encryption_key_label).and_return(nil)
@@ -145,6 +187,15 @@ module VCAP::CloudController
           expect(app.environment_variables).to eq(env_vars)
           expect(service_binding.credentials).to eq(credentials)
           expect(service_instance.credentials).to eq(instance_credentials)
+        end
+
+        it 'does not change the update_at field' do
+          updated_at = app.reload.values[:updated_at]
+
+          sleep(1.5) # ensure that timestamp in `updated_at` would change
+          RotateDatabaseKey.perform(batch_size: 1)
+
+          expect(app.reload.values[:updated_at]).to eq(updated_at)
         end
 
         it 'does not re-encrypt values that are already encrypted with the new label' do

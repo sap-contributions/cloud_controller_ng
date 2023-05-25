@@ -159,6 +159,8 @@ module CloudFoundry
       store_implementations = []
       store_implementations << :in_memory   # Test the ConcurrentRequestCounter::InMemoryStore
       store_implementations << :mock_redis  # Test the ConcurrentRequestCounter::RedisStore with MockRedis
+      store_implementations << :redis       # Test the ExpiringRequestCounter::RedisStore with a local Redis server (127.0.0.1:6379)
+                                            # (e.g. brew install redis; brew services start redis).
 
       store_implementations.each do |store_implementation|
         describe store_implementation do
@@ -170,6 +172,12 @@ module CloudFoundry
 
           before do
             TestConfig.override(redis: { socket: 'foo' }, puma: { max_threads: 123 }) unless store_implementation == :in_memory
+
+            if store_implementation == :redis
+              allow(Redis).to receive(:new).and_call_original # Unstub constructor to not use MockRedis (see spec_helper).
+              redis = Redis.new(timeout: 1, host: '127.0.0.1', port: 6379)
+              allow(Redis).to receive(:new).and_return(redis)
+            end
 
             allow(ConnectionPool::Wrapper).to receive(:new).and_call_original
             concurrent_request_counter.send(:store) # instantiate counter and store implementation
@@ -272,6 +280,63 @@ module CloudFoundry
 
               concurrent_request_counter.decrement(user_guid, logger)
               expect(logger).to have_received(:error).with(/Redis error/)
+            end
+          end
+
+          describe 'thread-safety' do
+            threads = [1, 2, 5, 10, 20, 50]
+
+            threads.each do |number_of_threads|
+              describe "with #{number_of_threads} threads" do
+                let(:test_iterations) { 20 }
+                let(:number_of_requests) { 100 }
+                let(:concurrent_request_counter) { ConcurrentRequestCounter.new('test', redis_connection_pool_size: number_of_threads) }
+
+                it 'works' do
+                  skip('MockRedis is not thread-safe') if store_implementation == :mock_redis
+
+                  test_iterations.times do
+                    threads = []
+                    passed_requests = 0
+                    blocked_requests = 0
+
+                    number_of_threads.times do
+                      threads << Thread.new do
+                        number_of_requests.times do
+                          if concurrent_request_counter.try_increment?(user_guid, max_concurrent_requests, logger)
+                            passed_requests += 1
+                            Thread.pass
+                            concurrent_request_counter.decrement(user_guid, logger)
+                          else
+                            blocked_requests += 1
+                          end
+                          Thread.pass
+                        end
+                      end
+                    end
+                    threads.each(&:join)
+
+                    expect(passed_requests + blocked_requests).to eq(number_of_threads * number_of_requests)
+                    if number_of_threads <= max_concurrent_requests
+                      # When the number of threads is less than (or equal to) the concurrency limit, there must be no blocked requests.
+                      expect(blocked_requests).to eq(0)
+                    else
+                      # When the number of threads is greater than the concurrency limit, _roughly_ max_concurrent_requests * number_of_requests should pass.
+                      expected_passed_requests = max_concurrent_requests * number_of_requests
+                      expect(passed_requests).to be_between(expected_passed_requests * 0.75.to_f, expected_passed_requests * 1.75.to_f),
+                        "passed_requests: #{passed_requests}, blocked_requests: #{blocked_requests}"
+                    end
+
+                    # Finally, the ConcurrentRequestCounter should have its initial value again.
+                    key = "test:#{user_guid}"
+                    if store_implementation == :in_memory
+                      expect(store.instance_variable_get(:@data)[key].available_permits).to eq(max_concurrent_requests)
+                    elsif store_implementation == :redis
+                      expect(store.instance_variable_get(:@redis).get(key).to_i).to eq(0)
+                    end
+                  end
+                end
+              end
             end
           end
         end

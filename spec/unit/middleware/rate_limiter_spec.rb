@@ -326,6 +326,8 @@ module CloudFoundry
       store_implementations = []
       store_implementations << :in_memory   # Test the ExpiringRequestCounter::InMemoryStore
       store_implementations << :mock_redis  # Test the ExpiringRequestCounter::RedisStore with MockRedis
+      store_implementations << :redis       # Test the ExpiringRequestCounter::RedisStore with a local Redis server (127.0.0.1:6379)
+                                            # (e.g. brew install redis; brew services start redis).
 
       store_implementations.each do |store_implementation|
         describe store_implementation do
@@ -338,6 +340,12 @@ module CloudFoundry
 
           before do
             TestConfig.override(redis: { socket: 'foo' }, puma: { max_threads: 123 }) unless store_implementation == :in_memory
+
+            if store_implementation == :redis
+              allow(Redis).to receive(:new).and_call_original # Unstub constructor to not use MockRedis (see spec_helper).
+              redis = Redis.new(timeout: 1, host: '127.0.0.1', port: 6379)
+              allow(Redis).to receive(:new).and_return(redis)
+            end
 
             allow(ConnectionPool::Wrapper).to receive(:new).and_call_original
             expiring_request_counter.send(:store) # instantiate counter and store implementation
@@ -396,6 +404,7 @@ module CloudFoundry
               expiring_request_counter.increment(user_guid, reset_interval_in_minutes, logger)
 
               elapsed_seconds = 10
+              sleep(elapsed_seconds) if store_implementation == :redis
               Timecop.travel(Time.now + elapsed_seconds.seconds) do
                 count, expires_in = expiring_request_counter.increment(user_guid, reset_interval_in_minutes, logger)
                 expect(count).to eq(2)
@@ -414,6 +423,37 @@ module CloudFoundry
               expect(count).to eq(1)
               expect(expires_in).to eq(stubbed_expires_in)
               expect(logger).to have_received(:error).with(/Redis error/)
+            end
+          end
+
+          describe 'thread-safety' do
+            let(:test_iterations) { 20 }
+            let(:number_of_threads) { 50 }
+            let(:number_of_requests) { 100 }
+            let(:expiring_request_counter) { ExpiringRequestCounter.new('test', redis_connection_pool_size: number_of_threads) }
+
+            it 'works' do
+              skip('MockRedis is not thread-safe') if store_implementation == :mock_redis
+
+              test_iterations.times do |iteration|
+                threads = []
+
+                count, _ = expiring_request_counter.increment(user_guid, reset_interval_in_minutes, logger)
+                expect(count).to eq((number_of_threads * number_of_requests + 2) * iteration + 1)
+
+                number_of_threads.times do
+                  threads << Thread.new do
+                    number_of_requests.times do
+                      expiring_request_counter.increment(user_guid, reset_interval_in_minutes, logger)
+                      Thread.pass
+                    end
+                  end
+                end
+                threads.each(&:join)
+
+                count, _ = expiring_request_counter.increment(user_guid, reset_interval_in_minutes, logger)
+                expect(count).to eq((number_of_threads * number_of_requests + 2) * (iteration + 1))
+              end
             end
           end
         end

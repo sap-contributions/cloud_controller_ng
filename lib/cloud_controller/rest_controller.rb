@@ -1,5 +1,5 @@
-require 'controllers/base/base_controller'
-require 'controllers/base/model_controller'
+require 'vcap/cloud_controller/controllers/base/base_controller'
+require 'vcap/cloud_controller/controllers/base/model_controller'
 require 'cloud_controller/rest_controller/controller_dsl'
 require 'cloud_controller/rest_controller/secure_eager_loader'
 require 'cloud_controller/rest_controller/preloaded_object_serializer'

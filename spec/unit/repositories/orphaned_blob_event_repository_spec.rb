@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'repositories/orphaned_blob_event_repository'
+require 'vcap/cloud_controller/repositories/orphaned_blob_event_repository'
 
 module VCAP::CloudController
   module Repositories

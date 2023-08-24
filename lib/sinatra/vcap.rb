@@ -1,6 +1,6 @@
 require 'vcap/rest_api'
 require 'vcap/request'
-require 'presenters/error_presenter'
+require 'vcap/cloud_controller/presenters/error_presenter'
 require 'sinatra/reloader'
 require 'securerandom'
 require 'steno'

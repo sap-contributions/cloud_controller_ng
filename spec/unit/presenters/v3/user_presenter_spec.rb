@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'presenters/v3/user_presenter'
-require 'presenters/helpers/censorship'
+require 'vcap/cloud_controller/presenters/helpers/censorship'
 
 module VCAP::CloudController::Presenters::V3
   RSpec.describe UserPresenter do

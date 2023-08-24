@@ -1,4 +1,4 @@
-require 'presenters/system_environment/system_env_presenter'
+require 'vcap/cloud_controller/presenters/system_environment/system_env_presenter'
 require 'cloud_controller/diego/normal_env_hash_to_diego_env_array_philosopher'
 require_relative '../../vcap/vars_builder'
 

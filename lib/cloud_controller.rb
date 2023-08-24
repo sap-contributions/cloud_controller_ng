@@ -39,7 +39,7 @@ require 'delayed_job_plugins/before_enqueue_hook'
 require 'delayed_job_plugins/after_enqueue_hook'
 require 'sequel_plugins/sequel_plugins'
 require 'vcap/sequel_add_association_dependencies_monkeypatch'
-require 'access/access'
+require 'vcap/cloud_controller/access/access'
 
 require 'cloud_controller/security_context'
 require 'cloud_controller/jobs'
@@ -51,7 +51,7 @@ require 'cloud_controller/steno_configurer'
 require 'cloud_controller/constants'
 require 'cloud_controller/params_hashifier'
 
-require 'controllers/base/front_controller'
+require 'vcap/cloud_controller/controllers/base/front_controller'
 
 require 'cloud_controller/app_ssh_enabled'
 require 'cloud_controller/config'

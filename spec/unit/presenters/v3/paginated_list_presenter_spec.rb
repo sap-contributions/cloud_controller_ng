@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'presenters/v3/paginated_list_presenter'
-require 'presenters/helpers/censorship'
+require 'vcap/cloud_controller/presenters/helpers/censorship'
 
 module VCAP::CloudController::Presenters
   module V3

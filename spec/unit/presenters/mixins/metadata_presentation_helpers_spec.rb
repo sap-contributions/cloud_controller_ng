@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'presenters/mixins/metadata_presentation_helpers'
+require 'vcap/cloud_controller/presenters/mixins/metadata_presentation_helpers'
 
 module VCAP::CloudController::Presenters::Mixins
   RSpec.describe MetadataPresentationHelpers do

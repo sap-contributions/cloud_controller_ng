@@ -1,4 +1,4 @@
-require 'actions/staging_cancel'
+require 'vcap/cloud_controller/actions/staging_cancel'
 
 module VCAP::CloudController
   module Diego

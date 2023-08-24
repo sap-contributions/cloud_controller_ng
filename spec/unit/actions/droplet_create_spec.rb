@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'actions/droplet_create'
+require 'vcap/cloud_controller/actions/droplet_create'
 
 module VCAP::CloudController
   RSpec.describe DropletCreate do

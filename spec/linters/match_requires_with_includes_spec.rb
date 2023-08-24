@@ -8,7 +8,7 @@ RSpec.describe RuboCop::Cop::MatchRequiresWithIncludes do
   include CopHelper
 
   let(:missing_metadata_presentation_helper) do
-    "Included 'VCAP::CloudController::Presenters::Mixins::MetadataPresentationHelpers' but need to require 'presenters/mixins/metadata_presentation_helpers'"
+    "Included 'VCAP::CloudController::Presenters::Mixins::MetadataPresentationHelpers' but need to require 'vcap/cloud_controller/presenters/mixins/metadata_presentation_helpers'"
   end
 
   let(:missing_sub_resource) do
@@ -33,7 +33,7 @@ RSpec.describe RuboCop::Cop::MatchRequiresWithIncludes do
 
   it 'does not register an offense if metadata_presentation_helpers required' do
     inspect_source(<<~RUBY)
-      require 'presenters/mixins/metadata_presentation_helpers'
+      require 'vcap/cloud_controller/presenters/mixins/metadata_presentation_helpers'
       module M
       class C
       include VCAP::CloudController::Presenters::Mixins::MetadataPresentationHelpers

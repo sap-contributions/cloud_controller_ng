@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'actions/staging_cancel'
+require 'vcap/cloud_controller/actions/staging_cancel'
 
 module VCAP::CloudController
   RSpec.describe StagingCancel do

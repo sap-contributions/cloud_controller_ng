@@ -1,6 +1,6 @@
-require 'jobs/v2/services/delete_orphaned_binding'
-require 'jobs/v2/services/delete_orphaned_instance'
-require 'jobs/v2/services/delete_orphaned_key'
+require 'vcap/cloud_controller/jobs/v2/services/delete_orphaned_binding'
+require 'vcap/cloud_controller/jobs/v2/services/delete_orphaned_instance'
+require 'vcap/cloud_controller/jobs/v2/services/delete_orphaned_key'
 
 module VCAP::Services
   module ServiceBrokers

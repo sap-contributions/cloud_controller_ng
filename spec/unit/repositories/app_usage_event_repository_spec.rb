@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'repositories/app_usage_event_repository'
+require 'vcap/cloud_controller/repositories/app_usage_event_repository'
 
 module VCAP::CloudController
   module Repositories

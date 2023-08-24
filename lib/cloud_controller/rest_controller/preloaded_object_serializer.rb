@@ -1,4 +1,4 @@
-require 'presenters/v2/presenter_provider'
+require 'vcap/cloud_controller/presenters/v2/presenter_provider'
 
 module VCAP::CloudController::RestController
   class PreloadedObjectSerializer

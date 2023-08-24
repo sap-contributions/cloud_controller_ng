@@ -1,6 +1,6 @@
 require 'spec_helper'
-require 'actions/v2/app_stop'
-require 'actions/staging_cancel'
+require 'vcap/cloud_controller/actions/v2/app_stop'
+require 'vcap/cloud_controller/actions/staging_cancel'
 
 module VCAP::CloudController
   RSpec.describe V2::AppStop do

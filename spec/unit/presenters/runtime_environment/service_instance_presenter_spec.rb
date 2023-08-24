@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'presenters/system_environment/service_instance_presenter'
+require 'vcap/cloud_controller/presenters/system_environment/service_instance_presenter'
 
 RSpec.describe ServiceInstancePresenter do
   describe '#to_hash' do

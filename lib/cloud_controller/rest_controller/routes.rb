@@ -1,4 +1,4 @@
-require 'controllers/base/front_controller'
+require 'vcap/cloud_controller/controllers/base/front_controller'
 
 module VCAP::CloudController::RestController
   module Routes

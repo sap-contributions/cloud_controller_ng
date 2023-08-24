@@ -1,6 +1,6 @@
 require 'spec_helper'
-require 'models/runtime/event'
-require 'repositories/service_event_repository'
+require 'vcap/cloud_controller/models/runtime/event'
+require 'vcap/cloud_controller/repositories/service_event_repository'
 require 'cloud_controller/security_context'
 
 module VCAP::Services::ServiceBrokers

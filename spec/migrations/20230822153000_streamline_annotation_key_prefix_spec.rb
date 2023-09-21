@@ -1,9 +1,10 @@
 require 'spec_helper'
-require 'migrations/helpers/migration_mixin'
+require 'migrations/helpers/migration_shared_context'
 
 RSpec.describe 'migration to streamline changes to annotation_key_prefix', isolation: :truncation do
-  let(:migration_filename) { '20230822153000_streamline_annotation_key_prefix.rb' }
-  include MigrationMixin
+  include_context 'migration' do
+    let(:migration_filename) { '20230822153000_streamline_annotation_key_prefix.rb' }
+  end
 
   describe 'annotation tables' do
     it 'converts all legacy key_prefixes to annotations with prefixes in the key_prefix column' do

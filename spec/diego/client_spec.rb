@@ -21,7 +21,6 @@ module Diego
     before do
       # from middleware/vcap_request_id.rb
       ::VCAP::Request.current_id = "#{request_id}::b62be6c2-0f2c-4199-94d3-41a69e00f67d"
-      # allow(subject).to receive(:sleep)
       allow(Steno).to receive(:logger).with('cc.diego.client').and_return(logger)
       allow(logger).to receive(:info)
       allow(logger).to receive(:error)
@@ -741,11 +740,12 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/desired_lrp_scheduling_infos/list").to_raise(StandardError.new('error message'))
-          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
+          allow(subject).to receive(:sleep) { |n| Timecop.travel(n) }
         end
 
         it 'raises' do
           expect { client.desired_lrp_scheduling_infos(domain) }.to raise_error(RequestError, /error message/)
+          expect(a_request(:post, "#{bbs_url}/v1/desired_lrp_scheduling_infos/list")).to have_been_made.times(17)
         end
       end
 

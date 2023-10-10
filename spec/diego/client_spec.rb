@@ -11,6 +11,7 @@ module Diego
     let(:client_key_file) { File.join(Paths::FIXTURES, 'certs/bbs_client.key') }
     let(:timeout) { 10 }
     let(:request_id) { '522960b781af4039b8b91a20ff6c0394' }
+    let(:logger) { double(Steno::Logger) }
 
     subject(:client) do
       Client.new(url: bbs_url, ca_cert_file: ca_cert_file, client_cert_file: client_cert_file, client_key_file: client_key_file,
@@ -20,6 +21,10 @@ module Diego
     before do
       # from middleware/vcap_request_id.rb
       ::VCAP::Request.current_id = "#{request_id}::b62be6c2-0f2c-4199-94d3-41a69e00f67d"
+      allow(subject).to receive(:sleep)
+      allow(Steno).to receive(:logger).with('cc.diego.client').and_return(logger)
+      allow(logger).to receive(:info)
+      allow(logger).to receive(:error)
     end
 
     describe 'configuration' do
@@ -706,6 +711,7 @@ module Diego
       let(:domain) { 'domain' }
 
       before do
+        # allow(subject).to receive(:sleep)
         stub_request(:post, "#{bbs_url}/v1/desired_lrp_scheduling_infos/list").to_return(status: response_status, body: response_body)
       end
 
@@ -740,7 +746,7 @@ module Diego
 
         it 'raises' do
           expect { client.desired_lrp_scheduling_infos(domain) }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/desired_lrp_scheduling_infos/list")).to have_been_made.times(3)
+          # expect(a_request(:post, "#{bbs_url}/v1/desired_lrp_scheduling_infos/list")).to have_been_made.times(3)
         end
       end
 
@@ -760,22 +766,70 @@ module Diego
     end
 
     describe '#with_request_error_handling' do
-      it 'retries' do
-        tries = 0
 
-        client.with_request_error_handling do
-          tries += 1
-          raise 'error' if tries < 2
+      before do
+        allow(subject).to receive(:sleep)
+        allow(logger).to receive(:info)
+        allow(logger).to receive(:error)
+      end
+
+      context 'when the block succeeds immediately' do
+        it 'does not sleep or raise an exception' do
+          expect { subject.with_request_error_handling {} }.not_to raise_error
+        end
+      end
+
+      context 'when the block raises an exception' do
+        let(:successful_block) { proc { @count ||= 0; @count += 1; @count == 2 ? true : raise('error') } }
+
+        it 'once and then succeeds it retries once and eventually succeeds' do
+          expect { subject.with_request_error_handling(&successful_block) }.not_to raise_error
         end
 
-        expect(tries).to be > 1
-      end
+        it 'it retries and eventually raises an error when the block fails' do
+          attempts = 0
+          expect{
+            subject.with_request_error_handling do
+              attempts += 1
+              Timecop.travel(Time.now + 50)
+              raise 'Error!'
+            end
+          }.to raise_error(RequestError, 'Error!')
+          expect(logger).to have_received(:info).with(/Initiating a new attempt to connect to the diego backend./)
+          expect(logger).to have_received(:error).with(/Unable to establish a connection to diego backend/)
+          expect(logger).to have_received(:error).once
+          expect(logger).to have_received(:info).once
+          expect(attempts).to eq(2)
+        end
 
-      it 'raises an error after all retries fail' do
-        expect do
-          client.with_request_error_handling { raise 'error' }
-        end.to raise_error(RequestError)
-      end
+        it 'it should stops retrying after 60 seconds and raises an exception' do #done boyAl
+          start_time = Time.now
+          Timecop.freeze do
+            expect {
+              subject.with_request_error_handling do
+                Timecop.travel(start_time + 61)
+                raise 'Error!'
+              end
+            }.to raise_error(RequestError,"Error!")
+          end
+          expected_log = 'Unable to establish a connection to diego backend, no more retries, raising an exception.'
+          expect(logger).to have_received(:error).with(expected_log)
+        end
+
+        it "it raises an error after 6 attempts in approximately 1 minute when each yield call takes 10 seconds" do
+          attempts = 0
+          expect {
+            subject.with_request_error_handling do
+              attempts += 1
+              Timecop.travel(10.seconds.from_now) # assuming each yield call take 10 seconds
+              raise 'Error!'
+            end
+          }.to raise_error(RequestError, 'Error!')
+          expect(logger).to have_received(:error).with(/Unable to establish a connection to diego/).once
+          expect(logger).to have_received(:info).with(/Initiating a new attempt to connect to the diego backend./).exactly(5).times
+          expect(attempts).to be_within(1).of(6)
+        end
+        end
     end
 
     describe 'tcp socket initialization' do

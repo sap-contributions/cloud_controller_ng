@@ -767,7 +767,7 @@ module Diego
     describe '#with_request_error_handling' do
 
       before do
-        allow(subject).to receive(:sleep)
+        allow(subject).to receive(:sleep) { |n| Timecop.travel(n) }
         allow(logger).to receive(:info)
         allow(logger).to receive(:error)
       end
@@ -828,7 +828,38 @@ module Diego
           expect(logger).to have_received(:info).with(/Initiating a new attempt to connect to the diego backend./).exactly(5).times
           expect(attempts).to be_within(1).of(6)
         end
+
+        it "it raises an error after 9 attempts in approximately 1 minute when each yield call takes 5 seconds" do
+          attempts = 0
+          expect {
+            subject.with_request_error_handling do
+              attempts += 1
+              Timecop.travel(5.seconds.from_now) # assuming each yield call take 10 seconds
+              raise 'Error!'
+            end
+          }.to raise_error(RequestError, 'Error!')
+          expect(logger).to have_received(:error).with(/Unable to establish a connection to diego/).once
+          expect(logger).to have_received(:info).with(/Initiating a new attempt to connect to the diego backend./).exactly(8).times
+          expect(attempts).to be_within(1).of(9)
         end
+
+        it "it raises an error after 17 attempts in approximately 1 minute when each yield call immediately" do
+          retry_count = 0
+          start_time = Time.now
+          begin
+            subject.with_request_error_handling do
+              retry_count += 1
+              raise StandardError
+            end
+          rescue RequestError
+          end
+          end_time = Time.now
+          duration = end_time.to_f - start_time.to_f
+
+          expect(retry_count).to be_within(1).of(17)
+          expect(duration).to be_within(1).of(62)
+        end
+      end
     end
 
     describe 'tcp socket initialization' do

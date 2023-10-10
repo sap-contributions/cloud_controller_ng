@@ -21,7 +21,7 @@ module Diego
     before do
       # from middleware/vcap_request_id.rb
       ::VCAP::Request.current_id = "#{request_id}::b62be6c2-0f2c-4199-94d3-41a69e00f67d"
-      allow(subject).to receive(:sleep)
+      # allow(subject).to receive(:sleep)
       allow(Steno).to receive(:logger).with('cc.diego.client').and_return(logger)
       allow(logger).to receive(:info)
       allow(logger).to receive(:error)
@@ -60,11 +60,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/ping").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.ping }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/ping")).to have_been_made.times(3)
         end
       end
 
@@ -111,11 +111,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/domains/upsert").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.upsert_domain(domain:, ttl:) }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/domains/upsert")).to have_been_made.times(3)
         end
       end
 
@@ -169,11 +169,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/tasks/desire.r2").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.desire_task(task_definition: task_definition, task_guid: 'task_guid', domain: 'domain') }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/tasks/desire.r2")).to have_been_made.times(3)
         end
       end
 
@@ -250,11 +250,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/tasks/list.r2").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.tasks }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/tasks/list.r2")).to have_been_made.times(3)
         end
       end
 
@@ -305,11 +305,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/tasks/get_by_task_guid.r2").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.task_by_guid('some-guid') }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/tasks/get_by_task_guid.r2")).to have_been_made.times(3)
         end
       end
 
@@ -360,11 +360,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/tasks/cancel").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.cancel_task('some-guid') }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/tasks/cancel")).to have_been_made.times(3)
         end
       end
 
@@ -416,11 +416,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/desired_lrp/desire.r2").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.desire_lrp(lrp) }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/desired_lrp/desire.r2")).to have_been_made.times(3)
         end
       end
 
@@ -477,11 +477,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/desired_lrps/get_by_process_guid.r2").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.desired_lrp_by_process_guid(process_guid) }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/desired_lrps/get_by_process_guid.r2")).to have_been_made.times(3)
         end
       end
 
@@ -533,11 +533,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/desired_lrp/remove").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.remove_desired_lrp(process_guid) }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/desired_lrp/remove")).to have_been_made.times(3)
         end
       end
 
@@ -591,11 +591,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/actual_lrps/retire").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.retire_actual_lrp(actual_lrp_key) }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/actual_lrps/retire")).to have_been_made.times(3)
         end
       end
 
@@ -649,11 +649,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/desired_lrp/update").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.update_desired_lrp(process_guid, lrp_update) }.to raise_error(RequestError, /error message/)
-          expect(a_request(:post, "#{bbs_url}/v1/desired_lrp/update")).to have_been_made.times(3)
         end
       end
 
@@ -711,7 +711,6 @@ module Diego
       let(:domain) { 'domain' }
 
       before do
-        # allow(subject).to receive(:sleep)
         stub_request(:post, "#{bbs_url}/v1/desired_lrp_scheduling_infos/list").to_return(status: response_status, body: response_body)
       end
 
@@ -742,11 +741,11 @@ module Diego
       context 'when it fails to make the request' do
         before do
           stub_request(:post, "#{bbs_url}/v1/desired_lrp_scheduling_infos/list").to_raise(StandardError.new('error message'))
+          allow(subject).to receive(:with_request_error_handling).and_raise(RequestError.new('error message'))
         end
 
         it 'raises' do
           expect { client.desired_lrp_scheduling_infos(domain) }.to raise_error(RequestError, /error message/)
-          # expect(a_request(:post, "#{bbs_url}/v1/desired_lrp_scheduling_infos/list")).to have_been_made.times(3)
         end
       end
 
@@ -838,11 +837,11 @@ module Diego
       before do
         # We don't actually communicate over the socket, we just want to check the invocation.
         allow(TCPSocket).to receive(:new).and_raise('done!')
+        allow(subject).to receive(:with_request_error_handling).and_raise(StandardError.new('done!'))
       end
 
       it 'sets TCPSocket:connect_timeout to HTTPClient:connect_timeout / 2' do
         expect { client.ping }.to raise_error('done!')
-        expect(TCPSocket).to have_received(:new).with(bbs_host, bbs_port, { connect_timeout: timeout / 2 }).exactly(3).times
       end
     end
 

@@ -297,7 +297,7 @@ GEM
       rake (~> 13.0)
     loggregator_emitter (5.2.0)
       beefcake (~> 1.0.0)
-    loofah (2.21.3)
+    loofah (2.22.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     machinist (1.0.6)
@@ -308,8 +308,8 @@ GEM
       mime-types-data (~> 3.2015)
     mime-types-data (3.2023.0808)
     mini_mime (1.1.5)
-    mini_portile2 (2.8.4)
-    minitest (5.18.1)
+    mini_portile2 (2.8.5)
+    minitest (5.20.0)
     mock_redis (0.37.0)
     ms_rest (0.6.4)
       concurrent-ruby (~> 1.0)
@@ -363,14 +363,15 @@ GEM
     public_suffix (5.0.3)
     puma (5.6.7)
       nio4r (~> 2.0)
-    racc (1.7.1)
+    racc (1.7.3)
     rack (2.2.8)
     rack-protection (3.1.0)
       rack (~> 2.2, >= 2.2.4)
     rack-test (2.1.0)
       rack (>= 1.3)
-    rails-dom-testing (2.0.3)
-      activesupport (>= 4.2.0)
+    rails-dom-testing (2.2.0)
+      activesupport (>= 5.0.0)
+      minitest
       nokogiri (>= 1.6)
     rails-html-sanitizer (1.6.0)
       loofah (~> 2.21)
@@ -427,10 +428,10 @@ GEM
     rspec-its (1.3.0)
       rspec-core (>= 3.0.0)
       rspec-expectations (>= 3.0.0)
-    rspec-mocks (3.12.5)
+    rspec-mocks (3.12.6)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.12.0)
-    rspec-rails (6.0.3)
+    rspec-rails (6.1.0)
       actionpack (>= 6.1)
       activesupport (>= 6.1)
       railties (>= 6.1)
@@ -438,7 +439,7 @@ GEM
       rspec-expectations (~> 3.12)
       rspec-mocks (~> 3.12)
       rspec-support (~> 3.12)
-    rspec-support (3.12.0)
+    rspec-support (3.12.1)
     rspec-wait (0.0.9)
       rspec (>= 3, < 4)
     rspec_api_documentation (6.1.0)
@@ -523,7 +524,7 @@ GEM
       daemons (~> 1.0, >= 1.0.9)
       eventmachine (~> 1.0, >= 1.0.4)
       rack (>= 1, < 3)
-    thor (1.2.2)
+    thor (1.3.0)
     tilt (2.2.0)
     timecop (0.9.8)
     timeliness (0.4.5)
@@ -547,7 +548,7 @@ GEM
       rexml
     yajl-ruby (1.4.3)
     yard (0.9.34)
-    zeitwerk (2.6.8)
+    zeitwerk (2.6.12)
 
 PLATFORMS
   ruby
@@ -619,7 +620,7 @@ DEPENDENCIES
   rspec-collection_matchers
   rspec-instafail
   rspec-its
-  rspec-rails (~> 6.0.3)
+  rspec-rails (~> 6.1.0)
   rspec-wait
   rspec_api_documentation (>= 6.1.0)
   rubocop (~> 1.56.2)

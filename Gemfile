@@ -102,5 +102,5 @@ group :development do
   gem 'spork', git: 'https://github.com/sporkrb/spork', ref: '224df49' # '~> 1.0rc'
   gem 'spring'
   gem 'spring-commands-rspec'
-  gem 'debug', '~> 1.8'
+  gem 'debug', '~> 1.9'
 end

@@ -48,6 +48,48 @@ module VCAP::CloudController
 
     subject(:config_instance) { Config.new(test_config_hash) }
 
+    describe '.read_file' do
+      let(:local_cc_worker_config_file) do
+        file = Tempfile.new('local_cc_worker_config.yml')
+        file.write('---')
+        file.close
+        file
+      end
+
+      it 'return empty hash if YAML file is empty' do
+          config_hash = Config.read_file(local_cc_worker_config_file)
+          expect(config_hash).to eq({})
+      end
+
+      it 'raises error if the file does not exist' do
+        expect do
+          Config.read_file('nonexistent.yml')
+        end.to raise_error(Errno::ENOENT, /No such file or directory @ rb_sysopen - nonexistent.yml/)
+      end
+
+      context 'when a file is valid' do
+        let(:config_contents) do
+          {
+            'db' => {
+              'max_connections' => 2
+            }
+          }
+        end
+
+        let(:local_cc_worker_config_file) do
+          file = Tempfile.new('cc_local_config_file.yml')
+          file.write(YAML.dump(config_contents))
+          file.close
+          file
+        end
+
+        it 'returns a valid hash' do
+          config_hash = Config.read_file(local_cc_worker_config_file)
+          expect(config_hash[:db][:max_connections]).to eq(2)
+        end
+      end
+    end
+
     describe '.load_from_file' do
       it 'raises if the file does not exist' do
         expect do

@@ -49,43 +49,181 @@ module VCAP::CloudController
     subject(:config_instance) { Config.new(test_config_hash) }
 
     describe '.read_file' do
-      let(:local_cc_worker_config_file) do
-        file = Tempfile.new('local_cc_worker_config.yml')
-        file.write('---')
-        file.close
-        file
-      end
-
-      it 'return empty hash if YAML file is empty' do
-          config_hash = Config.read_file(local_cc_worker_config_file)
-          expect(config_hash).to eq({})
-      end
-
       it 'raises error if the file does not exist' do
         expect do
           Config.read_file('nonexistent.yml')
         end.to raise_error(Errno::ENOENT, /No such file or directory @ rb_sysopen - nonexistent.yml/)
       end
 
-      context 'when a file is valid' do
-        let(:config_contents) do
+
+
+      context "reads a file" do
+        context 'when a file cannot be read' do
+          let(:file_name) { 'test_config.yml' }
+
+          it 'should return an empty hash' do
+            allow(VCAP::CloudController::YAMLConfig).to receive(:safe_load_file).with(file_name).and_return(nil)
+
+            result = Config.read_file(file_name)
+            expect(result).to eq({})
+          end
+        end
+
+        context 'when the file has entries' do
+          let(:config_contents) do
+            {
+              'db' => {
+                'max_connections' => 2
+              }
+            }
+          end
+
+          let(:local_cc_worker_config_file) do
+            file = Tempfile.new('cc_local_config_file.yml')
+            file.write(YAML.dump(config_contents))
+            file.close
+            file
+          end
+
+          it 'should return a valid hash' do
+            config_hash = Config.read_file(local_cc_worker_config_file)
+            expect(config_hash[:db][:max_connections]).to eq(2)
+          end
+        end
+
+        context "when empty YAML file is provided" do
+          let(:local_cc_worker_config_file) do
+            config = YAMLConfig.safe_load_file('config/cloud_controller_local_worker_override.yml')
+            file = Tempfile.new('local_cc_worker_config.yml')
+            file.write(YAML.dump(config))
+            file.close
+            file
+        end
+
+        it 'should return an empty hash' do
+          config_hash = Config.read_file(local_cc_worker_config_file)
+          expect(config_hash).to eq({})
+        end
+      end
+      end
+    end
+
+    describe '.load_from_hash' do
+      it 'raises error if an empty hash is provided' do
+        expect do
+          Config.load_from_hash({}, context: :api)
+        end.to raise_error(Membrane::SchemaValidationError)
+      end
+
+      context 'merges default values' do
+        context 'when no config values are provided' do
+          let(:cc_config_hash) do
+            YAMLConfig.safe_load_file('config/cloud_controller.yml')
+          end
+
+          let(:config_hash) do
+            Config.load_from_hash(cc_config_hash, context: :api).config_hash
+          end
+
+          it 'has the default values' do
+            expect(config_hash[:db][:max_connections]).to eq(42)
+            expect(config_hash[:name]).to eq("api")
+            expect(config_hash[:local_route]).to eq("127.0.0.1")
+          end
+
+          context 'special passwords characters' do
+            let(:uri) { "http://user:#{password}@example.com/databasename" }
+            let(:raw_password) { 'pass@word' }
+
+            context 'unescaped' do
+              let(:password) { raw_password }
+
+              it "can't handle an unescaped @" do
+                expect do
+                  DatabasePartsParser.database_parts_from_connection(uri)
+                end.to raise_error(URI::InvalidURIError, "bad URI(is not URI?): \"#{uri}\"")
+              end
+            end
+
+            context 'escaped' do
+              let(:password) { CGI.escape(raw_password) }
+
+              it "can't handle an unescaped @" do
+                parts = DatabasePartsParser.database_parts_from_connection(uri)
+                expect(parts[:password]).to eq(raw_password)
+              end
+            end
+          end
+        end
+      end
+
+      context 'unit test' do
+        let(:cc_config_hash) do
           {
-            'db' => {
-              'max_connections' => 2
+            'some_key' => 'some-value',
+            'webserver': 'thin',
+            'database_encryption' => {
+              'keys' => {
+                'foo' => 'bar',
+                'head' => 'banging',
+                'array' => %w[a b c]
+              },
+              'tls_port' => 123
             }
           }
         end
 
-        let(:local_cc_worker_config_file) do
-          file = Tempfile.new('cc_local_config_file.yml')
-          file.write(YAML.dump(config_contents))
-          file.close
-          file
+        it 'validates a symbolized version of the config file contents with the correct schema file' do
+          allow(VCAP::CloudController::ConfigSchemas::Vms::ApiSchema).to receive(:validate)
+
+          Config.load_from_hash(cc_config_hash).config_hash
+
+          expect(VCAP::CloudController::ConfigSchemas::Vms::ApiSchema).to have_received(:validate).with(
+            some_key: 'some-value',
+            webserver: 'thin',
+            database_encryption: {
+              keys: {
+                foo: 'bar',
+                head: 'banging',
+                array: %w[a b c]
+              },
+              tls_port: 123
+            }
+          )
         end
 
-        it 'returns a valid hash' do
-          config_hash = Config.read_file(local_cc_worker_config_file)
-          expect(config_hash[:db][:max_connections]).to eq(2)
+        context 'when the secrets hash is provided' do
+          let(:secrets_hash) do
+            {
+              'some_secret' => 'shhhhh!',
+              'database_encryption' => {
+                'keys' => {
+                  'password' => 'totes-s3cre7'
+                }
+              }
+            }
+          end
+
+          it 'merges the secrets hash into the file contents and validates with the correct schema' do
+            allow(VCAP::CloudController::ConfigSchemas::Vms::ApiSchema).to receive(:validate)
+
+            Config.load_from_hash(cc_config_hash, context: :api, secrets_hash: secrets_hash).config_hash
+
+            expect(VCAP::CloudController::ConfigSchemas::Vms::ApiSchema).to have_received(:validate).with(
+              some_key: 'some-value',
+              webserver: 'thin',
+              some_secret: 'shhhhh!',
+              database_encryption: {
+                keys: {
+                  foo: 'bar',
+                  head: 'banging',
+                  array: %w[a b c],
+                  password: 'totes-s3cre7'
+                },
+                tls_port: 123
+              }
+            )
+          end
         end
       end
     end

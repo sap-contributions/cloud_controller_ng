@@ -1,2 +1,4 @@
+# This configuration file aims to override configurations for the cc local worker (where cc and local workers are tightly coupled).
+# Create and merge with cc_ng configuration file, and start cc_ng local workers with resulting configuration file.
+# Configurations can be overriden with a file in capi-release.
 ---
-# This file overrides configurations for the cc local worker......

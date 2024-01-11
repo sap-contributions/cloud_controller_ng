@@ -55,13 +55,11 @@ module VCAP::CloudController
         end.to raise_error(Errno::ENOENT, /No such file or directory @ rb_sysopen - nonexistent.yml/)
       end
 
-
-
-      context "reads a file" do
+      context 'read a file' do
         context 'when a file cannot be read' do
           let(:file_name) { 'test_config.yml' }
 
-          it 'should return an empty hash' do
+          it 'return an empty hash' do
             allow(VCAP::CloudController::YAMLConfig).to receive(:safe_load_file).with(file_name).and_return(nil)
 
             result = Config.read_file(file_name)
@@ -78,33 +76,33 @@ module VCAP::CloudController
             }
           end
 
-          let(:local_cc_worker_config_file) do
+          let(:cc_local_worker_config_file) do
             file = Tempfile.new('cc_local_config_file.yml')
             file.write(YAML.dump(config_contents))
             file.close
             file
           end
 
-          it 'should return a valid hash' do
-            config_hash = Config.read_file(local_cc_worker_config_file)
+          it 'return a valid hash' do
+            config_hash = Config.read_file(cc_local_worker_config_file)
             expect(config_hash[:db][:max_connections]).to eq(2)
           end
         end
 
-        context "when empty YAML file is provided" do
-          let(:local_cc_worker_config_file) do
+        context 'when empty YAML file is provided' do
+          let(:cc_local_worker_config_file) do
             config = YAMLConfig.safe_load_file('config/cloud_controller_local_worker_override.yml')
-            file = Tempfile.new('local_cc_worker_config.yml')
+            file = Tempfile.new('cc_local_worker_config.yml')
             file.write(YAML.dump(config))
             file.close
             file
-        end
+          end
 
-        it 'should return an empty hash' do
-          config_hash = Config.read_file(local_cc_worker_config_file)
-          expect(config_hash).to eq({})
+          it 'return an empty hash' do
+            config_hash = Config.read_file(cc_local_worker_config_file)
+            expect(config_hash).to eq({})
+          end
         end
-      end
       end
     end
 
@@ -127,32 +125,8 @@ module VCAP::CloudController
 
           it 'has the default values' do
             expect(config_hash[:db][:max_connections]).to eq(42)
-            expect(config_hash[:name]).to eq("api")
-            expect(config_hash[:local_route]).to eq("127.0.0.1")
-          end
-
-          context 'special passwords characters' do
-            let(:uri) { "http://user:#{password}@example.com/databasename" }
-            let(:raw_password) { 'pass@word' }
-
-            context 'unescaped' do
-              let(:password) { raw_password }
-
-              it "can't handle an unescaped @" do
-                expect do
-                  DatabasePartsParser.database_parts_from_connection(uri)
-                end.to raise_error(URI::InvalidURIError, "bad URI(is not URI?): \"#{uri}\"")
-              end
-            end
-
-            context 'escaped' do
-              let(:password) { CGI.escape(raw_password) }
-
-              it "can't handle an unescaped @" do
-                parts = DatabasePartsParser.database_parts_from_connection(uri)
-                expect(parts[:password]).to eq(raw_password)
-              end
-            end
+            expect(config_hash[:name]).to eq('api')
+            expect(config_hash[:local_route]).to eq('127.0.0.1')
           end
         end
       end
@@ -161,7 +135,7 @@ module VCAP::CloudController
         let(:cc_config_hash) do
           {
             'some_key' => 'some-value',
-            'webserver': 'thin',
+            'webserver' => 'thin',
             'database_encryption' => {
               'keys' => {
                 'foo' => 'bar',

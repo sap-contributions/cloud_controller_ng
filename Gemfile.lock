@@ -324,7 +324,7 @@ GEM
     mustache (1.1.1)
     mustermann (3.0.0)
       ruby2_keywords (~> 0.0.1)
-    mysql2 (0.5.5)
+    mysql2 (0.5.6)
     net-ssh (7.2.1)
     netaddr (2.0.6)
     netrc (0.11.0)
@@ -611,7 +611,7 @@ DEPENDENCIES
   mock_redis
   multi_json
   multipart-parser
-  mysql2 (~> 0.5.5)
+  mysql2 (~> 0.5.6)
   net-ssh
   netaddr (>= 2.0.4)
   newrelic_rpm

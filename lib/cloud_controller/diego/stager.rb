@@ -45,6 +45,8 @@ module VCAP::CloudController
           Diego::Buildpack::StagingCompletionHandler.new(build)
         elsif build.lifecycle_type == Lifecycles::DOCKER
           Diego::Docker::StagingCompletionHandler.new(build)
+        elsif build.lifecycle_type == Lifecycles::CNB
+          Diego::CNB::StagingCompletionHandler.new(build)
         else
           raise "Unprocessable lifecycle type for stager: #{build.lifecycle_type}"
         end

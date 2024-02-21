@@ -10,6 +10,12 @@ module VCAP::CloudController
                 key: :buildpack_lifecycle_data_guid,
                 without_guid_generation: true
 
+    many_to_one :cnb_lifecycle_data,
+                class: 'VCAP::CloudController::CNBLifecycleDataModel',
+                primary_key: :guid,
+                key: :cnb_lifecycle_data_guid,
+                without_guid_generation: true
+
     def name
       buildpack_url || admin_buildpack_name
     end

@@ -31,6 +31,7 @@ module VCAP::CloudController
       instances
       metadata
       memory
+      cnb
       name
       no_route
       processes
@@ -119,7 +120,13 @@ module VCAP::CloudController
     end
 
     def app_lifecycle_hash
-      lifecycle_data = requested?(:docker) ? docker_lifecycle_data : buildpacks_lifecycle_data
+      lifecycle_data = if requested?(:cnb)
+                         cnb_lifecycle_data
+                       elsif requested?(:docker)
+                         docker_lifecycle_data
+                       else
+                         buildpacks_lifecycle_data
+                       end
 
       {
         lifecycle: lifecycle_data,
@@ -271,6 +278,10 @@ module VCAP::CloudController
 
     def docker_lifecycle_data
       { type: Lifecycles::DOCKER }
+    end
+
+    def cnb_lifecycle_data
+      { type: Lifecycles::CNB }
     end
 
     def buildpacks_lifecycle_data

@@ -21,6 +21,14 @@ module VCAP::CloudController::Diego
           expect(protocol).to be_a(VCAP::CloudController::Diego::Docker::LifecycleProtocol)
         end
       end
+
+      context 'with CNB' do
+        let(:type) { VCAP::CloudController::Lifecycles::CNB }
+
+        it 'returns a cnb lifecycle protocol' do
+          expect(protocol).to be_a(VCAP::CloudController::Diego::CNB::LifecycleProtocol)
+        end
+      end
     end
   end
 end

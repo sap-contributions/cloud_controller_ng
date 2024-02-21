@@ -4,6 +4,8 @@ require 'cloud_controller/diego/buildpack/staging_completion_handler'
 require 'cloud_controller/diego/buildpack/lifecycle_protocol'
 require 'cloud_controller/diego/docker/lifecycle_protocol'
 require 'cloud_controller/diego/docker/staging_completion_handler'
+require 'cloud_controller/diego/cnb/lifecycle_protocol'
+require 'cloud_controller/diego/cnb/staging_completion_handler'
 require 'cloud_controller/diego/egress_rules'
 
 module VCAP::CloudController

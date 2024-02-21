@@ -2064,6 +2064,16 @@ module VCAP::CloudController
           expect(message.app_update_message.lifecycle_type).to eq(Lifecycles::DOCKER)
         end
       end
+
+      context 'when cnb is specified' do
+        let(:parsed_yaml) { { cnb: true } }
+
+        it 'returns an AppUpdateMessage containing mapped attributes' do
+          message = AppManifestMessage.create_from_yml(parsed_yaml)
+
+          expect(message.app_update_message.lifecycle_type).to eq(Lifecycles::CNB)
+        end
+      end
     end
 
     describe '#app_update_environment_variables_message' do

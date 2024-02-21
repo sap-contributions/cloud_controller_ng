@@ -94,7 +94,6 @@ class AppsV3Controller < ApplicationController
     unauthorized! unless permission_queryer.can_write_to_active_space?(space.id)
     suspended! unless permission_queryer.is_space_active?(space.id)
     FeatureFlag.raise_unless_enabled!(:diego_docker) if message.lifecycle_type == VCAP::CloudController::PackageModel::DOCKER_TYPE
-
     lifecycle = AppLifecycleProvider.provide_for_create(message)
     unprocessable!(lifecycle.errors.full_messages) unless lifecycle.valid?
 

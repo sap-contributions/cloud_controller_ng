@@ -89,6 +89,10 @@ module VCAP::CloudController
       lifecycle_type == DockerLifecycleDataModel::LIFECYCLE_TYPE
     end
 
+    def cnb?
+      lifecycle_data == CNBLifecycleDataModel::LIFECYCLE_TYPE
+    end
+
     def docker_ports
       exposed_ports = []
       if execution_metadata.present?
@@ -141,11 +145,11 @@ module VCAP::CloudController
     def lifecycle_type
       return BuildpackLifecycleDataModel::LIFECYCLE_TYPE if buildpack_lifecycle_data
 
-      DockerLifecycleDataModel::LIFECYCLE_TYPE
+      CNBLifecycleDataModel::LIFECYCLE_TYPE
     end
 
     def lifecycle_data
-      buildpack_lifecycle_data || DockerLifecycleDataModel.new
+      buildpack_lifecycle_data || CNBLifecycleDataModel.new
     end
 
     def in_final_state?

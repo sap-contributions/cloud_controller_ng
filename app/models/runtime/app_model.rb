@@ -115,6 +115,10 @@ module VCAP::CloudController
       lifecycle_type == BuildpackLifecycleDataModel::LIFECYCLE_TYPE
     end
 
+    def cnb?
+      lifecycle_type == CNBLifecycleDataModel::LIFECYCLE_TYPE
+    end
+
     def stopped?
       desired_state == ProcessModel::STOPPED
     end

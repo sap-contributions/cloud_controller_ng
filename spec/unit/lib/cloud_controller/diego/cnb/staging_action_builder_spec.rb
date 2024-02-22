@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'cloud_controller/diego/cnb/staging_action_builder'
 
 module VCAP::CloudController
   module Diego
@@ -104,18 +105,7 @@ module VCAP::CloudController
           let(:run_staging_action) do
             ::Diego::Bbs::Models::RunAction.new(
               path: '/tmp/lifecycle/builder',
-              args: [
-                '-buildpackOrder=buildpack-1-key,buildpack-2-key',
-                '-skipCertVerify=false',
-                '-skipDetect=false',
-                '-buildDir=/tmp/app',
-                '-outputDroplet=/tmp/droplet',
-                '-outputMetadata=/tmp/result.json',
-                '-outputBuildArtifactsCache=/tmp/output-cache',
-                '-buildpacksDir=/tmp/buildpacks',
-                '-buildArtifactsCacheDir=/tmp/cache'
-              ],
-              user: 'vcap',
+              user: 'cnb',
               resource_limits: ::Diego::Bbs::Models::ResourceLimits.new(nofile: 4),
               env: generated_environment
             )
@@ -297,155 +287,15 @@ module VCAP::CloudController
         end
 
         describe '#cached_dependencies' do
-          it 'always returns the buildpack lifecycle bundle dependency' do
+          it 'always returns the cnb lifecycle bundle dependency' do
             result = builder.cached_dependencies
             expect(result).to include(
               ::Diego::Bbs::Models::CachedDependency.new(
-                from: 'generated-uri',
+                from: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
                 to: '/tmp/lifecycle',
-                cache_key: 'buildpack-buildpack-stack-lifecycle'
+                cache_key: 'cnb-lifecycle'
               )
             )
-          end
-
-          context 'when enable_declarative_asset_downloads is true' do
-            let(:enable_declarative_asset_downloads) { true }
-
-            it 'returns no cached dependencies' do
-              expect(builder.cached_dependencies).to be_nil
-            end
-          end
-
-          context 'when there are buildpacks' do
-            let(:buildpacks) do
-              [
-                { name: 'buildpack-1', key: 'buildpack-1-key', url: 'buildpack-1-url', sha256: 'checksum' },
-                { name: 'buildpack-2', key: 'buildpack-2-key', url: 'buildpack-2-url', sha256: 'checksum' }
-              ]
-            end
-
-            it 'includes buildpack dependencies' do
-              buildpack_entry_1 = ::Diego::Bbs::Models::CachedDependency.new(
-                name: 'buildpack-1',
-                from: 'buildpack-1-url',
-                to: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('buildpack-1-key')}",
-                cache_key: 'buildpack-1-key',
-                checksum_algorithm: 'sha256',
-                checksum_value: 'checksum'
-              )
-              buildpack_entry_2 = ::Diego::Bbs::Models::CachedDependency.new(
-                name: 'buildpack-2',
-                from: 'buildpack-2-url',
-                to: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('buildpack-2-key')}",
-                cache_key: 'buildpack-2-key',
-                checksum_algorithm: 'sha256',
-                checksum_value: 'checksum'
-              )
-
-              result = builder.cached_dependencies
-              expect(result).to include(buildpack_entry_1, buildpack_entry_2)
-            end
-
-            context 'when legacy_md5_buildpack_paths_enabled is true' do
-              let(:legacy_md5_buildpack_paths_enabled) { true }
-
-              it 'includes buildpack dependencies' do
-                buildpack_entry_1 = ::Diego::Bbs::Models::CachedDependency.new(
-                  name: 'buildpack-1',
-                  from: 'buildpack-1-url',
-                  to: "/tmp/buildpacks/#{OpenSSL::Digest.hexdigest('MD5', 'buildpack-1-key')}",
-                  cache_key: 'buildpack-1-key',
-                  checksum_algorithm: 'sha256',
-                  checksum_value: 'checksum'
-                )
-                buildpack_entry_2 = ::Diego::Bbs::Models::CachedDependency.new(
-                  name: 'buildpack-2',
-                  from: 'buildpack-2-url',
-                  to: "/tmp/buildpacks/#{OpenSSL::Digest.hexdigest('MD5', 'buildpack-2-key')}",
-                  cache_key: 'buildpack-2-key',
-                  checksum_algorithm: 'sha256',
-                  checksum_value: 'checksum'
-                )
-
-                result = builder.cached_dependencies
-                expect(result).to include(buildpack_entry_1, buildpack_entry_2)
-              end
-            end
-
-            context 'when enable_declarative_asset_downloads is true' do
-              let(:enable_declarative_asset_downloads) { true }
-
-              it 'returns no cached dependencies' do
-                expect(builder.cached_dependencies).to be_nil
-              end
-            end
-
-            context 'and some do not include checksums' do
-              let(:buildpacks) do
-                [
-                  { name: 'buildpack-1', key: 'buildpack-1-key', url: 'buildpack-1-url', sha256: 'checksum' },
-                  { name: 'buildpack-2', key: 'buildpack-2-key', url: 'buildpack-2-url', sha256: nil }
-                ]
-              end
-
-              it 'does not ask for checksum validation' do
-                buildpack_entry_1 = ::Diego::Bbs::Models::CachedDependency.new(
-                  name: 'buildpack-1',
-                  from: 'buildpack-1-url',
-                  to: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('buildpack-1-key')}",
-                  cache_key: 'buildpack-1-key',
-                  checksum_algorithm: 'sha256',
-                  checksum_value: 'checksum'
-                )
-                buildpack_entry_2 = ::Diego::Bbs::Models::CachedDependency.new(
-                  name: 'buildpack-2',
-                  from: 'buildpack-2-url',
-                  to: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('buildpack-2-key')}",
-                  cache_key: 'buildpack-2-key'
-                )
-
-                result = builder.cached_dependencies
-                expect(result).to include(buildpack_entry_1, buildpack_entry_2)
-              end
-
-              context 'when enable_declarative_asset_downloads is true' do
-                let(:enable_declarative_asset_downloads) { true }
-
-                it 'returns no cached dependencies' do
-                  expect(builder.cached_dependencies).to be_nil
-                end
-              end
-            end
-          end
-
-          context 'when there are custom buildpacks' do
-            let(:buildpacks) do
-              [
-                { name: 'buildpack-1', key: 'buildpack-1-key', url: 'buildpack-1-url', sha256: 'checksum' },
-                { name: 'custom', key: 'custom-key', url: 'custom-url' }
-              ]
-            end
-
-            it 'does not include the custom buildpacks' do
-              buildpack_entry_1 = ::Diego::Bbs::Models::CachedDependency.new(
-                name: 'buildpack-1',
-                from: 'buildpack-1-url',
-                to: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('buildpack-1-key')}",
-                cache_key: 'buildpack-1-key',
-                checksum_algorithm: 'sha256',
-                checksum_value: 'checksum'
-              )
-              buildpack_entry_2 = ::Diego::Bbs::Models::CachedDependency.new(
-                name: 'custom',
-                from: 'custom-url',
-                to: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('custom-key')}",
-                cache_key: 'custom-key'
-              )
-
-              result = builder.cached_dependencies
-              expect(result).to include(buildpack_entry_1)
-              expect(result).not_to include(buildpack_entry_2)
-            end
           end
         end
 
@@ -612,7 +462,7 @@ module VCAP::CloudController
           end
 
           it 'returns the stack' do
-            expect(builder.stack).to eq('preloaded:buildpack-stack')
+            expect(builder.stack).to eq('docker://paketobuildpacks/builder-jammy-base')
           end
 
           context 'when the stack does not exist' do

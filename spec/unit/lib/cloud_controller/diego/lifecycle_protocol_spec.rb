@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'cloud_controller/diego/lifecycle_protocol'
+require 'cloud_controller/diego/cnb/lifecycle_protocol'
 
 module VCAP::CloudController::Diego
   RSpec.describe LifecycleProtocol do

@@ -1,5 +1,5 @@
-require 'cloud_controller/diego/buildpack/buildpack_entry_generator'
-require 'cloud_controller/diego/buildpack/droplet_url_generator'
+require 'cloud_controller/diego/cnb/buildpack_entry_generator'
+require 'cloud_controller/diego/cnb/droplet_url_generator'
 require 'cloud_controller/diego/cnb/lifecycle_data'
 require 'cloud_controller/diego/cnb/staging_action_builder'
 

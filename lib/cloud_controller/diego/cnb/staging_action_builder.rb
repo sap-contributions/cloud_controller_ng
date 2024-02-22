@@ -104,24 +104,24 @@ module VCAP::CloudController
             )
           ]
 
-          others = lifecycle_data[:buildpacks].map do |buildpack|
-            next if buildpack[:name] == 'custom'
-
-            buildpack_dependency = {
-              name: buildpack[:name],
-              from: buildpack[:url],
-              to: buildpack_path(buildpack[:key]),
-              cache_key: buildpack[:key]
-            }
-            if buildpack[:sha256]
-              buildpack_dependency[:checksum_algorithm] = 'sha256'
-              buildpack_dependency[:checksum_value] = buildpack[:sha256]
-            end
-
-            ::Diego::Bbs::Models::CachedDependency.new(buildpack_dependency.compact)
-          end.compact
-
-          dependencies.concat(others)
+          # others = lifecycle_data[:buildpacks].map do |buildpack|
+          #   next if buildpack[:name] == 'custom'
+          #
+          #   buildpack_dependency = {
+          #     name: buildpack[:name],
+          #     from: buildpack[:url],
+          #     to: buildpack_path(buildpack[:key]),
+          #     cache_key: buildpack[:key]
+          #   }
+          #   if buildpack[:sha256]
+          #     buildpack_dependency[:checksum_algorithm] = 'sha256'
+          #     buildpack_dependency[:checksum_value] = buildpack[:sha256]
+          #   end
+          #
+          #   ::Diego::Bbs::Models::CachedDependency.new(buildpack_dependency.compact)
+          # end.compact
+          
+          dependencies
         end
 
         def stack

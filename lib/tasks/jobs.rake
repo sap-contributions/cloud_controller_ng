@@ -74,9 +74,25 @@ namespace :jobs do
       Delayed::Worker.destroy_failed_jobs = false
       Delayed::Worker.max_attempts = 3
       Delayed::Worker.logger = logger
-      worker = Delayed::Worker.new(@queue_options)
-      worker.name = @queue_options[:worker_name]
-      worker.start
+
+      start_worker = lambda do |index=nil|
+        worker = Delayed::Worker.new(@queue_options)
+        name = @queue_options[:worker_name]
+        name += ".#{index}" if index
+        worker.name = name
+        worker.start
+      end
+
+      number_of_threads = config.get(:jobs, :threads) || 0
+      if number_of_threads == 0
+        start_worker.call
+      else
+        threads = []
+        number_of_threads.times do |index|
+          threads << Thread.new { start_worker.call(index) }
+        end
+        threads.each(&:join)
+      end
     end
 
     private

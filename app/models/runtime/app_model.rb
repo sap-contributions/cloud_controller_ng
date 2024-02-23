@@ -2,6 +2,7 @@ require 'cloud_controller/database_uri_generator'
 require 'cloud_controller/serializer'
 require 'models/helpers/process_types'
 require 'hashdiff'
+require 'models/runtime/cnb_lifecycle_data_model'
 
 module VCAP::CloudController
   class AppModel < Sequel::Model(:apps)
@@ -83,13 +84,15 @@ module VCAP::CloudController
     def lifecycle_type
       return BuildpackLifecycleDataModel::LIFECYCLE_TYPE if buildpack_lifecycle_data
 
-      DockerLifecycleDataModel::LIFECYCLE_TYPE
+      # TODO: Add proper db setup for cnb lifecycle
+      CNBLifecycleDataModel::LIFECYCLE_TYPE
     end
 
     def lifecycle_data
       return buildpack_lifecycle_data if buildpack_lifecycle_data
 
-      DockerLifecycleDataModel.new
+      # TODO: Add proper db setup for cnb lifecycle
+      CNBLifecycleDataModel.new
     end
 
     def current_package

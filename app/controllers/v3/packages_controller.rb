@@ -44,6 +44,8 @@ class PackagesController < ApplicationController
     FeatureFlag.raise_unless_enabled!(:app_bits_upload)
 
     opts = hashed_params[:body].dup.symbolize_keys
+    # This is necessary for local deployment only
+    # opts[:bits_path] = opts[:bits_path][1..-1]
     begin
       if opts[:resources].present?
         opts[:resources] = MultiJson.load(opts[:resources])

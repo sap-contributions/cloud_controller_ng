@@ -145,7 +145,7 @@ module VCAP::CloudController
             result << ::Diego::Bbs::Models::DownloadAction.new({
               artifact: 'app package',
               from: lifecycle_data[:app_bits_download_uri],
-              to: '/workspace',
+              to: '/home/vcap/workspace',
               user: 'cnb',
               checksum_algorithm: lifecycle_data[:app_bits_checksum][:type],
               checksum_value: lifecycle_data[:app_bits_checksum][:value]

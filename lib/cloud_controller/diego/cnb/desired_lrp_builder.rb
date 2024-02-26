@@ -92,7 +92,12 @@ module VCAP::CloudController
         end
 
         def global_environment_variables
-          [::Diego::Bbs::Models::EnvironmentVariable.new(name: 'LANG', value: DEFAULT_LANG)]
+          [
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'LANG', value: DEFAULT_LANG),
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_PLATFORM_API', value: "0.11"),
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_LAYERS_DIR', value: "/home/vcap/layers"),
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_APP_DIR', value: "/home/vcap/workspace")
+          ]
         end
 
         def ports

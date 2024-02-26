@@ -2,6 +2,7 @@ require 'cloud_controller/diego/cnb/buildpack_entry_generator'
 require 'cloud_controller/diego/cnb/droplet_url_generator'
 require 'cloud_controller/diego/cnb/lifecycle_data'
 require 'cloud_controller/diego/cnb/staging_action_builder'
+require 'cloud_controller/diego/cnb/task_action_builder'
 
 module VCAP
   module CloudController
@@ -26,7 +27,8 @@ module VCAP
             lifecycle_data.build_artifacts_cache_download_uri = @blobstore_url_generator.buildpack_cache_download_url(staging_details.package.app_guid, stack)
             lifecycle_data.build_artifacts_cache_upload_uri = @blobstore_url_generator.buildpack_cache_upload_url(staging_details.package.app_guid, stack)
             lifecycle_data.droplet_upload_uri                 = @blobstore_url_generator.droplet_upload_url(staging_details.staging_guid)
-            lifecycle_data.buildpacks                         = @buildpack_entry_generator.buildpack_entries(staging_details.lifecycle.buildpack_infos, stack)
+            # TODO: Check this line
+            # lifecycle_data.buildpacks                         = @buildpack_entry_generator.buildpack_entries(staging_details.lifecycle.buildpack_infos, stack)
             lifecycle_data.stack                              = stack
 
             lifecycle_data.message

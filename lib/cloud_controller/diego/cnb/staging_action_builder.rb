@@ -120,7 +120,7 @@ module VCAP::CloudController
           #
           #   ::Diego::Bbs::Models::CachedDependency.new(buildpack_dependency.compact)
           # end.compact
-          
+
           dependencies
         end
 
@@ -145,8 +145,8 @@ module VCAP::CloudController
             result << ::Diego::Bbs::Models::DownloadAction.new({
               artifact: 'app package',
               from: lifecycle_data[:app_bits_download_uri],
-              to: '/tmp/app',
-              user: 'vcap',
+              to: '/workspace',
+              user: 'cnb',
               checksum_algorithm: lifecycle_data[:app_bits_checksum][:type],
               checksum_value: lifecycle_data[:app_bits_checksum][:value]
             }.compact)
@@ -158,7 +158,7 @@ module VCAP::CloudController
               artifact: 'build artifacts cache',
               from: lifecycle_data[:build_artifacts_cache_download_uri],
               to: '/tmp/cache',
-              user: 'vcap',
+              user: 'cnb',
               checksum_algorithm: 'sha256',
               checksum_value: lifecycle_data[:buildpack_cache_checksum]
             }.compact))

@@ -3,14 +3,13 @@ module VCAP::CloudController
     module CNB
       class LifecycleData
         attr_accessor :app_bits_download_uri, :build_artifacts_cache_download_uri, :build_artifacts_cache_upload_uri,
-                      :buildpacks, :app_bits_checksum, :droplet_upload_uri, :stack, :buildpack_cache_checksum
+                      :app_bits_checksum, :droplet_upload_uri, :stack, :buildpack_cache_checksum
 
         def message
           message = {
             app_bits_download_uri:,
             build_artifacts_cache_upload_uri:,
             droplet_upload_uri:,
-            buildpacks:,
             stack:,
             app_bits_checksum:
           }
@@ -31,7 +30,6 @@ module VCAP::CloudController
               optional(:buildpack_cache_checksum) => String,
               build_artifacts_cache_upload_uri: String,
               droplet_upload_uri: String,
-              buildpacks: Array,
               stack: String,
               app_bits_checksum: Hash
             }

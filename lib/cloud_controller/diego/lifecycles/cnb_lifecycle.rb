@@ -26,7 +26,11 @@ module VCAP::CloudController
     end
 
     def stack
-      nil
+      VCAP::CloudController::Stack.default.name
+    end
+
+    def staging_stack
+      VCAP::CloudController::Stack.default.name
     end
   end
 end

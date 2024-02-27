@@ -61,7 +61,7 @@ module VCAP::CloudController
     def lifecycle_data
       return buildpack_lifecycle_data if buildpack_lifecycle_data
 
-      DockerLifecycleDataModel.new
+      CNBLifecycleDataModel.new
     end
 
     def staged?

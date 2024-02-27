@@ -22,12 +22,9 @@ module VCAP::CloudController
         def cached_dependencies
           return nil if @config.get(:diego, :enable_declarative_asset_downloads)
 
-          lifecycle_bundle = @config.get(:diego, :lifecycle_bundles)["cnb"]
-          raise InvalidStack.new("no compiler defined for requested stack '#{@stack}'") unless lifecycle_bundle
-
           [
             ::Diego::Bbs::Models::CachedDependency.new(
-              from: LifecycleBundleUriGenerator.uri(lifecycle_bundle),
+              from: "https://storage.googleapis.com/cf-packages-public/lifecycle.tgz",
               to: '/tmp/lifecycle',
               cache_key: "cnb-lifecycle"
             )
@@ -35,10 +32,10 @@ module VCAP::CloudController
         end
 
         def root_fs
-          @stack_obj ||= Stack.find(name: @stack)
-          raise CloudController::Errors::ApiError.new_from_details('StackNotFound', @stack) unless @stack_obj
+          # @stack_obj ||= Stack.find(name: @stack)
+          # raise CloudController::Errors::ApiError.new_from_details('StackNotFound', @stack) unless @stack_obj
 
-          "preloaded:#{@stack_obj.run_rootfs_image}"
+          "preloaded:#{VCAP::CloudController::Stack.default.name}"
         end
 
         def setup
@@ -60,16 +57,13 @@ module VCAP::CloudController
         def image_layers
           return [] unless @config.get(:diego, :enable_declarative_asset_downloads)
 
-          lifecycle_bundle = @config.get(:diego, :lifecycle_bundles)["cnb"]
-          raise InvalidStack.new("no compiler defined for requested stack '#{@stack}'") unless lifecycle_bundle
-
           destination = @config.get(:diego, :droplet_destinations)[@stack.to_sym]
           raise InvalidStack.new("no droplet destination defined for requested stack '#{@stack}'") unless destination
 
           layers = [
             ::Diego::Bbs::Models::ImageLayer.new(
               name: "cnb-lifecycle",
-              url: LifecycleBundleUriGenerator.uri(lifecycle_bundle),
+              url: "https://storage.googleapis.com/cf-packages-public/lifecycle.tgz",
               destination_path: '/tmp/lifecycle',
               layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
               media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::TGZ
@@ -117,7 +111,7 @@ module VCAP::CloudController
         end
 
         def action_user
-          'cnb'
+          'vcap'
         end
       end
     end

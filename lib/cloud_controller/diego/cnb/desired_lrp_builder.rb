@@ -22,11 +22,15 @@ module VCAP::CloudController
         def cached_dependencies
           return nil if @config.get(:diego, :enable_declarative_asset_downloads)
 
+          lifecycle_bundle_key = :"buildpack/#{VCAP::CloudController::Stack.default.name}"
+          lifecycle_bundle = @config.get(:diego, :lifecycle_bundles)[lifecycle_bundle_key]
+          raise InvalidStack.new("no compiler defined for requested stack '#{VCAP::CloudController::Stack.default.name}'") unless lifecycle_bundle
+
           [
             ::Diego::Bbs::Models::CachedDependency.new(
-              from: "https://storage.googleapis.com/cf-packages-public/lifecycle.tgz",
+              from: LifecycleBundleUriGenerator.uri(lifecycle_bundle),
               to: '/tmp/lifecycle',
-              cache_key: "cnb-lifecycle"
+              cache_key: "buildpack-#{VCAP::CloudController::Stack.default.name}-lifecycle"
             )
           ]
         end
@@ -60,10 +64,14 @@ module VCAP::CloudController
           destination = @config.get(:diego, :droplet_destinations)[@stack.to_sym]
           raise InvalidStack.new("no droplet destination defined for requested stack '#{@stack}'") unless destination
 
+          lifecycle_bundle_key = :"buildpack/#{VCAP::CloudController::Stack.default.name}"
+          lifecycle_bundle = @config.get(:diego, :lifecycle_bundles)[lifecycle_bundle_key]
+          raise InvalidStack.new("no compiler defined for requested stack '#{VCAP::CloudController::Stack.default.name}'") unless lifecycle_bundle
+
           layers = [
             ::Diego::Bbs::Models::ImageLayer.new(
-              name: "cnb-lifecycle",
-              url: "https://storage.googleapis.com/cf-packages-public/lifecycle.tgz",
+              name: "buildpack-#{@stack}-lifecycle",
+              url: LifecycleBundleUriGenerator.uri(lifecycle_bundle),
               destination_path: '/tmp/lifecycle',
               layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
               media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::TGZ

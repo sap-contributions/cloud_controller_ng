@@ -271,6 +271,7 @@ module VCAP::CloudController
     end
 
     def docker_lifecycle_data
+      # TODO: Return proper lifecycle
       { type: Lifecycles::CNB }
     end
 

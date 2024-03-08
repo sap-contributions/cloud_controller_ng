@@ -126,8 +126,6 @@ module VCAP::CloudController
 
       memory_limit          = get_memory_limit(lifecycle.staging_message.staging_memory_in_mb, app, space, org)
       disk_limit            = get_disk_limit(lifecycle.staging_message.staging_disk_in_mb, app)
-      # TODO: do it better
-      disk_limit = 6048 if lifecycle.type == Lifecycles::CNB
       log_rate_limit        = get_log_rate_limit(lifecycle.staging_message.staging_log_rate_limit_bytes_per_second, app, space, org)
       environment_variables = @environment_builder.build(app,
                                                          space,

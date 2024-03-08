@@ -31,6 +31,7 @@ module VCAP::CloudController
       instances
       metadata
       memory
+      cnb
       name
       no_route
       processes
@@ -270,7 +271,7 @@ module VCAP::CloudController
     end
 
     def docker_lifecycle_data
-      { type: Lifecycles::DOCKER }
+      { type: Lifecycles::CNB }
     end
 
     def buildpacks_lifecycle_data

@@ -1,6 +1,8 @@
 module VCAP::CloudController
   class AppCNBLifecycle
-    def initialize(*_message); end
+    def initialize(message)
+      @message = message
+    end
 
     def create_lifecycle_data_model(_); end
 

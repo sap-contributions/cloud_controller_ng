@@ -8,7 +8,7 @@ module VCAP::CloudController
     TYPE_TO_LIFECYCLE_CLASS_MAP = {
       VCAP::CloudController::Lifecycles::BUILDPACK => AppBuildpackLifecycle,
       VCAP::CloudController::Lifecycles::DOCKER => AppDockerLifecycle,
-      VCAP::CloudController::Lifecycles::CNB => AppCNBLifecycle,
+      VCAP::CloudController::Lifecycles::CNB => AppCNBLifecycle
     }.freeze
 
     def self.provide_for_create(message)
@@ -25,7 +25,9 @@ module VCAP::CloudController
              elsif !app.nil?
                app.lifecycle_type
              else
-               Config.config.get(:default_app_lifecycle)
+               # TODO: Find the right lifecycle type
+               # Config.config.get(:default_app_lifecycle)
+               VCAP::CloudController::Lifecycles::CNB
              end
 
       TYPE_TO_LIFECYCLE_CLASS_MAP[type].new(message)

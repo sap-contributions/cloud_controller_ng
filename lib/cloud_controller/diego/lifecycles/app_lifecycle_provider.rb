@@ -20,6 +20,7 @@ module VCAP::CloudController
     end
 
     def self.provide(message, app)
+      # Retrieving CNB lifecycle type from message is easy, how to get it from the app (model) in case of provide_for_update?
       type = if message.lifecycle_type.present?
                message.lifecycle_type
              elsif !app.nil?

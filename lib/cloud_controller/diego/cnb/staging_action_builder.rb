@@ -107,7 +107,9 @@ module VCAP::CloudController
               from: 'https://github.com/buildpacks/lifecycle/releases/download/v0.19.0/lifecycle-v0.19.0+linux.x86-64.tgz',
               to: '/cnb',
               cache_key: 'cnb-lifecycle-real2',
-              name: 'real cnb lifecycle'
+              name: 'real cnb lifecycle',
+              checksum_algorithm: 'sha256',
+              checksum_value: '217a9581ee818315c8729cddea26144b1b8db55112f1f2473b8298b368f32474',
             )
           ]
 

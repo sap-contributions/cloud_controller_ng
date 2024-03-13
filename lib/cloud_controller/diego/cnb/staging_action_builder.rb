@@ -37,6 +37,7 @@ module VCAP::CloudController
           return [] unless @config.get(:diego, :enable_declarative_asset_downloads)
 
           layers = [
+            # Type is shared, could be converted to CachedDependency
             ::Diego::Bbs::Models::ImageLayer.new(
               name: 'custom cnb lifecycle',
               from: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
@@ -47,6 +48,7 @@ module VCAP::CloudController
           ]
 
           if lifecycle_data[:app_bits_checksum][:type] == 'sha256'
+            # Type is exclusive, will be converted to DownloadActions
             layers << ::Diego::Bbs::Models::ImageLayer.new({
               name: 'app package',
               url: lifecycle_data[:app_bits_download_uri],
@@ -59,6 +61,7 @@ module VCAP::CloudController
           end
 
           if lifecycle_data[:build_artifacts_cache_download_uri] && lifecycle_data[:buildpack_cache_checksum].present?
+            # Type is exclusive, will be converted to DownloadActions
             layers << ::Diego::Bbs::Models::ImageLayer.new({
               name: 'build artifacts cache',
               url: lifecycle_data[:build_artifacts_cache_download_uri],
@@ -73,6 +76,7 @@ module VCAP::CloudController
           buildpack_layers = lifecycle_data[:buildpacks].
                              reject { |buildpack| buildpack[:name] == 'custom' }.
                              map do |buildpack|
+            # Type is shared, could be converted to CachedDependency
             layer = {
               name: buildpack[:name],
               url: buildpack[:url],
@@ -94,14 +98,14 @@ module VCAP::CloudController
         def cached_dependencies
           return nil if @config.get(:diego, :enable_declarative_asset_downloads)
 
-          dependencies = [
+          [
             ::Diego::Bbs::Models::CachedDependency.new(
               # TODO: Get this thing from the platform or something?
               # from: LifecycleBundleUriGenerator.uri(config.get(:diego, :lifecycle_bundles)[lifecycle_bundle_key]),
               from: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
               to: '/tmp/lifecycle',
               cache_key: 'cnb-lifecycle',
-              name: 'custom cnb lifecycle',
+              name: 'custom cnb lifecycle'
             ),
             ::Diego::Bbs::Models::CachedDependency.new(
               from: 'https://github.com/buildpacks/lifecycle/releases/download/v0.19.0/lifecycle-v0.19.0+linux.x86-64.tgz',
@@ -109,7 +113,7 @@ module VCAP::CloudController
               cache_key: 'cnb-lifecycle-real2',
               name: 'real cnb lifecycle',
               checksum_algorithm: 'sha256',
-              checksum_value: '217a9581ee818315c8729cddea26144b1b8db55112f1f2473b8298b368f32474',
+              checksum_value: '217a9581ee818315c8729cddea26144b1b8db55112f1f2473b8298b368f32474'
             )
           ]
 
@@ -129,8 +133,6 @@ module VCAP::CloudController
           #
           #   ::Diego::Bbs::Models::CachedDependency.new(buildpack_dependency.compact)
           # end.compact
-
-          dependencies
         end
 
         def stack

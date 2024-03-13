@@ -35,11 +35,16 @@ module VCAP::CloudController
                class: 'VCAP::CloudController::KpackLifecycleDataModel',
                key: :droplet_guid,
                primary_key: :guid
+    one_to_one :cnb_lifecycle_data,
+               class: 'VCAP::CloudController::CNBLifecycleDataModel',
+               key: :droplet_guid,
+               primary_key: :guid
     one_to_many :labels, class: 'VCAP::CloudController::DropletLabelModel', key: :resource_guid, primary_key: :guid
     one_to_many :annotations, class: 'VCAP::CloudController::DropletAnnotationModel', key: :resource_guid, primary_key: :guid
 
     add_association_dependencies buildpack_lifecycle_data: :destroy
     add_association_dependencies kpack_lifecycle_data: :destroy
+    add_association_dependencies cnb_lifecycle_data: :destroy
     add_association_dependencies labels: :destroy
     add_association_dependencies annotations: :destroy
 
@@ -144,12 +149,19 @@ module VCAP::CloudController
 
     def lifecycle_type
       return BuildpackLifecycleDataModel::LIFECYCLE_TYPE if buildpack_lifecycle_data
+      # TODO: Do not use kpack for cnb
+      return CNBLifecycleDataModel::LIFECYCLE_TYPE if cnb_lifecycle_data
 
-      CNBLifecycleDataModel::LIFECYCLE_TYPE
+      DockerLifecycleDataModel::LIFECYCLE_TYPE
     end
 
     def lifecycle_data
-      buildpack_lifecycle_data || CNBLifecycleDataModel.new
+      # FIXME: Add proper handling for docker case
+      # TODO: Should we return an existing object for cnb instead of creating a new one?
+      return buildpack_lifecycle_data if buildpack_lifecycle_data
+      # return cnb_lifecycle_data if cnb_lifecycle_data
+
+      DockerLifecycleDataModel.new
     end
 
     def in_final_state?

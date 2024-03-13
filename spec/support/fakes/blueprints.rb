@@ -132,7 +132,7 @@ module VCAP::CloudController
     buildpack_receipt_buildpack { 'a-buildpack' }
     buildpack_receipt_buildpack_guid { Sham.guid }
     buildpack_receipt_detect_output { 'buildpack-output' }
-    docker_receipt_image { 'docker-iamge' }
+    docker_receipt_image { 'docker-image' }
     package_guid { Sham.guid }
     build_guid { Sham.guid }
     docker_receipt_username { 'a-user' }
@@ -623,6 +623,20 @@ module VCAP::CloudController
 
   BuildpackLifecycleDataModel.blueprint(:all_fields) do
     buildpacks { ['http://example.com/repo.git'] }
+    stack { Stack.make.name }
+    app_guid { Sham.guid }
+    droplet_guid { Sham.guid }
+    admin_buildpack_name { 'admin-bp' }
+    build { BuildModel.make }
+  end
+
+  CNBLifecycleDataModel.blueprint do
+    buildpacks { nil }
+    stack { Stack.make.name }
+  end
+
+  CNBLifecycleDataModel.blueprint(:all_fields) do
+    buildpacks { ['gcr.io/paketo-buildpacks/nodejs'] }
     stack { Stack.make.name }
     app_guid { Sham.guid }
     droplet_guid { Sham.guid }

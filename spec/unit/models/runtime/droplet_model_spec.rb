@@ -70,11 +70,27 @@ module VCAP::CloudController
 
         before do
           droplet_model.buildpack_lifecycle_data = lifecycle_data
+          droplet_model.cnb_lifecycle_data = nil
           droplet_model.save
         end
 
         it 'returns the string "buildpack"' do
           expect(droplet_model.lifecycle_type).to eq('buildpack')
+        end
+      end
+
+      context 'when there is cnb_lifecycle_data associated to the droplet' do
+        let(:droplet_model) { DropletModel.make(:buildpack) }
+        let!(:lifecycle_data) { CNBLifecycleDataModel.make(droplet: droplet_model) }
+
+        before do
+          droplet_model.cnb_lifecycle_data = lifecycle_data
+          droplet_model.buildpack_lifecycle_data = nil
+          droplet_model.save
+        end
+
+        it 'returns the string "cnb"' do
+          expect(droplet_model.lifecycle_type).to eq('cnb')
         end
       end
 

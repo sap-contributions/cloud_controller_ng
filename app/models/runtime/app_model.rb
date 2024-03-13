@@ -84,14 +84,14 @@ module VCAP::CloudController
     def lifecycle_type
       return BuildpackLifecycleDataModel::LIFECYCLE_TYPE if buildpack_lifecycle_data
 
-      # TODO: Add proper db setup for cnb lifecycle
+      # FIXME: Add proper db setup for cnb lifecycle
       CNBLifecycleDataModel::LIFECYCLE_TYPE
     end
 
     def lifecycle_data
       return buildpack_lifecycle_data if buildpack_lifecycle_data
 
-      # TODO: Add proper db setup for cnb lifecycle
+      # FIXME: Add proper db setup for cnb lifecycle
       CNBLifecycleDataModel.new
     end
 

@@ -281,7 +281,7 @@ module VCAP::CloudController
       { type: Lifecycles::DOCKER }
     end
 
-    def cnb_lifecycle_data
+    def cnbs_lifecycle_data
       { type: Lifecycles::CNB }
     end
 

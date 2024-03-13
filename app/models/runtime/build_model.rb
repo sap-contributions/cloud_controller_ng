@@ -51,6 +51,7 @@ module VCAP::CloudController
     def lifecycle_type
       return Lifecycles::BUILDPACK if buildpack_lifecycle_data
 
+      # FIXME: Add proper handling for docker case
       Lifecycles::CNB
     end
 
@@ -61,6 +62,7 @@ module VCAP::CloudController
     def lifecycle_data
       return buildpack_lifecycle_data if buildpack_lifecycle_data
 
+      # FIXME: Add proper handling for docker case
       CNBLifecycleDataModel.new
     end
 

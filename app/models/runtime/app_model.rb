@@ -55,6 +55,11 @@ module VCAP::CloudController
                key: :app_guid,
                primary_key: :guid
 
+    one_to_one :cnb_lifecycle_data,
+               class: 'VCAP::CloudController::CNBLifecycleDataModel',
+               key: :app_guid,
+               primary_key: :guid
+
     set_field_as_encrypted :environment_variables, column: :encrypted_environment_variables
     serializes_via_json :environment_variables
 
@@ -83,16 +88,16 @@ module VCAP::CloudController
 
     def lifecycle_type
       return BuildpackLifecycleDataModel::LIFECYCLE_TYPE if buildpack_lifecycle_data
+      return CNBLifecycleDataModel::LIFECYCLE_TYPE if cnb_lifecycle_data
 
-      # FIXME: Add proper db setup for cnb lifecycle
-      CNBLifecycleDataModel::LIFECYCLE_TYPE
+      DockerLifecycleDataModel::LIFECYCLE_TYPE
     end
 
     def lifecycle_data
       return buildpack_lifecycle_data if buildpack_lifecycle_data
+      return cnb_lifecycle_data if cnb_lifecycle_data
 
-      # FIXME: Add proper db setup for cnb lifecycle
-      CNBLifecycleDataModel.new
+      DockerLifecycleDataModel.new
     end
 
     def current_package

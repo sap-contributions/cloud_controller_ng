@@ -12,6 +12,7 @@ require 'new_relic_custom_attributes'
 require 'zipkin'
 require 'block_v3_only_roles'
 require 'below_min_cli_warning'
+require 'april_1st'
 
 module VCAP::CloudController
   class RackAppBuilder
@@ -25,6 +26,7 @@ module VCAP::CloudController
         use CloudFoundry::Middleware::RequestMetrics, request_metrics
         use CloudFoundry::Middleware::Cors, config.get(:allowed_cors_domains)
         use CloudFoundry::Middleware::VcapRequestId
+        use CloudFoundry::Middleware::April1st if Config.config.get(:system_domain) == 'cf.sap.hana.ondemand.com'
         use CloudFoundry::Middleware::BelowMinCliWarning if config.get(:warn_if_below_min_cli_version)
         use CloudFoundry::Middleware::NewRelicCustomAttributes if config.get(:newrelic_enabled)
         use Honeycomb::Rack::Middleware, client: Honeycomb.client if config.get(:honeycomb)

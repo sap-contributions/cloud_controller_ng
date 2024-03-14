@@ -48,10 +48,18 @@ module VCAP::CloudController
         let(:request) { { lifecycle: { type: type, data: {} } } }
 
         context 'docker type' do
-          let(:type) { 'cnb' }
+          let(:type) { 'docker' }
 
           it 'returns a AppDockerLifecycle' do
             expect(AppLifecycleProvider.provide_for_update(message, app)).to be_a(AppDockerLifecycle)
+          end
+        end
+
+        context 'cnb type' do
+          let(:type) { 'cnb' }
+
+          it 'returns a CNBDockerLifecycle' do
+            expect(AppLifecycleProvider.provide_for_update(message, app)).to be_a(AppCNBLifecycle)
           end
         end
 

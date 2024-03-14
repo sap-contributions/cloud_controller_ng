@@ -15,21 +15,19 @@ module VCAP::CloudController
       provide(message, nil)
     end
 
+
     def self.provide_for_update(message, app)
       provide(message, app)
     end
 
     def self.provide(message, app)
       # Retrieving CNB lifecycle type from message is easy, how to get it from the app (model) in case of provide_for_update?
-      # FIXME: Add proper handling for docker case
       type = if message.lifecycle_type.present?
                message.lifecycle_type
              elsif !app.nil?
                app.lifecycle_type
              else
-               # TODO: Find the right lifecycle type
-               # Config.config.get(:default_app_lifecycle)
-               VCAP::CloudController::Lifecycles::CNB
+               Config.config.get(:default_app_lifecycle)
              end
 
       TYPE_TO_LIFECYCLE_CLASS_MAP[type].new(message)

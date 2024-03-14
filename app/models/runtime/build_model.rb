@@ -37,6 +37,10 @@ module VCAP::CloudController
                class: 'VCAP::CloudController::KpackLifecycleDataModel',
                key: :build_guid,
                primary_key: :guid
+    one_to_one :cnb_lifecycle_data,
+               class: 'VCAP::CloudController::CNBLifecycleDataModel',
+               key: :build_guid,
+               primary_key: :guid
 
     one_through_one :space, join_table: AppModel.table_name, left_key: :guid, left_primary_key: :app_guid, right_primary_key: :guid, right_key: :space_guid
 
@@ -50,9 +54,9 @@ module VCAP::CloudController
 
     def lifecycle_type
       return Lifecycles::BUILDPACK if buildpack_lifecycle_data
+      return Lifecycles::CNB if cnb_lifecycle_data
 
-      # FIXME: Add proper handling for docker case
-      Lifecycles::CNB
+      Lifecycles::DOCKER
     end
 
     def buildpack_lifecycle?
@@ -61,9 +65,9 @@ module VCAP::CloudController
 
     def lifecycle_data
       return buildpack_lifecycle_data if buildpack_lifecycle_data
+      return cnb_lifecycle_data if cnb_lifecycle_data
 
-      # FIXME: Add proper handling for docker case
-      CNBLifecycleDataModel.new
+      DockerLifecycleDataModel.new
     end
 
     def staged?

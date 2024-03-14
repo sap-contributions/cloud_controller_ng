@@ -156,10 +156,8 @@ module VCAP::CloudController
     end
 
     def lifecycle_data
-      # FIXME: Add proper handling for docker case
-      # TODO: Should we return an existing object for cnb instead of creating a new one?
       return buildpack_lifecycle_data if buildpack_lifecycle_data
-      # return cnb_lifecycle_data if cnb_lifecycle_data
+      return cnb_lifecycle_data if cnb_lifecycle_data
 
       DockerLifecycleDataModel.new
     end

@@ -14,6 +14,17 @@ Sequel.migration do
       String :droplet_guid, size: 255
       foreign_key [:droplet_guid], :droplets, key: :guid, name: :fk_cnb_lifecycle_droplet_guid
       index [:droplet_guid], name: :fk_cnb_lifecycle_droplet_guid_index
+
+      String :stack, size: 255
+    end
+
+    alter_table(:buildpack_lifecycle_buildpacks) do
+      add_column :cnb_lifecycle_data_guid, String, null: true
+
+      add_foreign_key [:cnb_lifecycle_data_guid], :cnb_lifecycle_data, key: :guid, name: :fk_blcnb_bldata_guid
+      add_index [:cnb_lifecycle_data_guid], name: :bl_cnb_bldata_guid_index
+
+      set_column_allow_null :cnb_lifecycle_data_guid
     end
   end
 end

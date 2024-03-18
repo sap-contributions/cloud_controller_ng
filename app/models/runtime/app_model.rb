@@ -65,6 +65,7 @@ module VCAP::CloudController
 
     add_association_dependencies buildpack_lifecycle_data: :destroy
     add_association_dependencies kpack_lifecycle_data: :destroy
+    add_association_dependencies cnb_lifecycle_data: :destroy
     add_association_dependencies labels: :destroy
     add_association_dependencies annotations: :destroy
 

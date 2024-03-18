@@ -157,6 +157,20 @@ module VCAP::CloudController
             and change(BuildpackLifecycleBuildpackModel, :count).by(-2)
         end
       end
+
+      context 'when the app has cnb_lifecycle_data' do
+        subject(:lifecycle_data) do
+          CNBLifecycleDataModel.create()
+        end
+
+        it 'destroys the buildpack_lifecycle_data' do
+          app_model.update(cnb_lifecycle_data: lifecycle_data)
+          expect do
+            app_model.destroy
+          end.to change(CNBLifecycleDataModel, :count).by(-1)
+        end
+      end
+
     end
 
     describe 'validations' do

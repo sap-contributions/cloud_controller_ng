@@ -161,7 +161,10 @@ module VCAP::CloudController
       context 'when there is cnb_lifecycle_data associated to the droplet' do
         let(:droplet_model) { DropletModel.make(:kpack) }
         let!(:lifecycle_data) do
-          CNBLifecycleDataModel.make(droplet: droplet_model)
+          CNBLifecycleDataModel.make(
+            droplet: droplet_model,
+            buildpacks: ['http://some-buildpack.com', 'http://another-buildpack.net']
+          )
         end
 
         before do
@@ -176,8 +179,8 @@ module VCAP::CloudController
         it 'deletes the dependent cnb_lifecycle_data_models when a droplet is deleted' do
           expect do
             droplet_model.destroy
-          end.to change(CNBLifecycleDataModel, :count).by(-1)
-        end
+          end.to change(CNBLifecycleDataModel, :count).by(-1).
+                 and change(BuildpackLifecycleBuildpackModel, :count).by(-2)        end
       end
 
       context 'when there is no lifecycle data associated to the droplet' do

@@ -121,7 +121,8 @@ module VCAP::CloudController
       context 'cnb_lifecycle_data' do
         let!(:cnb_lifecycle_data) do
           CNBLifecycleDataModel.make(
-            build: build_model
+            build: build_model,
+            buildpacks: ['http://some-buildpack.com', 'http://another-buildpack.net']
           )
         end
 
@@ -132,6 +133,13 @@ module VCAP::CloudController
 
         it 'returns cnb_lifecycle_data ' do
           expect(build_model.lifecycle_data).to eq(cnb_lifecycle_data)
+        end
+
+        it 'deletes the dependent cnb_lifecycle_data_models when a build is deleted' do
+          expect do
+            build_model.destroy
+          end.to change(CNBLifecycleDataModel, :count).by(-1).
+            and change(BuildpackLifecycleBuildpackModel, :count).by(-2)
         end
 
       end

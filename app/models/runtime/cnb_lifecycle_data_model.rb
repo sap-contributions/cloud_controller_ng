@@ -44,6 +44,10 @@ module VCAP::CloudController
       self.buildpack_lifecycle_buildpacks_attributes = buildpacks_to_add + buildpacks_to_remove
     end
 
+    def using_custom_buildpack?
+      true
+    end
+
     def attributes_from_buildpack(buildpack_name)
         { buildpack_url: buildpack_name, admin_buildpack_name: nil }
     end

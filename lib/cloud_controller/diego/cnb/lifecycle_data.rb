@@ -32,7 +32,8 @@ module VCAP::CloudController
               build_artifacts_cache_upload_uri: String,
               droplet_upload_uri: String,
               stack: String,
-              buildpacks:,
+              # FIXME: Is nil somehow
+              # buildpacks: Array,
               app_bits_checksum: Hash
             }
           end

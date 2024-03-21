@@ -176,6 +176,11 @@ module VCAP::CloudController
           expect(droplet_model.lifecycle_data).to eq(lifecycle_data)
         end
 
+        it 'is a persistable hash' do
+          expect(droplet_model.reload.cnb_lifecycle_data.buildpacks).to eq(lifecycle_data.buildpacks)
+          expect(droplet_model.reload.cnb_lifecycle_data.stack).to eq(lifecycle_data.stack)
+        end
+
         it 'deletes the dependent cnb_lifecycle_data_models when a droplet is deleted' do
           expect do
             droplet_model.destroy

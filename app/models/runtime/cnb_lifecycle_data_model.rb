@@ -2,7 +2,6 @@ require 'cloud_controller/diego/lifecycles/lifecycles'
 
 module VCAP::CloudController
   class CNBLifecycleDataModel < Sequel::Model(:cnb_lifecycle_data)
-    #include Serializer
     LIFECYCLE_TYPE = Lifecycles::CNB
 
     many_to_one :droplet,
@@ -18,7 +17,7 @@ module VCAP::CloudController
                 without_guid_generation: true
 
     many_to_one :app,
-                class: '::VCAP::CloudController::AppModel',
+                class: '::VCAP::CloudController::AppModel',\
                 key: :app_guid,
                 primary_key: :guid,
                 without_guid_generation: true
@@ -33,7 +32,11 @@ module VCAP::CloudController
     add_association_dependencies buildpack_lifecycle_buildpacks: :destroy
 
     def buildpacks
-      buildpack_lifecycle_buildpacks.map(&:name) if buildpack_lifecycle_buildpacks.present?
+      if buildpack_lifecycle_buildpacks.present?
+        buildpack_lifecycle_buildpacks.map(&:name)
+      else
+        Array([])
+      end
     end
 
     def buildpacks=(new_buildpacks)

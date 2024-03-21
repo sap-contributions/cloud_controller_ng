@@ -36,7 +36,7 @@ module VCAP::CloudController
               app_bits_checksum: Hash
             }
           end
-        end
+        end\
       end
     end
   end

@@ -160,14 +160,15 @@ module VCAP::CloudController
 
       context 'when the app has cnb_lifecycle_data' do
         subject(:lifecycle_data) do
-          CNBLifecycleDataModel.create()
+          CNBLifecycleDataModel.create(buildpacks: ['http://some-buildpack.com', 'http://another-buildpack.net'])
         end
 
         it 'destroys the buildpack_lifecycle_data' do
           app_model.update(cnb_lifecycle_data: lifecycle_data)
           expect do
             app_model.destroy
-          end.to change(CNBLifecycleDataModel, :count).by(-1)
+          end.to change(CNBLifecycleDataModel, :count).by(-1).
+            and change(BuildpackLifecycleBuildpackModel, :count).by(-2)
         end
       end
 
@@ -331,6 +332,12 @@ module VCAP::CloudController
         it 'returns cnb_lifecycle_data if it is on the model' do
           expect(app_model.reload.lifecycle_data).to eq(cnb_lifecycle_data)
         end
+
+        it 'is a persistable hash' do
+          expect(app_model.reload.cnb_lifecycle_data.buildpacks).to eq(cnb_lifecycle_data.buildpacks)
+          expect(app_model.reload.cnb_lifecycle_data.stack).to eq(cnb_lifecycle_data.stack)
+        end
+
       end
 
       context 'lifecycle_data is nil' do

@@ -120,13 +120,12 @@ module VCAP::CloudController
     end
 
     def app_lifecycle_hash
-      # requested_keys == incoming document
-      lifecycle_data = if requested?(:buildpacks)
-                         buildpacks_lifecycle_data
-                       elsif requested?(:cnb)
+      lifecycle_data = if requested?(:cnb)
                          cnb_lifecycle_data
-                       else
+                       elsif requested?(:docker)
                          docker_lifecycle_data
+                       else
+                         buildpacks_lifecycle_data
                        end
 
       {
@@ -281,7 +280,7 @@ module VCAP::CloudController
       { type: Lifecycles::DOCKER }
     end
 
-    def cnbs_lifecycle_data
+    def cnb_lifecycle_data
       { type: Lifecycles::CNB }
     end
 

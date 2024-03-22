@@ -4,7 +4,7 @@ module VCAP::CloudController
       @message = message
     end
 
-    def create_lifecycle_data_model(app);
+    def create_lifecycle_data_model(app)
       CNBLifecycleDataModel.create(
         buildpacks:,
         stack:,
@@ -43,20 +43,20 @@ module VCAP::CloudController
       Lifecycles::CNB
     end
 
-  private
+    private
 
-  attr_reader :message
+    attr_reader :message
 
-  def buildpacks
-    message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || []) : []
-  end
+    def buildpacks
+      message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || []) : []
+    end
 
-  def stack
-    if message.buildpack_data.requested?(:stack) && !message.buildpack_data.stack.nil?
-      message.buildpack_data.stack
-    else
-      Stack.default.name
+    def stack
+      if message.buildpack_data.requested?(:stack) && !message.buildpack_data.stack.nil?
+        message.buildpack_data.stack
+      else
+        Stack.default.name
+      end
     end
   end
-  end
-  end
+end

@@ -171,7 +171,6 @@ module VCAP::CloudController
             and change(BuildpackLifecycleBuildpackModel, :count).by(-2)
         end
       end
-
     end
 
     describe 'validations' do
@@ -337,7 +336,6 @@ module VCAP::CloudController
           expect(app_model.reload.cnb_lifecycle_data.buildpacks).to eq(cnb_lifecycle_data.buildpacks)
           expect(app_model.reload.cnb_lifecycle_data.stack).to eq(cnb_lifecycle_data.stack)
         end
-
       end
 
       context 'lifecycle_data is nil' do

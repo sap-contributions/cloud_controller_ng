@@ -17,7 +17,7 @@ module VCAP::CloudController
                 without_guid_generation: true
 
     many_to_one :app,
-                class: '::VCAP::CloudController::AppModel',\
+                class: '::VCAP::CloudController::AppModel',
                 key: :app_guid,
                 primary_key: :guid,
                 without_guid_generation: true
@@ -35,7 +35,7 @@ module VCAP::CloudController
       if buildpack_lifecycle_buildpacks.present?
         buildpack_lifecycle_buildpacks.map(&:name)
       else
-        Array([])
+        []
       end
     end
 
@@ -47,12 +47,16 @@ module VCAP::CloudController
       self.buildpack_lifecycle_buildpacks_attributes = buildpacks_to_add + buildpacks_to_remove
     end
 
+    def first_custom_buildpack_url
+      buildpack_lifecycle_buildpacks.find(&:custom?)&.buildpack_url
+    end
+
     def using_custom_buildpack?
       true
     end
 
     def attributes_from_buildpack(buildpack_name)
-        { buildpack_url: buildpack_name, admin_buildpack_name: nil }
+      { buildpack_url: buildpack_name, admin_buildpack_name: nil }
     end
 
     def valid?

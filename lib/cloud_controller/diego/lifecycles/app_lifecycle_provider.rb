@@ -15,7 +15,6 @@ module VCAP::CloudController
       provide(message, nil)
     end
 
-
     def self.provide_for_update(message, app)
       provide(message, app)
     end

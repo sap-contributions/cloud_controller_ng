@@ -60,7 +60,7 @@ module VCAP::CloudController
     end
 
     def buildpack_lifecycle?
-      lifecycle_type != Lifecycles::DOCKER
+      lifecycle_type == Lifecycles::BUILDPACK
     end
 
     def lifecycle_data

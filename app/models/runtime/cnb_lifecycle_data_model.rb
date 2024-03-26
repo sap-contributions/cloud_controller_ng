@@ -39,6 +39,16 @@ module VCAP::CloudController
       end
     end
 
+    def buildpack_models
+      if buildpack_lifecycle_buildpacks.present?
+        buildpack_lifecycle_buildpacks.map do |buildpack|
+          Buildpack.find(name: buildpack.name) || CustomBuildpack.new(buildpack.name)
+        end
+      else
+        []
+      end
+    end
+
     def buildpacks=(new_buildpacks)
       new_buildpacks ||= []
 
@@ -59,8 +69,10 @@ module VCAP::CloudController
       { buildpack_url: buildpack_name, admin_buildpack_name: nil }
     end
 
-    def valid?
-      true
+    def validate
+      return unless app && (build || droplet)
+
+      errors.add(:lifecycle_data, 'Must be associated with an app OR a build+droplet, but not both')
     end
   end
 end

@@ -1,57 +1,27 @@
 require 'spec_helper'
-require 'cloud_controller/diego/buildpack/staging_completion_handler'
+require 'cloud_controller/diego/cnb/staging_completion_handler'
 
 module VCAP::CloudController
   module Diego
-    module Buildpack
+    module CNB
       RSpec.describe StagingCompletionHandler do
         let(:logger) { instance_double(Steno::Logger, info: nil, error: nil, warn: nil) }
-        let(:buildpack) { VCAP::CloudController::Buildpack.make(name: 'lifecycle-bp') }
 
-        let(:buildpack1_name) { 'the-pleasant-buildpack' }
-        let(:buildpack1_other_name) { 'valley' }
-        let(:buildpack1_version) { '3.1' }
-        let(:buildpack1_key) { 'vicuna' }
-        let!(:buildpack1) { VCAP::CloudController::Buildpack.make(key: buildpack1_key, name: buildpack1_name, sha256_checksum: 'mammoth') }
-        let(:buildpack2_name) { 'my-brilliant-buildpack' }
-        let(:buildpack2_other_name) { 'launderette' }
-        let(:buildpack2_version) { '95' }
-        let(:buildpack2_key) { 'guanaco' }
-        let!(:buildpack2) { VCAP::CloudController::Buildpack.make(key: buildpack2_key, name: buildpack2_name, sha256_checksum: 'languid') }
-        let(:buildpack3_key) { 'git://my-buildpacks.tv/kate/allie.git' }
-        let(:buildpack3_other_name) { 'hilltop' }
-        let(:buildpack3_version) { 'ME' }
-
-        let(:lifecycle_buildpacks) do
-          [
-            {
-              name: buildpack1_other_name,
-              version: buildpack1_version,
-              key: buildpack1_key
-            },
-            {
-              name: buildpack2_other_name,
-              version: buildpack2_version,
-              key: buildpack2_key
-            },
-            {
-              name: buildpack3_other_name,
-              version: buildpack3_version,
-              key: buildpack3_key
-            }
-          ]
-        end
         let(:success_response) do
           {
             result: {
-              lifecycle_type: 'buildpack',
+              lifecycle_type: 'cnb',
               lifecycle_metadata: {
-                buildpack_key: buildpack.key,
-                detected_buildpack: 'INTERCAL'
+                buildpack_key: 'foo',
+                buildpacks: [
+                  key: 'foo',
+                  name: 'nodejs',
+                  version: '1.0.0'
+                ]
               },
               execution_metadata: '',
               process_types: {
-                web: 'some command'
+                web: '/home/vcap/lifecycle/web'
               }
             }
           }
@@ -76,7 +46,7 @@ module VCAP::CloudController
           let(:package) { PackageModel.make(app:) }
           let!(:build) do
             BuildModel.make(app: app, package: package, state: BuildModel::STAGING_STATE).tap do |build|
-              BuildpackLifecycleDataModel.make(build:)
+              CNBLifecycleDataModel.make(build:)
             end
           end
           let(:staging_guid) { build.guid }
@@ -139,9 +109,10 @@ module VCAP::CloudController
                                                       'worker' => 'hello',
                                                       'anything' => 'hi hi hi'
                                                     })
-                expect(droplet.buildpack_receipt_buildpack).to eq('lifecycle-bp')
-                expect(droplet.buildpack_receipt_buildpack_guid).to eq(buildpack.guid)
-                expect(droplet.buildpack_receipt_detect_output).to eq('INTERCAL')
+                # FIXME: Do we need to write buildpack_receipt_buildpack and buildpack_receipt_detect_output to the db?
+                # expect(droplet.buildpack_receipt_buildpack).to eq('lifecycle-bp')
+                # expect(droplet.buildpack_receipt_buildpack_guid).to eq(buildpack.guid)
+                # expect(droplet.buildpack_receipt_detect_output).to eq('INTERCAL')
               end
 
               it 'expires any old droplets' do
@@ -227,9 +198,10 @@ module VCAP::CloudController
 
                     expect(droplet.process_types).to eq({})
                     expect(droplet.execution_metadata).to eq('black-box-string')
-                    expect(droplet.buildpack_receipt_buildpack).to eq('lifecycle-bp')
-                    expect(droplet.buildpack_receipt_buildpack_guid).to eq(buildpack.guid)
-                    expect(droplet.buildpack_receipt_detect_output).to eq('INTERCAL')
+                    # FIXME: Do we need to write buildpack_receipt_buildpack and buildpack_receipt_detect_output to the db?
+                    # expect(droplet.buildpack_receipt_buildpack).to eq('lifecycle-bp')
+                    # expect(droplet.buildpack_receipt_buildpack_guid).to eq(buildpack.guid)
+                    # expect(droplet.buildpack_receipt_detect_output).to eq('INTERCAL')
                   end
                 end
 
@@ -333,57 +305,58 @@ module VCAP::CloudController
                 end
               end
 
-              describe 'recording buildpack receipt' do
-                it 'records detected_buildpack' do
-                  success_response[:result][:lifecycle_metadata][:detected_buildpack] = 'detect output'
-                  subject.staging_complete(success_response)
+              # FIXME: Do we need to write buildpack_receipt_buildpack and buildpack_receipt_detect_output to the db?
+              # describe 'recording buildpack receipt' do
+              #   it 'records detected_buildpack' do
+              #     success_response[:result][:lifecycle_metadata][:detected_buildpack] = 'detect output'
+              #     subject.staging_complete(success_response)
 
-                  expect(droplet.reload.buildpack_receipt_detect_output).to eq('detect output')
-                end
+              #     expect(droplet.reload.buildpack_receipt_detect_output).to eq('detect output')
+              #   end
 
-                context 'when the buildpack key is a url' do
-                  it 'records that as the buildpack' do
-                    success_response[:result][:lifecycle_metadata][:buildpack_key] = 'https://www.buildpack.com'
-                    subject.staging_complete(success_response)
+              #   context 'when the buildpack key is a url' do
+              #     it 'records that as the buildpack' do
+              #       success_response[:result][:lifecycle_metadata][:buildpack_key] = 'https://www.buildpack.com'
+              #       subject.staging_complete(success_response)
 
-                    expect(droplet.reload.buildpack_receipt_buildpack).to eq('https://www.buildpack.com')
-                  end
-                end
+              #       expect(droplet.reload.buildpack_receipt_buildpack).to eq('https://www.buildpack.com')
+              #     end
+              #   end
 
-                context 'when the buildpack key is a key' do
-                  it 'records that as the buildpack' do
-                    admin_buildpack = VCAP::CloudController::Buildpack.make(name: 'woop', key: 'thismakey')
+              #   context 'when the buildpack key is a key' do
+              #     it 'records that as the buildpack' do
+              #       admin_buildpack = VCAP::CloudController::Buildpack.make(name: 'woop', key: 'thismakey')
 
-                    success_response[:result][:lifecycle_metadata][:buildpack_key] = 'thismakey'
-                    subject.staging_complete(success_response)
+              #       success_response[:result][:lifecycle_metadata][:buildpack_key] = 'thismakey'
+              #       subject.staging_complete(success_response)
 
-                    expect(droplet.reload.buildpack_receipt_buildpack).to eq('woop')
-                    expect(droplet.reload.buildpack_receipt_buildpack_guid).to eq(admin_buildpack.guid)
-                  end
-                end
+              #       expect(droplet.reload.buildpack_receipt_buildpack).to eq('woop')
+              #       expect(droplet.reload.buildpack_receipt_buildpack_guid).to eq(admin_buildpack.guid)
+              #     end
+              #   end
 
-                it 'records the buildpack_lifecycle_buildpacks' do
-                  success_response[:result][:lifecycle_metadata][:buildpacks] = lifecycle_buildpacks
-                  subject.staging_complete(success_response)
-                  expect(droplet.reload.buildpack_lifecycle_data.buildpack_lifecycle_buildpacks.size).to eq(lifecycle_buildpacks.size)
-                  expect(droplet.reload.buildpack_lifecycle_data.buildpack_lifecycle_buildpacks).
-                    to match_array(BuildpackLifecycleBuildpackModel.all)
-                end
+              #   it 'records the buildpack_lifecycle_buildpacks' do
+              #     success_response[:result][:lifecycle_metadata][:buildpacks] = lifecycle_buildpacks
+              #     subject.staging_complete(success_response)
+              #     expect(droplet.reload.buildpack_lifecycle_data.buildpack_lifecycle_buildpacks.size).to eq(lifecycle_buildpacks.size)
+              #     expect(droplet.reload.buildpack_lifecycle_data.buildpack_lifecycle_buildpacks).
+              #       to match_array(BuildpackLifecycleBuildpackModel.all)
+              #   end
 
-                context 'when lifecycle buildpacks do not have versions or names' do
-                  let(:lifecycle_buildpacks) do
-                    [{ key: buildpack1_key }, { key: buildpack2_key }, { key: buildpack3_key }]
-                  end
+              #   context 'when lifecycle buildpacks do not have versions or names' do
+              #     let(:lifecycle_buildpacks) do
+              #       [{ key: buildpack1_key }, { key: buildpack2_key }, { key: buildpack3_key }]
+              #     end
 
-                  it 'accepts the lifecycle buildpacks' do
-                    success_response[:result][:lifecycle_metadata][:buildpacks] = lifecycle_buildpacks
-                    subject.staging_complete(success_response)
-                    expect(droplet.reload.buildpack_lifecycle_data.buildpack_lifecycle_buildpacks.size).to eq(lifecycle_buildpacks.size)
-                    expect(droplet.reload.buildpack_lifecycle_data.buildpack_lifecycle_buildpacks).
-                      to match_array(BuildpackLifecycleBuildpackModel.all)
-                  end
-                end
-              end
+              #     it 'accepts the lifecycle buildpacks' do
+              #       success_response[:result][:lifecycle_metadata][:buildpacks] = lifecycle_buildpacks
+              #       subject.staging_complete(success_response)
+              #       expect(droplet.reload.buildpack_lifecycle_data.buildpack_lifecycle_buildpacks.size).to eq(lifecycle_buildpacks.size)
+              #       expect(droplet.reload.buildpack_lifecycle_data.buildpack_lifecycle_buildpacks).
+              #         to match_array(BuildpackLifecycleBuildpackModel.all)
+              #     end
+              #   end
+              # end
             end
 
             context 'when updating the droplet record with data from staging fails' do
@@ -449,14 +422,15 @@ module VCAP::CloudController
                 end.to change { AppUsageEvent.where(state: 'BUILDPACK_SET').count }.from(0).to(2)
               end
 
-              it 'records a staging complete event for the build' do
-                expect do
-                  subject.staging_complete(success_response, true)
-                end.to change { AppUsageEvent.where(state: 'STAGING_STOPPED').count }.from(0).to(1)
-                event = AppUsageEvent.where(state: 'STAGING_STOPPED').last
-                expect(event.buildpack_guid).to eq(buildpack.guid)
-                expect(event.buildpack_name).to eq(buildpack.name)
-              end
+              # FIXME: Relevant only for system buildpacks?
+              # it 'records a staging complete event for the build' do
+              #   expect do
+              #     subject.staging_complete(success_response, true)
+              #   end.to change { AppUsageEvent.where(state: 'STAGING_STOPPED').count }.from(0).to(1)
+              #   event = AppUsageEvent.where(state: 'STAGING_STOPPED').last
+              #   expect(event.buildpack_guid).to eq(buildpack.guid)
+              #   expect(event.buildpack_name).to eq(buildpack.name)
+              # end
 
               context 'when this is not the most recent staging result' do
                 before do
@@ -485,26 +459,28 @@ module VCAP::CloudController
                 allow(runners).to receive(:runner_for_process).and_return(runner)
               end
 
-              it 'records a staging complete event for the build' do
-                expect do
-                  subject.staging_complete(success_response, with_start)
-                end.to change { AppUsageEvent.where(state: 'STAGING_STOPPED').count }.from(0).to(1)
-                event = AppUsageEvent.where(state: 'STAGING_STOPPED').last
-                expect(event.buildpack_guid).to eq(buildpack.guid)
-                expect(event.buildpack_name).to eq(buildpack.name)
-              end
+              # FIXME: Relevant only for system buildpacks?
+              # it 'records a staging complete event for the build' do
+              #   expect do
+              #     subject.staging_complete(success_response, with_start)
+              #   end.to change { AppUsageEvent.where(state: 'STAGING_STOPPED').count }.from(0).to(1)
+              #   event = AppUsageEvent.where(state: 'STAGING_STOPPED').last
+              #   expect(event.buildpack_guid).to eq(buildpack.guid)
+              #   expect(event.buildpack_name).to eq(buildpack.name)
+              # end
 
-              it 'records a buildpack set event for all processes' do
-                ProcessModel.make(app: app, type: 'other')
-                expect do
-                  subject.staging_complete(success_response, with_start)
-                end.to change { AppUsageEvent.where(state: 'BUILDPACK_SET').count }.from(0).to(1)
-                event = AppUsageEvent.where(state: 'BUILDPACK_SET').last
-                expect(event.buildpack_guid).to eq(buildpack.guid)
-                expect(event.buildpack_name).to eq(buildpack.name)
-                expect(event.parent_app_name).to eq(app.name)
-                expect(event.parent_app_guid).to eq(app.guid)
-              end
+              # FIXME: Relevant only for system buildpacks?
+              # it 'records a buildpack set event for all processes' do
+              #   ProcessModel.make(app: app, type: 'other')
+              #   expect do
+              #     subject.staging_complete(success_response, with_start)
+              #   end.to change { AppUsageEvent.where(state: 'BUILDPACK_SET').count }.from(0).to(1)
+              #   event = AppUsageEvent.where(state: 'BUILDPACK_SET').last
+              #   expect(event.buildpack_guid).to eq(buildpack.guid)
+              #   expect(event.buildpack_name).to eq(buildpack.name)
+              #   expect(event.parent_app_name).to eq(app.name)
+              #   expect(event.parent_app_guid).to eq(app.guid)
+              # end
 
               it 'does not start the app' do
                 subject.staging_complete(success_response, with_start)

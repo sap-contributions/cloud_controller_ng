@@ -10,6 +10,7 @@ module VCAP::CloudController
         end
 
         def self.schema
+          # This is the result.json schema from our cnbapplifecycle
           lambda { |_dsl|
             {
               result: {
@@ -17,10 +18,10 @@ module VCAP::CloudController
                 lifecycle_type: Lifecycles::CNB,
                 lifecycle_metadata: {
                   optional(:buildpack_key) => String,
-                  detected_buildpack: String,
+                  optional(:detected_buildpack) => String,
                   optional(:buildpacks) => [
                     {
-                      key: String,
+                      optional(:key) => String,
                       optional(:name) => String,
                       optional(:version) => String
                     }

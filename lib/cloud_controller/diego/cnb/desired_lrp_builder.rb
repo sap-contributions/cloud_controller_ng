@@ -22,15 +22,11 @@ module VCAP::CloudController
         def cached_dependencies
           return nil if @config.get(:diego, :enable_declarative_asset_downloads)
 
-          lifecycle_bundle_key = :"buildpack/#{VCAP::CloudController::Stack.default.name}"
-          lifecycle_bundle = @config.get(:diego, :lifecycle_bundles)[lifecycle_bundle_key]
-          raise InvalidStack.new("no compiler defined for requested stack '#{VCAP::CloudController::Stack.default.name}'") unless lifecycle_bundle
-
           [
             ::Diego::Bbs::Models::CachedDependency.new(
-              from: LifecycleBundleUriGenerator.uri(lifecycle_bundle),
+              from: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
               to: '/tmp/lifecycle',
-              cache_key: "buildpack-#{VCAP::CloudController::Stack.default.name}-lifecycle"
+              cache_key: "buildpack-cnb-lifecycle"
             )
           ]
         end
@@ -64,14 +60,10 @@ module VCAP::CloudController
           destination = @config.get(:diego, :droplet_destinations)[@stack.to_sym]
           raise InvalidStack.new("no droplet destination defined for requested stack '#{@stack}'") unless destination
 
-          lifecycle_bundle_key = :"buildpack/#{VCAP::CloudController::Stack.default.name}"
-          lifecycle_bundle = @config.get(:diego, :lifecycle_bundles)[lifecycle_bundle_key]
-          raise InvalidStack.new("no compiler defined for requested stack '#{VCAP::CloudController::Stack.default.name}'") unless lifecycle_bundle
-
           layers = [
             ::Diego::Bbs::Models::ImageLayer.new(
-              name: "buildpack-#{@stack}-lifecycle",
-              url: LifecycleBundleUriGenerator.uri(lifecycle_bundle),
+              name: "buildpack-cnb-lifecycle",
+              url: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
               destination_path: '/tmp/lifecycle',
               layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
               media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::TGZ
@@ -96,7 +88,6 @@ module VCAP::CloudController
         def global_environment_variables
           [
             ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'LANG', value: DEFAULT_LANG),
-            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_PLATFORM_API', value: "0.11"),
             ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_LAYERS_DIR', value: "/home/vcap/layers"),
             ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_APP_DIR', value: "/home/vcap/workspace")
           ]

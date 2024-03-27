@@ -1,0 +1,10 @@
+[
+  {
+    "httpRequest": {
+      "path": "/v1/tasks"
+    },
+    "httpResponse": {
+      "statusCode": 202
+    }
+  }
+]

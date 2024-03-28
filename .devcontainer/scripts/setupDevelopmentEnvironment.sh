@@ -100,7 +100,7 @@ yq -i e '.buildpacks.fog_connection.path_style=true' tmp/cloud_controller.yml
 yq -i e '.cloud_controller_username_lookup_client_name="login"' tmp/cloud_controller.yml
 yq -i e '.cloud_controller_username_lookup_client_secret="loginsecret"' tmp/cloud_controller.yml
 
-yq -i e '.diego.bbs.url="https://127.0.0.1:8889"' tmp/cloud_controller.yml
+yq -i e '.diego.bbs.url="http://127.0.0.1:1234"' tmp/cloud_controller.yml
 yq -i e '.diego.bbs.key_file="spec/fixtures/certs/bbs_client.key"' tmp/cloud_controller.yml
 yq -i e '.diego.bbs.cert_file="spec/fixtures/certs/bbs_client.crt"' tmp/cloud_controller.yml
 yq -i e '.diego.bbs.ca_file="spec/fixtures/certs/bbs_ca.crt"' tmp/cloud_controller.yml

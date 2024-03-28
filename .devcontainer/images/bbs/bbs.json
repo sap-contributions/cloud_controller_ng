@@ -15,7 +15,7 @@
     "key-2016-06": "J7dy5tgYSyb5kUeKmhU944TFhVTEoq"
   },
   "active_key_label": "key-2016-06",
-  "auctioneer_address": "http://mockserver:1080",
+  "auctioneer_address": "http://mockserver:1234",
   "ca_file": "/bbs/certs/bbs_ca.crt",
   "cert_file": "/bbs/certs/bbs_server.crt",
   "key_file": "/bbs/certs/bbs_server.key",

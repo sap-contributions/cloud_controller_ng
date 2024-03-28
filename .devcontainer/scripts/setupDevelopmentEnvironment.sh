@@ -105,6 +105,8 @@ yq -i e '.diego.bbs.key_file="spec/fixtures/certs/bbs_client.key"' tmp/cloud_con
 yq -i e '.diego.bbs.cert_file="spec/fixtures/certs/bbs_client.crt"' tmp/cloud_controller.yml
 yq -i e '.diego.bbs.ca_file="spec/fixtures/certs/bbs_ca.crt"' tmp/cloud_controller.yml
 
+yq -i e '.packages.max_package_size=2147483648' tmp/cloud_controller.yml
+
 # Wait for background jobs and exit 1 if any error happened
 # shellcheck disable=SC2046
 wait $(jobs -p)

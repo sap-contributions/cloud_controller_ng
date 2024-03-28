@@ -7,4 +7,3 @@ VOLUME /bbs
 COPY entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT "/entrypoint.sh"
-# CMD ["/go/bin/bbs", "-config=/bbs/bbs.json"]

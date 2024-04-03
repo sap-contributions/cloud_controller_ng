@@ -95,7 +95,7 @@ module VCAP::CloudController
     end
 
     def cnb?
-      lifecycle_data == CNBLifecycleDataModel::LIFECYCLE_TYPE
+      lifecycle_type == CNBLifecycleDataModel::LIFECYCLE_TYPE
     end
 
     def docker_ports
@@ -149,7 +149,6 @@ module VCAP::CloudController
 
     def lifecycle_type
       return BuildpackLifecycleDataModel::LIFECYCLE_TYPE if buildpack_lifecycle_data
-      # TODO: Do not use kpack for cnb
       return CNBLifecycleDataModel::LIFECYCLE_TYPE if cnb_lifecycle_data
 
       DockerLifecycleDataModel::LIFECYCLE_TYPE

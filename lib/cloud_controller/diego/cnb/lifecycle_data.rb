@@ -10,8 +10,8 @@ module VCAP::CloudController
             app_bits_download_uri:,
             build_artifacts_cache_upload_uri:,
             droplet_upload_uri:,
-            stack:,
             buildpacks:,
+            stack:,
             app_bits_checksum:
           }
           message[:build_artifacts_cache_download_uri] = build_artifacts_cache_download_uri if build_artifacts_cache_download_uri
@@ -31,9 +31,8 @@ module VCAP::CloudController
               optional(:buildpack_cache_checksum) => String,
               build_artifacts_cache_upload_uri: String,
               droplet_upload_uri: String,
+              buildpacks: Array,
               stack: String,
-              # FIXME: Is nil somehow
-              # buildpacks: Array,
               app_bits_checksum: Hash
             }
           end

@@ -72,27 +72,6 @@ module VCAP::CloudController
               digest_value: lifecycle_data[:buildpack_cache_checksum]
             }.compact)
           end
-
-          buildpack_layers = lifecycle_data[:buildpacks].
-                             reject { |buildpack| buildpack[:name] == 'custom' }.
-                             map do |buildpack|
-            # Type is shared, could be converted to CachedDependency
-            layer = {
-              name: buildpack[:name],
-              url: buildpack[:url],
-              destination_path: buildpack_path(buildpack[:key]),
-              layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
-              media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP
-            }
-            if buildpack[:sha256]
-              layer[:digest_algorithm] = ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256
-              layer[:digest_value] = buildpack[:sha256]
-            end
-
-            ::Diego::Bbs::Models::ImageLayer.new(layer.compact)
-          end
-
-          layers.concat(buildpack_layers)
         end
 
         def cached_dependencies
@@ -108,23 +87,6 @@ module VCAP::CloudController
               name: 'custom cnb lifecycle'
             )
           ]
-
-          # others = lifecycle_data[:buildpacks].map do |buildpack|
-          #   next if buildpack[:name] == 'custom'
-          #
-          #   buildpack_dependency = {
-          #     name: buildpack[:name],
-          #     from: buildpack[:url],
-          #     to: buildpack_path(buildpack[:key]),
-          #     cache_key: buildpack[:key]
-          #   }
-          #   if buildpack[:sha256]
-          #     buildpack_dependency[:checksum_algorithm] = 'sha256'
-          #     buildpack_dependency[:checksum_value] = buildpack[:sha256]
-          #   end
-          #
-          #   ::Diego::Bbs::Models::CachedDependency.new(buildpack_dependency.compact)
-          # end.compact
         end
 
         def stack
@@ -176,9 +138,9 @@ module VCAP::CloudController
           ::Diego::Bbs::Models::RunAction.new(
             path: '/tmp/lifecycle/builder',
             user: 'vcap',
-            args: [
-              '--buildpack', 'gcr.io/paketo-buildpacks/nodejs'
-            ]
+            args: lifecycle_data[:buildpacks].map do |buildpack|
+              ['--buildpacks', buildpack[:url]]
+            end.flatten
           )
         end
 

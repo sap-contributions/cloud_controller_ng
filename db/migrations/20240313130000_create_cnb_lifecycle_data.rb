@@ -19,7 +19,7 @@ Sequel.migration do
     alter_table(:buildpack_lifecycle_buildpacks) do
       add_column :cnb_lifecycle_data_guid, String, null: true
 
-      add_foreign_key [:cnb_lifecycle_data_guid], :cnb_lifecycle_data, key: :guid, name: :fk_blcnb_bldata_guid
+      add_foreign_key [:cnb_lifecycle_data_guid], :cnb_lifecycle_data, key: :guid, name: :fk_blcnb_bldata_guid, on_delete: :cascade
       add_index [:cnb_lifecycle_data_guid], name: :bl_cnb_bldata_guid_index
 
       set_column_allow_null :cnb_lifecycle_data_guid

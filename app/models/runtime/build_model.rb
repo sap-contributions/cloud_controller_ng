@@ -63,6 +63,10 @@ module VCAP::CloudController
       lifecycle_type == Lifecycles::BUILDPACK
     end
 
+    def cnb_lifecycle?
+      lifecycle_type == Lifecycles::CNB
+    end
+
     def lifecycle_data
       return buildpack_lifecycle_data if buildpack_lifecycle_data
       return cnb_lifecycle_data if cnb_lifecycle_data

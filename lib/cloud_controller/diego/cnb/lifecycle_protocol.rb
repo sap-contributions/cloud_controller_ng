@@ -25,10 +25,9 @@ module VCAP
             lifecycle_data.app_bits_checksum                  = staging_details.package.checksum_info
             lifecycle_data.buildpack_cache_checksum           = staging_details.package.app.buildpack_cache_sha256_checksum
             lifecycle_data.build_artifacts_cache_download_uri = @blobstore_url_generator.buildpack_cache_download_url(staging_details.package.app_guid, stack)
-            lifecycle_data.build_artifacts_cache_upload_uri = @blobstore_url_generator.buildpack_cache_upload_url(staging_details.package.app_guid, stack)
+            lifecycle_data.build_artifacts_cache_upload_uri   = @blobstore_url_generator.buildpack_cache_upload_url(staging_details.package.app_guid, stack)
             lifecycle_data.droplet_upload_uri                 = @blobstore_url_generator.droplet_upload_url(staging_details.staging_guid)
-            # TODO: Check this line
-            # lifecycle_data.buildpacks                         = @buildpack_entry_generator.buildpack_entries(staging_details.lifecycle.buildpack_infos, stack)
+            lifecycle_data.buildpacks                         = @buildpack_entry_generator.buildpack_entries(staging_details.lifecycle.buildpack_infos, stack)
             lifecycle_data.stack                              = stack
 
             lifecycle_data.message

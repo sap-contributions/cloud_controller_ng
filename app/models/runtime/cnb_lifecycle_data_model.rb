@@ -42,7 +42,7 @@ module VCAP::CloudController
     def buildpack_models
       if buildpack_lifecycle_buildpacks.present?
         buildpack_lifecycle_buildpacks.map do |buildpack|
-          Buildpack.find(name: buildpack.name) || CustomBuildpack.new(buildpack.name)
+          CustomBuildpack.new(buildpack.name)
         end
       else
         []

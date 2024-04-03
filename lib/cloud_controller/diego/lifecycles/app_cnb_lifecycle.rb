@@ -1,3 +1,5 @@
+require 'cloud_controller/diego/docker/docker_uri_converter'
+
 module VCAP::CloudController
   class AppCNBLifecycle
     def initialize(message)
@@ -47,8 +49,20 @@ module VCAP::CloudController
 
     attr_reader :message
 
+    def formatted_buildpacks
+      converter = VCAP::CloudController::DockerURIConverter.new
+
+      (message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || []) : []).map do |buildpack|
+        if buildpack.include? '://'
+          buildpack
+        else
+          converter.convert(buildpack).sub("#", ":")
+        end
+      end
+    end
+
     def buildpacks
-      message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || []) : []
+      formatted_buildpacks
     end
 
     def stack

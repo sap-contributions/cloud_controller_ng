@@ -190,7 +190,7 @@ module VCAP
                 expect do
                   lifecycle_protocol.task_action_builder(config, task)
                 end.to raise_error(
-                  VCAP::CloudController::Diego::Buildpack::LifecycleProtocol::InvalidDownloadUri,
+                  VCAP::CloudController::Diego::CNB::LifecycleProtocol::InvalidDownloadUri,
                   /Failed to get blobstore download url for droplet #{task.droplet.guid}/
                 )
               end
@@ -225,7 +225,7 @@ module VCAP
             end
 
             it 'creates a diego DesiredLrpBuilder' do
-              expect(VCAP::CloudController::Diego::Buildpack::DesiredLrpBuilder).to receive(:new).with(
+              expect(VCAP::CloudController::Diego::CNB::DesiredLrpBuilder).to receive(:new).with(
                 config,
                 builder_opts
               )
@@ -239,7 +239,7 @@ module VCAP
 
               it 'uses it' do
                 builder_opts.merge!(checksum_algorithm: 'sha256', checksum_value: 'droplet-sha256-checksum')
-                expect(VCAP::CloudController::Diego::Buildpack::DesiredLrpBuilder).to receive(:new).with(
+                expect(VCAP::CloudController::Diego::CNB::DesiredLrpBuilder).to receive(:new).with(
                   config,
                   builder_opts
                 )
@@ -255,7 +255,7 @@ module VCAP
 
               it 'uses the detected start command' do
                 builder_opts[:start_command] = '/usr/bin/nc'
-                expect(VCAP::CloudController::Diego::Buildpack::DesiredLrpBuilder).to receive(:new).with(
+                expect(VCAP::CloudController::Diego::CNB::DesiredLrpBuilder).to receive(:new).with(
                   config,
                   builder_opts
                 )
@@ -286,7 +286,7 @@ module VCAP
 
                 it 'uses the droplet from the revision and the command in the droplet' do
                   builder_opts.merge!(start_command: 'something else', droplet_hash: new_droplet.droplet_hash, checksum_value: new_droplet.sha256_checksum)
-                  expect(VCAP::CloudController::Diego::Buildpack::DesiredLrpBuilder).to receive(:new).with(
+                  expect(VCAP::CloudController::Diego::CNB::DesiredLrpBuilder).to receive(:new).with(
                     config,
                     builder_opts
                   )
@@ -300,7 +300,7 @@ module VCAP
 
                   it 'uses the command from the revision' do
                     builder_opts.merge!(start_command: 'stop stop stop', droplet_hash: new_droplet.droplet_hash, checksum_value: new_droplet.sha256_checksum)
-                    expect(VCAP::CloudController::Diego::Buildpack::DesiredLrpBuilder).to receive(:new).with(
+                    expect(VCAP::CloudController::Diego::CNB::DesiredLrpBuilder).to receive(:new).with(
                       config,
                       builder_opts
                     )
@@ -312,7 +312,7 @@ module VCAP
               context 'but there is not a revision on the process' do
                 it 'uses the droplet from the process' do
                   builder_opts.merge!(droplet_hash: droplet.droplet_hash, checksum_value: droplet.sha256_checksum)
-                  expect(VCAP::CloudController::Diego::Buildpack::DesiredLrpBuilder).to receive(:new).with(
+                  expect(VCAP::CloudController::Diego::CNB::DesiredLrpBuilder).to receive(:new).with(
                     config,
                     builder_opts
                   )
@@ -321,7 +321,7 @@ module VCAP
 
                 it 'uses the command from the process' do
                   builder_opts[:start_command] = 'go go go'
-                  expect(VCAP::CloudController::Diego::Buildpack::DesiredLrpBuilder).to receive(:new).with(
+                  expect(VCAP::CloudController::Diego::CNB::DesiredLrpBuilder).to receive(:new).with(
                     config,
                     builder_opts
                   )

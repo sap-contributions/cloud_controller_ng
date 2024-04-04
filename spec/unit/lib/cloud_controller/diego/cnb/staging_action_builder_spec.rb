@@ -64,7 +64,7 @@ module VCAP::CloudController
             ::Diego::Bbs::Models::DownloadAction.new(
               artifact: 'app package',
               from: 'http://app_bits_download_uri.example.com/path/to/bits',
-              to: '/tmp/app',
+              to: '/home/vcap/workspace',
               user: 'vcap',
               checksum_algorithm: 'sha256',
               checksum_value: 'package-checksum'
@@ -105,16 +105,15 @@ module VCAP::CloudController
           let(:run_staging_action) do
             ::Diego::Bbs::Models::RunAction.new(
               path: '/tmp/lifecycle/builder',
-              user: 'cnb',
-              resource_limits: ::Diego::Bbs::Models::ResourceLimits.new(nofile: 4),
-              env: generated_environment
+              user: 'vcap',
+              args: ["--buildpacks", "gcr.io/paketo-buildpacks/node-start", "--buildpacks", "gcr.io/paketo-buildpacks/node-engine"]
             )
           end
 
           let(:buildpacks) do
             [
-              { name: 'buildpack-1', key: 'buildpack-1-key', url: 'buildpack-1-url', skip_detect: false },
-              { name: 'buildpack-2', key: 'buildpack-2-key', url: 'buildpack-2-url', skip_detect: false }
+              { url: 'gcr.io/paketo-buildpacks/node-start', skip_detect: false },
+              { url: 'gcr.io/paketo-buildpacks/node-engine', skip_detect: false }
             ]
           end
 
@@ -139,7 +138,6 @@ module VCAP::CloudController
             expect(parallel_upload_action.parallel_action).not_to be_nil
             upload_actions = parallel_upload_action.parallel_action.actions
             expect(upload_actions[0].upload_action).to eq(upload_droplet_action)
-            expect(upload_actions[1].upload_action).to eq(upload_build_artifacts_cache_action)
           end
 
           describe 'credhub' do
@@ -154,50 +152,6 @@ module VCAP::CloudController
             end
             let(:expected_credhub_arg) do
               { 'VCAP_PLATFORM_OPTIONS' => { 'credhub-uri' => credhub_url } }
-            end
-
-            context 'when credhub url is present' do
-              before do
-                TestConfig.override(credhub_api: { internal_url: 'http:credhub.capi.land:8844' })
-              end
-
-              context 'when the interpolation of service bindings is enabled' do
-                before do
-                  TestConfig.override(credential_references: { interpolate_service_bindings: true })
-                end
-
-                it 'sends the credhub_url in the environment variables' do
-                  result = builder.action
-                  actions = result.serial_action.actions
-
-                  expect(actions[1].run_action.env).to eq(generated_environment + expected_platform_options)
-                end
-              end
-
-              context 'when the interpolation of service bindings is disabled' do
-                before do
-                  TestConfig.override(credential_references: { interpolate_service_bindings: false })
-                end
-
-                it 'does not send the credhub_url in the environment variables' do
-                  result = builder.action
-                  actions = result.serial_action.actions
-
-                  expect(actions[1].run_action.env).to eq(generated_environment)
-                end
-              end
-            end
-
-            context 'when credhub url is not present' do
-              before do
-                TestConfig.override(credhub_api: nil)
-              end
-
-              it 'does not send the credhub_url in the environment variables' do
-                result = builder.action
-                actions = result.serial_action.actions
-                expect(actions[1].run_action.env).to eq(generated_environment)
-              end
             end
           end
 
@@ -232,24 +186,6 @@ module VCAP::CloudController
               parallel_download_action = actions[0].parallel_action
               expect(parallel_download_action.actions.count).to eq(1)
               expect(parallel_download_action.actions.first.download_action).not_to eq(download_build_artifacts_cache_action)
-            end
-          end
-
-          context 'when any specified buildpack has "skip_detect" set to true' do
-            let(:buildpacks) do
-              [
-                { name: 'buildpack-1', key: 'buildpack-1-key', url: 'buildpack-1-url', skip_detect: false },
-                { name: 'buildpack-2', key: 'buildpack-2-key', url: 'buildpack-2-url', skip_detect: true }
-              ]
-            end
-
-            it 'sets skipDetect to true' do
-              result = builder.action
-
-              serial_action = result.serial_action
-              actions       = serial_action.actions
-
-              expect(actions[1].run_action.args).to include('-skipDetect=true')
             end
           end
 
@@ -291,168 +227,12 @@ module VCAP::CloudController
             result = builder.cached_dependencies
             expect(result).to include(
               ::Diego::Bbs::Models::CachedDependency.new(
+                name: 'custom cnb lifecycle',
                 from: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
                 to: '/tmp/lifecycle',
                 cache_key: 'cnb-lifecycle'
               )
             )
-          end
-        end
-
-        describe '#image_layers' do
-          it 'returns no image layers' do
-            expect(builder.image_layers).to be_empty
-          end
-
-          context 'when enable_declarative_asset_downloads is true' do
-            let(:enable_declarative_asset_downloads) { true }
-
-            it 'returns the lifecycle as an image layer' do
-              expect(builder.image_layers).to include(
-                ::Diego::Bbs::Models::ImageLayer.new(
-                  name: 'buildpack-buildpack-stack-lifecycle',
-                  url: 'generated-uri',
-                  destination_path: '/tmp/lifecycle',
-                  layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
-                  media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::TGZ
-                )
-              )
-            end
-
-            it 'returns the app package as an image layer' do
-              expect(builder.image_layers).to include(
-                ::Diego::Bbs::Models::ImageLayer.new(
-                  name: 'app package',
-                  url: 'http://app_bits_download_uri.example.com/path/to/bits',
-                  destination_path: '/tmp/app',
-                  layer_type: ::Diego::Bbs::Models::ImageLayer::Type::EXCLUSIVE,
-                  media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP,
-                  digest_algorithm: ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256,
-                  digest_value: 'package-checksum'
-                )
-              )
-            end
-
-            context 'when the app package does not have sha256 checksum' do
-              # this test can be removed once all app packages have sha256 checksums
-              before do
-                lifecycle_data[:app_bits_checksum][:type] = 'sha1'
-              end
-
-              it 'does not include the app package as an image layer' do
-                expect(builder.image_layers.any? { |l| l['name'] == 'app package' }).to be false
-              end
-            end
-
-            it 'returns the buildpack cache as an image layer' do
-              expect(builder.image_layers).to include(
-                ::Diego::Bbs::Models::ImageLayer.new(
-                  name: 'build artifacts cache',
-                  url: 'http://build_artifacts_cache_download_uri.example.com/path/to/bits',
-                  destination_path: '/tmp/cache',
-                  layer_type: ::Diego::Bbs::Models::ImageLayer::Type::EXCLUSIVE,
-                  media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP,
-                  digest_algorithm: ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256,
-                  digest_value: 'bp-cache-checksum'
-                )
-              )
-            end
-
-            context 'when there is no buildpack cache' do
-              before do
-                lifecycle_data[:build_artifacts_cache_download_uri] = nil
-              end
-
-              it 'does not include the buildpack cache as an image layer' do
-                expect(builder.image_layers.any? { |l| l['name'] == 'build artifacts cache' }).to be false
-              end
-            end
-
-            context 'when there is no buildpack cache checksum' do
-              before do
-                lifecycle_data[:buildpack_cache_checksum] = ''
-              end
-
-              it 'does not include the buildpack cache as an image layer' do
-                expect(builder.image_layers.any? { |l| l['name'] == 'build artifacts cache' }).to be false
-              end
-            end
-
-            context 'when there are buildpacks' do
-              let(:buildpacks) do
-                [
-                  { name: 'buildpack-1', key: 'buildpack-1-key', url: 'buildpack-1-url', sha256: 'checksum' },
-                  { name: 'buildpack-2', key: 'buildpack-2-key', url: 'buildpack-2-url', sha256: 'checksum' }
-                ]
-              end
-
-              it 'returns the buildpacks as an image layer' do
-                expect(builder.image_layers).to include(
-                  ::Diego::Bbs::Models::ImageLayer.new(
-                    name: 'buildpack-1',
-                    url: 'buildpack-1-url',
-                    destination_path: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('buildpack-1-key')}",
-                    digest_algorithm: ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256,
-                    digest_value: 'checksum',
-                    layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
-                    media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP
-                  )
-                )
-                expect(builder.image_layers).to include(
-                  ::Diego::Bbs::Models::ImageLayer.new(
-                    name: 'buildpack-2',
-                    url: 'buildpack-2-url',
-                    destination_path: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('buildpack-2-key')}",
-                    digest_algorithm: ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256,
-                    digest_value: 'checksum',
-                    layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
-                    media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP
-                  )
-                )
-              end
-
-              context 'and some do not include checksums' do
-                let(:buildpacks) do
-                  [
-                    { name: 'buildpack-1', key: 'buildpack-1-key', url: 'buildpack-1-url', sha256: 'checksum' },
-                    { name: 'buildpack-2', key: 'buildpack-2-key', url: 'buildpack-2-url', sha256: nil }
-                  ]
-                end
-
-                it 'returns the buildpacks without checksum information' do
-                  expect(builder.image_layers).to include(
-                    ::Diego::Bbs::Models::ImageLayer.new(
-                      name: 'buildpack-2',
-                      url: 'buildpack-2-url',
-                      destination_path: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('buildpack-2-key')}",
-                      layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
-                      media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP
-                    )
-                  )
-                end
-              end
-            end
-
-            context 'when there are custom buildpacks' do
-              let(:buildpacks) do
-                [
-                  { name: 'buildpack-1', key: 'buildpack-1-key', url: 'buildpack-1-url', sha256: 'checksum' },
-                  { name: 'custom', key: 'custom-key', url: 'custom-url' }
-                ]
-              end
-
-              it 'does not returns the custom buildpack as an image layer' do
-                expect(builder.image_layers).not_to include(
-                  ::Diego::Bbs::Models::ImageLayer.new(
-                    name: 'custom',
-                    url: 'custom-url',
-                    destination_path: "/tmp/buildpacks/#{Digest::XXH64.hexdigest('custom-key')}",
-                    layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
-                    media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP
-                  )
-                )
-              end
-            end
           end
         end
 
@@ -462,7 +242,7 @@ module VCAP::CloudController
           end
 
           it 'returns the stack' do
-            expect(builder.stack).to eq('docker://paketobuildpacks/builder-jammy-base')
+            expect(builder.stack).to eq('preloaded:buildpack-stack')
           end
 
           context 'when the stack does not exist' do
@@ -485,9 +265,14 @@ module VCAP::CloudController
         end
 
         describe '#task_environment_variables' do
-          it 'returns LANG' do
-            lang_env = ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'LANG', value: 'en_US.UTF-8')
-            expect(builder.task_environment_variables).to contain_exactly(lang_env)
+          it 'contains CNB_USER_ID' do
+            user_env = ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_USER_ID', value: '2000')
+            expect(builder.task_environment_variables).to include(user_env)
+          end
+
+          it 'contains CNB_GROUP_ID' do
+            group_env = ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_GROUP_ID', value: '2000')
+            expect(builder.task_environment_variables).to include(group_env)
           end
         end
       end

@@ -12,7 +12,6 @@ module VCAP::CloudController
             result: {
               lifecycle_type: 'cnb',
               lifecycle_metadata: {
-                buildpack_key: 'foo',
                 buildpacks: [
                   key: 'foo',
                   name: 'nodejs',
@@ -118,36 +117,6 @@ module VCAP::CloudController
               it 'expires any old droplets' do
                 expect_any_instance_of(BitsExpiration).to receive(:expire_droplets!)
                 subject.staging_complete(success_response)
-              end
-
-              context 'when there are sidecars in the staging result' do
-                before do
-                  success_response[:result][:sidecars] = [{
-                    name: 'sleepy',
-                    command: 'sleep infinity',
-                    memory: 1000,
-                    process_types: ['web']
-                  }]
-                end
-
-                it 'saves the sidecars into the droplet' do
-                  subject.staging_complete(success_response)
-                  droplet.reload
-                  expect(droplet.sidecars).to eq([{
-                                                   'name' => 'sleepy',
-                                                   'command' => 'sleep infinity',
-                                                   'memory' => 1000,
-                                                   'process_types' => ['web']
-                                                 }])
-                end
-              end
-
-              context 'when sidecars are NOT present in the staging result' do
-                it 'does not set sidecars on the droplet' do
-                  subject.staging_complete(success_response)
-
-                  expect(droplet.sidecars).to be_nil
-                end
               end
 
               context 'when sidecars is null in the staging result' do

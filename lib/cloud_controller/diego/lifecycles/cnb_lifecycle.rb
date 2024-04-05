@@ -45,6 +45,7 @@ module VCAP::CloudController
     private
 
     def formatted_buildpacks
+      #FIXME: Do we need this? We should add a test!
       converter = VCAP::CloudController::DockerURIConverter.new
 
       buildpacks_to_use.map do |buildpack|

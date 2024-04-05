@@ -623,6 +623,10 @@ module VCAP::CloudController
     stack { nil }
   end
 
+  CustomBuildpack.blueprint do
+    url { 'http://acme.com' }
+  end
+
   BuildpackLifecycleDataModel.blueprint do
     buildpacks { nil }
     stack { Stack.make.name }

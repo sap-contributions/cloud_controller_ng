@@ -1,10 +1,13 @@
-require 'cloud_controller/diego/docker/docker_uri_converter'
+require 'cloud_controller/diego/lifecycles/cnb_lifecycle_data_validator'
 
 module VCAP::CloudController
   class AppCNBLifecycle
     def initialize(message)
-      @message = message
+      @message   = message
+      @validator = CNBLifecycleDataValidator.new({buildpacks: buildpacks})
     end
+
+    delegate :valid?, :errors, to: :validator
 
     def create_lifecycle_data_model(app)
       CNBLifecycleDataModel.create(
@@ -33,36 +36,16 @@ module VCAP::CloudController
       app.lifecycle_data.stack = message.buildpack_data.stack
     end
 
-    def valid?
-      true
-    end
-
-    def errors
-      []
-    end
-
     def type
       Lifecycles::CNB
     end
 
     private
 
-    attr_reader :message
-
-    def formatted_buildpacks
-      converter = VCAP::CloudController::DockerURIConverter.new
-
-      (message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || []) : []).map do |buildpack|
-        if buildpack.include? '://'
-          buildpack
-        else
-          converter.convert(buildpack).sub("#", ":")
-        end
-      end
-    end
+    attr_reader :message, :validator
 
     def buildpacks
-      formatted_buildpacks
+      (message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || [])  : [])
     end
 
     def stack

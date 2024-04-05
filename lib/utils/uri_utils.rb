@@ -1,3 +1,5 @@
+require 'uri'
+
 module UriUtils
   SSH_REGEX = %r{ \A (?:ssh://)? git@ .+? : .+? \.git \z }x
   GIT_REGEX = %r{ \A git:// .+? : .+? \.git \z }x
@@ -13,6 +15,12 @@ module UriUtils
     return true if is_uri?(candidate)
 
     !!(SSH_REGEX.match(candidate) || GIT_REGEX.match(candidate))
+  end
+
+  def self.is_cnb_buildpack_uri?(candidate)
+    return false unless candidate.is_a?(String)
+    ['http://','https://','docker://'].any? { |prefix| candidate.start_with?(prefix) }
+    #TODO: Should we validate the uri?
   end
 
   def self.is_uri_path?(candidate)

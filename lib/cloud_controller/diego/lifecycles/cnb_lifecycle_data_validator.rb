@@ -8,8 +8,8 @@ module VCAP::CloudController
 
     validate :buildpacks_are_uris
 
-
     def buildpacks_are_uris
+      errors.add(:buildpack, 'invalid')
     end
   end
 end

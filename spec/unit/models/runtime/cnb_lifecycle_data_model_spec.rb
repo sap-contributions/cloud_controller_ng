@@ -222,7 +222,7 @@ module VCAP::CloudController
         expect(lifecycle_data.errors.full_messages.first).to include('Must specify either a buildpack_url or an admin_buildpack_name')
       end
 
-      it 'adds BuildpackLifecyleBuildpack errors to the BuildpackLifecycleDataModels' do
+      it 'adds CNBLifecyleBuildpack errors to the BuildpackLifecycleBuildpacksDataModels' do
         app = AppModel.make
         lifecycle_data.app = app
         lifecycle_data.buildpacks = ['invalid_buildpack_name']
@@ -230,6 +230,14 @@ module VCAP::CloudController
         expect(lifecycle_data.errors.full_messages.size).to eq(1)
         expect(lifecycle_data.errors.full_messages.first).to include('Specified invalid buildpack URL: "invalid_buildpack_name"')
       end
+
+      it 'is valid' do
+        app = AppModel.make
+        lifecycle_data.app = app
+        lifecycle_data.buildpacks = ['http://gcr.io/acme']
+        expect(lifecycle_data.valid?).to be(true)
+      end
+
     end
 
     describe 'associations' do

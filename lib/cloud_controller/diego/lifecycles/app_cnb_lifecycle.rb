@@ -4,7 +4,7 @@ module VCAP::CloudController
   class AppCNBLifecycle
     def initialize(message)
       @message   = message
-      @validator = CNBLifecycleDataValidator.new({buildpacks: buildpacks})
+      @validator = CNBLifecycleDataValidator.new({ buildpacks: })
     end
 
     delegate :valid?, :errors, to: :validator
@@ -45,7 +45,7 @@ module VCAP::CloudController
     attr_reader :message, :validator
 
     def buildpacks
-      (message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || [])  : [])
+      (message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || []) : [])
     end
 
     def stack

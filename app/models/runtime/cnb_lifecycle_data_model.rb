@@ -69,6 +69,13 @@ module VCAP::CloudController
       { buildpack_url: buildpack_name, admin_buildpack_name: nil }
     end
 
+    def to_hash
+      {
+        buildpacks: buildpacks.map { |buildpack| CloudController::UrlSecretObfuscator.obfuscate(buildpack) },
+        stack: stack
+      }
+    end
+
     def validate
       return unless app && (build || droplet)
 

@@ -7,7 +7,7 @@ module VCAP::CloudController
     subject(:lifecycle) { AppCNBLifecycle.new(message) }
     let(:message) { VCAP::CloudController::AppCreateMessage.new(request) }
     let(:request) { { lifecycle: { type: 'cnb', data: lifecycle_request_data } } }
-    let(:lifecycle_request_data) { {buildpacks: ['http://acme.com']} }
+    let(:lifecycle_request_data) { { buildpacks: ['http://acme.com'] } }
 
     it_behaves_like 'a app lifecycle'
 

@@ -234,7 +234,7 @@ module VCAP::CloudController
       it 'is valid' do
         app = AppModel.make
         lifecycle_data.app = app
-        lifecycle_data.buildpacks = ['http://gcr.io/acme']
+        lifecycle_data.buildpacks = ['docker://gcr.io/acme']
         expect(lifecycle_data.valid?).to be(true)
       end
 

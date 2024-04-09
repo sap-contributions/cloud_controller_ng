@@ -71,11 +71,15 @@ RSpec.describe UriUtils do
     end
 
     it 'is true if it is a uri' do
-      expect(UriUtils.is_cnb_buildpack_uri?('http://www.example.com/foobar?baz=bar')).to be true
+      expect(UriUtils.is_cnb_buildpack_uri?('http://www.example.com/foobar?baz=bar')).to be false
     end
 
     it 'is true if it is a uri with docker scheme' do
       expect(UriUtils.is_cnb_buildpack_uri?('docker://nginx')).to be true
+    end
+
+    it 'is true if it is a uri with docker scheme with tag' do
+      expect(UriUtils.is_cnb_buildpack_uri?('docker://nginx:latest')).to be true
     end
 
     it 'is false if it is a uri without scheme' do

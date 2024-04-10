@@ -647,7 +647,7 @@ module VCAP::CloudController
   end
 
   CNBLifecycleDataModel.blueprint(:all_fields) do
-    buildpacks { ['gcr.io/paketo-buildpacks/nodejs'] }
+    buildpacks { ['docker://gcr.io/paketo-buildpacks/nodejs'] }
     stack { Stack.make.name }
     app_guid { Sham.guid }
     droplet_guid { Sham.guid }

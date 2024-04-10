@@ -70,8 +70,12 @@ RSpec.describe UriUtils do
       expect(UriUtils.is_cnb_buildpack_uri?('ssh://git@example.com:repo.git')).to be false
     end
 
-    it 'is true if it is a uri' do
-      expect(UriUtils.is_cnb_buildpack_uri?('http://www.example.com/foobar?baz=bar')).to be false
+    it 'is true if it is a http uri' do
+      expect(UriUtils.is_cnb_buildpack_uri?('http://www.example.com/foobar?baz=bar')).to be true
+    end
+
+    it 'is true if it is a https uri' do
+      expect(UriUtils.is_cnb_buildpack_uri?('https://www.example.com/foobar?baz=bar')).to be true
     end
 
     it 'is true if it is a uri with docker scheme' do
@@ -82,7 +86,7 @@ RSpec.describe UriUtils do
       expect(UriUtils.is_cnb_buildpack_uri?('docker://nginx:latest')).to be true
     end
 
-    it 'is false if it is a uri without scheme' do
+    it 'is false if it is a uri without any scheme' do
       expect(UriUtils.is_cnb_buildpack_uri?('nginx')).to be false
     end
   end

@@ -31,13 +31,21 @@ module VCAP::CloudController
       app.lifecycle_data.stack = message.buildpack_data.stack
     end
 
+    def valid?
+      true
+    end
+
+    def errors
+      []
+    end
+
     def type
       Lifecycles::CNB
     end
 
     private
 
-    attr_reader :message, :validator
+    attr_reader :message
 
     def buildpacks
       (message.buildpack_data.requested?(:buildpacks) ? (message.buildpack_data.buildpacks || []) : [])

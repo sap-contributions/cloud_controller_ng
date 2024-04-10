@@ -157,9 +157,9 @@ module VCAP::CloudController
           expect(event.space_guid).to eq(app.space_guid)
           expect(event.organization_guid).to eq(app.space.organization.guid)
           expect(event.metadata).to eq({
-                                         'build_guid' => build.guid,
-                                         'package_guid' => package.guid
-                                       })
+                                        'build_guid' => build.guid,
+                                        'package_guid' => package.guid
+                                      })
         end
 
         it 'does not create a droplet audit event' do
@@ -194,18 +194,17 @@ module VCAP::CloudController
           expect(build.staging_memory_in_mb).to eq(calculated_mem_limit)
           expect(build.staging_disk_in_mb).to eq(calculated_staging_disk_in_mb)
           expect(build.staging_log_rate_limit).to eq(calculated_staging_log_rate_limit)
-          #FIXME: buildpacks data is lost
-          #expect(build.lifecycle_data.to_hash).to eq(lifecycle_data)
+          expect(build.lifecycle_data.to_hash).to eq(lifecycle_data)
           expect(build.created_by_user_guid).to eq('1234')
           expect(build.created_by_user_name).to eq('charles')
           expect(build.created_by_user_email).to eq('charles@las.gym')
           expect(build).to have_labels(
-                             { prefix: nil, key_name: 'release', value: 'stable' },
-                             { prefix: 'seriouseats.com', key_name: 'potato', value: 'mashed' }
-                           )
+                            { prefix: nil, key_name: 'release', value: 'stable' },
+                            { prefix: 'seriouseats.com', key_name: 'potato', value: 'mashed' }
+                          )
           expect(build).to have_annotations(
-                             { key_name: 'anno', value: 'tations' }
-                           )
+                            { key_name: 'anno', value: 'tations' }
+                          )
         end
 
         it 'creates an app usage event for STAGING_STARTED' do
@@ -234,8 +233,7 @@ module VCAP::CloudController
           expect(event.previous_package_state).to eq('READY')
 
           expect(event.buildpack_guid).to be_nil
-          #FIXME: buildpacks data is lost
-          #expect(event.buildpack_name).to eq(buildpack_git_url)
+          expect(event.buildpack_name).to eq(buildpack_git_url)
         end
 
         it 'creates a build audit event' do
@@ -253,9 +251,9 @@ module VCAP::CloudController
           expect(event.space_guid).to eq(app.space_guid)
           expect(event.organization_guid).to eq(app.space.organization.guid)
           expect(event.metadata).to eq({
-                                         'build_guid' => build.guid,
-                                         'package_guid' => package.guid
-                                       })
+                                        'build_guid' => build.guid,
+                                        'package_guid' => package.guid
+                                      })
         end
 
         it 'does not create a droplet audit event' do

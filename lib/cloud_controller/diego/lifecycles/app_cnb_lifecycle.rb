@@ -1,13 +1,8 @@
-require 'cloud_controller/diego/lifecycles/cnb_lifecycle_data_validator'
-
 module VCAP::CloudController
   class AppCNBLifecycle
     def initialize(message)
-      @message   = message
-      @validator = CNBLifecycleDataValidator.new({ buildpacks: })
+      @message = message
     end
-
-    delegate :valid?, :errors, to: :validator
 
     def create_lifecycle_data_model(app)
       CNBLifecycleDataModel.create(

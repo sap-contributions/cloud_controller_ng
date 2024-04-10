@@ -1,5 +1,3 @@
-require 'cloud_controller/diego/lifecycles/cnb_lifecycle_data_validator'
-
 module VCAP::CloudController
   class CNBLifecycle
     attr_reader :staging_message, :buildpack_infos
@@ -7,11 +5,7 @@ module VCAP::CloudController
     def initialize(package, staging_message)
       @staging_message = staging_message
       @package = package
-
-      @validator = CNBLifecycleDataValidator.new({ buildpacks: buildpacks_to_use })
     end
-
-    delegate :valid?, :errors, to: :validator
 
     def type
       Lifecycles::CNB

@@ -162,36 +162,33 @@ module VCAP::CloudController
         lifecycle_data.save
       end
 
-      # FIXME: Add buildpack data
-      # it 'returns the lifecycle data as a hash' do
-      #   expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
-      # end
+      it 'returns the lifecycle data as a hash' do
+        expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
+      end
 
-      # FIXME: Add buildpack data
-      # context 'when the user has not specified a buildpack' do
-      #   let(:buildpacks) { nil }
-      #
-      #   it 'returns the lifecycle data as a hash' do
-      #     expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
-      #   end
-      # end
+      context 'when the user has not specified a buildpack' do
+        let(:buildpacks) { nil }
 
-      # FIXME: Add buildpack data
-      # context 'when the buildpack is an url' do
-      #   let(:buildpack) { 'https://github.com/puppychutes' }
-      #
-      #   it 'returns the lifecycle data as a hash' do
-      #     expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
-      #   end
-      #
-      #   it 'calls out to UrlSecretObfuscator' do
-      #     allow(CloudController::UrlSecretObfuscator).to receive(:obfuscate)
-      #
-      #     lifecycle_data.to_hash
-      #
-      #     expect(CloudController::UrlSecretObfuscator).to have_received(:obfuscate).exactly :once
-      #   end
-      # end
+        it 'returns the lifecycle data as a hash' do
+          expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
+        end
+      end
+
+      context 'when the buildpack is an url' do
+        let(:buildpack) { 'https://github.com/puppychutes' }
+
+        it 'returns the lifecycle data as a hash' do
+          expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
+        end
+
+        it 'calls out to UrlSecretObfuscator' do
+          allow(CloudController::UrlSecretObfuscator).to receive(:obfuscate)
+
+          lifecycle_data.to_hash
+
+          expect(CloudController::UrlSecretObfuscator).to have_received(:obfuscate).exactly :once
+        end
+      end
     end
 
     describe '#valid?' do
@@ -225,7 +222,7 @@ module VCAP::CloudController
       it 'adds CNBLifecyleBuildpack errors to the BuildpackLifecycleBuildpacksDataModels' do
         app = AppModel.make
         lifecycle_data.app = app
-        lifecycle_data.buildpacks = ['invalid_buildpack_name']
+        lifecycle_data.buildpacks = ['https://example.com', 'invalid_buildpack_name']
         expect(lifecycle_data.valid?).to be(false)
         expect(lifecycle_data.errors.full_messages.size).to eq(1)
         expect(lifecycle_data.errors.full_messages.first).to include('Specified invalid buildpack URL: "invalid_buildpack_name"')
@@ -234,7 +231,7 @@ module VCAP::CloudController
       it 'is valid' do
         app = AppModel.make
         lifecycle_data.app = app
-        lifecycle_data.buildpacks = ['docker://gcr.io/acme']
+        lifecycle_data.buildpacks = ['docker://gcr.io/acme', 'https://example.com']
         expect(lifecycle_data.valid?).to be(true)
       end
 

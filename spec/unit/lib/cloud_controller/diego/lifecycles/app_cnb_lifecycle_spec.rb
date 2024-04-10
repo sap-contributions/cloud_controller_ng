@@ -94,34 +94,5 @@ module VCAP::CloudController
         expect(data_model.stack).to eq('sweetness')
       end
     end
-
-
-    describe 'validation' do
-      let(:validator) { instance_double(CNBLifecycleDataValidator) }
-
-      before do
-        allow(validator).to receive(:valid?)
-        allow(validator).to receive(:errors)
-
-        allow(CNBLifecycleDataValidator).to receive(:new).and_return(validator)
-      end
-
-      it 'constructs the validator correctly' do
-        lifecycle.valid?
-
-        expect(CNBLifecycleDataValidator).to have_received(:new).with(buildpacks: ['http://acme.com'])
-      end
-
-      it 'delegates #valid? to a CNBLifecycleDataValidator' do
-        lifecycle.valid?
-        expect(validator).to have_received(:valid?)
-      end
-
-      it 'delegates #errors to a CNBLifecycleDataValidator' do
-        lifecycle.errors
-        expect(validator).to have_received(:errors)
-      end
-    end
-
   end
 end

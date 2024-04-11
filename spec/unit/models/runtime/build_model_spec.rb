@@ -109,7 +109,7 @@ module VCAP::CloudController
           build_model.save
         end
 
-        it 'returns buildpack_lifecycle_data ' do
+        it 'returns buildpack_lifecycle_data' do
           expect(build_model.lifecycle_data).to eq(buildpack_lifecycle_data)
         end
 
@@ -132,7 +132,7 @@ module VCAP::CloudController
           build_model.save
         end
 
-        it 'returns cnb_lifecycle_data ' do
+        it 'returns cnb_lifecycle_data' do
           expect(build_model.lifecycle_data).to eq(cnb_lifecycle_data)
         end
 
@@ -147,7 +147,6 @@ module VCAP::CloudController
           end.to change(CNBLifecycleDataModel, :count).by(-1).
             and change(BuildpackLifecycleBuildpackModel, :count).by(-2)
         end
-
       end
 
       context 'no lifecycle_data' do

@@ -3,17 +3,17 @@ Sequel.migration do
     create_table(:cnb_lifecycle_data) do
       VCAP::Migration.common(self, :cnb_lifecycle_data)
 
-      String :build_guid
+      String :build_guid, size: 255
       foreign_key [:build_guid], :builds, key: :guid, name: :fk_cnb_lifecycle_build_guid, on_delete: :cascade
       index [:build_guid], name: :fk_cnb_lifecycle_build_guid_index
 
-      String :app_guid
+      String :app_guid, size: 255
       index [:app_guid], name: :fk_cnb_lifecycle_app_guid_index
 
-      String :droplet_guid
+      String :droplet_guid, size: 255
       index [:droplet_guid], name: :fk_cnb_lifecycle_droplet_guid_index
 
-      String :stack
+      String :stack, size: 255
     end
 
     alter_table(:buildpack_lifecycle_buildpacks) do

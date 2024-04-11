@@ -19,8 +19,9 @@ module UriUtils
 
   def self.is_cnb_buildpack_uri?(candidate)
     return false unless candidate.is_a?(String)
+
     ['http://', 'https://', 'docker://'].any? { |prefix| candidate.start_with?(prefix) }
-    #TODO: Should we validate the uri?
+    # TODO: Should we validate the uri?
   end
 
   def self.is_uri_path?(candidate)

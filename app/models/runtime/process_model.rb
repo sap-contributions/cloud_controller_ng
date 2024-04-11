@@ -441,6 +441,8 @@ module VCAP::CloudController
 
     delegate :docker?, to: :app
 
+    delegate :cnb?, to: :app
+
     def database_uri
       service_binding_uris = service_bindings.map do |binding|
         binding.credentials['uri'] if binding.credentials.present?
@@ -493,6 +495,7 @@ module VCAP::CloudController
 
     def active?
       return false if docker? && !FeatureFlag.enabled?(:diego_docker)
+      return false if cnb? && !FeatureFlag.enabled?(:diego_cnb)
 
       true
     end

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 module VCAP::CloudController
   RSpec.describe CNBLifecycleDataModel do
-    subject(:lifecycle_data) { CNBLifecycleDataModel.new }
+    subject(:lifecycle_data) { CNBLifecycleDataModel.make([]) }
 
     describe '#stack' do
       it 'persists the stack' do
@@ -77,7 +77,6 @@ module VCAP::CloudController
     end
 
     describe '#buildpack_models' do
-
       context 'when the buildpacks are only custom buildpacks' do
         let(:buildpack1_url) { 'http://example.com/buildpack1' }
         let(:buildpack2_url) { 'http://example.com/buildpack2' }
@@ -162,36 +161,33 @@ module VCAP::CloudController
         lifecycle_data.save
       end
 
-      # FIXME: Add buildpack data
-      # it 'returns the lifecycle data as a hash' do
-      #   expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
-      # end
+      it 'returns the lifecycle data as a hash' do
+        expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
+      end
 
-      # FIXME: Add buildpack data
-      # context 'when the user has not specified a buildpack' do
-      #   let(:buildpacks) { nil }
-      #
-      #   it 'returns the lifecycle data as a hash' do
-      #     expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
-      #   end
-      # end
+      context 'when the user has not specified a buildpack' do
+        let(:buildpacks) { nil }
 
-      # FIXME: Add buildpack data
-      # context 'when the buildpack is an url' do
-      #   let(:buildpack) { 'https://github.com/puppychutes' }
-      #
-      #   it 'returns the lifecycle data as a hash' do
-      #     expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
-      #   end
-      #
-      #   it 'calls out to UrlSecretObfuscator' do
-      #     allow(CloudController::UrlSecretObfuscator).to receive(:obfuscate)
-      #
-      #     lifecycle_data.to_hash
-      #
-      #     expect(CloudController::UrlSecretObfuscator).to have_received(:obfuscate).exactly :once
-      #   end
-      # end
+        it 'returns the lifecycle data as a hash' do
+          expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
+        end
+      end
+
+      context 'when the buildpack is an url' do
+        let(:buildpack) { 'https://github.com/puppychutes' }
+
+        it 'returns the lifecycle data as a hash' do
+          expect(lifecycle_data.to_hash).to eq expected_lifecycle_data
+        end
+
+        it 'calls out to UrlSecretObfuscator' do
+          allow(CloudController::UrlSecretObfuscator).to receive(:obfuscate)
+
+          lifecycle_data.to_hash
+
+          expect(CloudController::UrlSecretObfuscator).to have_received(:obfuscate).exactly :once
+        end
+      end
     end
 
     describe '#valid?' do
@@ -222,13 +218,22 @@ module VCAP::CloudController
         expect(lifecycle_data.errors.full_messages.first).to include('Must specify either a buildpack_url or an admin_buildpack_name')
       end
 
-      it 'adds BuildpackLifecyleBuildpack errors to the BuildpackLifecycleDataModels' do
+      it 'adds CNBLifecyleBuildpack errors to the BuildpackLifecycleBuildpacksDataModels' do
         app = AppModel.make
         lifecycle_data.app = app
-        lifecycle_data.buildpacks = ['invalid_buildpack_name']
+        lifecycle_data.buildpacks = ['https://example.com', 'invalid_buildpack_name']
+        lifecycle_data.buildpack_lifecycle_buildpacks.each { |b| b.cnb_lifecycle_data = lifecycle_data }
+
         expect(lifecycle_data.valid?).to be(false)
         expect(lifecycle_data.errors.full_messages.size).to eq(1)
         expect(lifecycle_data.errors.full_messages.first).to include('Specified invalid buildpack URL: "invalid_buildpack_name"')
+      end
+
+      it 'is valid' do
+        app = AppModel.make
+        lifecycle_data.app = app
+        lifecycle_data.buildpacks = ['docker://gcr.io/acme', 'https://example.com']
+        expect(lifecycle_data.valid?).to be(true)
       end
     end
 

@@ -623,6 +623,10 @@ module VCAP::CloudController
     stack { nil }
   end
 
+  CustomBuildpack.blueprint do
+    url { 'http://acme.com' }
+  end
+
   BuildpackLifecycleDataModel.blueprint do
     buildpacks { nil }
     stack { Stack.make.name }
@@ -643,11 +647,10 @@ module VCAP::CloudController
   end
 
   CNBLifecycleDataModel.blueprint(:all_fields) do
-    buildpacks { ['gcr.io/paketo-buildpacks/nodejs'] }
+    buildpacks { ['docker://gcr.io/paketo-buildpacks/nodejs'] }
     stack { Stack.make.name }
     app_guid { Sham.guid }
     droplet_guid { Sham.guid }
-    admin_buildpack_name { 'admin-bp' }
     build { BuildModel.make }
   end
 
@@ -663,6 +666,7 @@ module VCAP::CloudController
 
   BuildpackLifecycleBuildpackModel.blueprint(:all_fields) do
     buildpack_lifecycle_data_guid { BuildpackLifecycleDataModel.make.guid }
+    cnb_lifecycle_data_guid { CNBLifecycleDataModel.make.guid }
     version { Sham.version }
     buildpack_name { Sham.name }
   end

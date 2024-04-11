@@ -11,7 +11,7 @@ module VCAP::CloudController
           data.build_artifacts_cache_download_uri = 'build_artifact_download'
           data.build_artifacts_cache_upload_uri   = 'build_artifact_upload'
           data.droplet_upload_uri                 = 'droplet_upload'
-          #data.buildpacks                         = []
+          data.buildpacks                         = ['docker://gcr.io/paketo-buildpacks/nodejs']
           data.stack                              = 'stack'
           data.buildpack_cache_checksum           = 'bp-cache-checksum'
           data.app_bits_checksum                  = { type: 'sha256', value: 'package-checksum' }
@@ -24,7 +24,7 @@ module VCAP::CloudController
             build_artifacts_cache_download_uri: 'build_artifact_download',
             build_artifacts_cache_upload_uri: 'build_artifact_upload',
             droplet_upload_uri: 'droplet_upload',
-            buildpacks: nil,  # FIXME: buildpacks needed
+            buildpacks: ['docker://gcr.io/paketo-buildpacks/nodejs'],
             stack: 'stack',
             buildpack_cache_checksum: 'bp-cache-checksum',
             app_bits_checksum: { type: 'sha256', value: 'package-checksum' }
@@ -70,22 +70,21 @@ module VCAP::CloudController
             end
           end
 
-          # FIXME: enable again
-          # context 'when anything else is missing' do
-          #   let(:required_keys) { lifecycle_payload.keys - optional_keys }
-          #
-          #   it 'fails with a schema validation error' do
-          #     required_keys.each do |key|
-          #       data = lifecycle_data.clone
-          #       data.public_send("#{key}=", nil)
-          #       expect do
-          #         data.message
-          #       end.to raise_error(
-          #         Membrane::SchemaValidationError, /{ #{key} => Expected instance of (String|Array|Hash), given an instance of NilClass }/
-          #       )
-          #     end
-          #   end
-          # end
+          context 'when anything else is missing' do
+            let(:required_keys) { lifecycle_payload.keys - optional_keys }
+
+            it 'fails with a schema validation error' do
+              required_keys.each do |key|
+                data = lifecycle_data.clone
+                data.public_send("#{key}=", nil)
+                expect do
+                  data.message
+                end.to raise_error(
+                  Membrane::SchemaValidationError, /{ #{key} => Expected instance of (String|Array|Hash), given an instance of NilClass }/
+                )
+              end
+            end
+          end
         end
       end
     end

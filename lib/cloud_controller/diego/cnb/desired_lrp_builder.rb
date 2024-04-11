@@ -26,7 +26,7 @@ module VCAP::CloudController
             ::Diego::Bbs::Models::CachedDependency.new(
               from: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
               to: '/tmp/lifecycle',
-              cache_key: "buildpack-cnb-lifecycle"
+              cache_key: 'buildpack-cnb-lifecycle'
             )
           ]
         end
@@ -42,16 +42,16 @@ module VCAP::CloudController
           return nil if @config.get(:diego, :enable_declarative_asset_downloads) && @checksum_algorithm == 'sha256'
 
           serial([
-                   ::Diego::Bbs::Models::DownloadAction.new({
-                                                              artifact: 'droplet',
-                                                              from: @droplet_uri,
-                                                              to: '.',
-                                                              cache_key: "droplets-#{@process_guid}",
-                                                              user: action_user,
-                                                              checksum_algorithm: @checksum_algorithm,
-                                                              checksum_value: @checksum_value
-                                                            }.compact)
-                 ])
+            ::Diego::Bbs::Models::DownloadAction.new({
+              artifact: 'droplet',
+              from: @droplet_uri,
+              to: '.',
+              cache_key: "droplets-#{@process_guid}",
+              user: action_user,
+              checksum_algorithm: @checksum_algorithm,
+              checksum_value: @checksum_value
+            }.compact)
+          ])
         end
 
         def image_layers
@@ -62,7 +62,7 @@ module VCAP::CloudController
 
           layers = [
             ::Diego::Bbs::Models::ImageLayer.new(
-              name: "buildpack-cnb-lifecycle",
+              name: 'buildpack-cnb-lifecycle',
               url: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
               destination_path: '/tmp/lifecycle',
               layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
@@ -72,14 +72,14 @@ module VCAP::CloudController
 
           if @checksum_algorithm == 'sha256'
             layers << ::Diego::Bbs::Models::ImageLayer.new({
-                                                             name: 'droplet',
-                                                             url: UriUtils.uri_escape(@droplet_uri),
-                                                             destination_path: destination,
-                                                             layer_type: ::Diego::Bbs::Models::ImageLayer::Type::EXCLUSIVE,
-                                                             media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::TGZ,
-                                                             digest_value: @checksum_value,
-                                                             digest_algorithm: ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256
-                                                           }.compact)
+              name: 'droplet',
+              url: UriUtils.uri_escape(@droplet_uri),
+              destination_path: destination,
+              layer_type: ::Diego::Bbs::Models::ImageLayer::Type::EXCLUSIVE,
+              media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::TGZ,
+              digest_value: @checksum_value,
+              digest_algorithm: ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256
+            }.compact)
           end
 
           layers
@@ -88,8 +88,8 @@ module VCAP::CloudController
         def global_environment_variables
           [
             ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'LANG', value: DEFAULT_LANG),
-            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_LAYERS_DIR', value: "/home/vcap/layers"),
-            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_APP_DIR', value: "/home/vcap/workspace")
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_LAYERS_DIR', value: '/home/vcap/layers'),
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_APP_DIR', value: '/home/vcap/workspace')
           ]
         end
 
@@ -101,7 +101,7 @@ module VCAP::CloudController
 
         def port_environment_variables
           [
-            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'PORT', value: ports.first.to_s),
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'PORT', value: ports.first.to_s)
           ]
         end
 

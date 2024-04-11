@@ -60,18 +60,18 @@ module VCAP::CloudController
             }.compact)
           end
 
-          if lifecycle_data[:build_artifacts_cache_download_uri] && lifecycle_data[:buildpack_cache_checksum].present?
-            # Type is exclusive, will be converted to DownloadActions
-            layers << ::Diego::Bbs::Models::ImageLayer.new({
-              name: 'build artifacts cache',
-              url: lifecycle_data[:build_artifacts_cache_download_uri],
-              destination_path: '/tmp/cache',
-              layer_type: ::Diego::Bbs::Models::ImageLayer::Type::EXCLUSIVE,
-              media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP,
-              digest_algorithm: ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256,
-              digest_value: lifecycle_data[:buildpack_cache_checksum]
-            }.compact)
-          end
+          return unless lifecycle_data[:build_artifacts_cache_download_uri] && lifecycle_data[:buildpack_cache_checksum].present?
+
+          # Type is exclusive, will be converted to DownloadActions
+          layers << ::Diego::Bbs::Models::ImageLayer.new({
+            name: 'build artifacts cache',
+            url: lifecycle_data[:build_artifacts_cache_download_uri],
+            destination_path: '/tmp/cache',
+            layer_type: ::Diego::Bbs::Models::ImageLayer::Type::EXCLUSIVE,
+            media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::ZIP,
+            digest_algorithm: ::Diego::Bbs::Models::ImageLayer::DigestAlgorithm::SHA256,
+            digest_value: lifecycle_data[:buildpack_cache_checksum]
+          }.compact)
         end
 
         def cached_dependencies

@@ -157,9 +157,9 @@ module VCAP::CloudController
           expect(event.space_guid).to eq(app.space_guid)
           expect(event.organization_guid).to eq(app.space.organization.guid)
           expect(event.metadata).to eq({
-                                        'build_guid' => build.guid,
-                                        'package_guid' => package.guid
-                                      })
+                                         'build_guid' => build.guid,
+                                         'package_guid' => package.guid
+                                       })
         end
 
         it 'does not create a droplet audit event' do
@@ -180,7 +180,6 @@ module VCAP::CloudController
         end
         let(:lifecycle) { CNBLifecycle.new(package, staging_message) }
 
-
         it 'creates a build' do
           build = nil
 
@@ -199,12 +198,12 @@ module VCAP::CloudController
           expect(build.created_by_user_name).to eq('charles')
           expect(build.created_by_user_email).to eq('charles@las.gym')
           expect(build).to have_labels(
-                            { prefix: nil, key_name: 'release', value: 'stable' },
-                            { prefix: 'seriouseats.com', key_name: 'potato', value: 'mashed' }
-                          )
+            { prefix: nil, key_name: 'release', value: 'stable' },
+            { prefix: 'seriouseats.com', key_name: 'potato', value: 'mashed' }
+          )
           expect(build).to have_annotations(
-                            { key_name: 'anno', value: 'tations' }
-                          )
+            { key_name: 'anno', value: 'tations' }
+          )
         end
 
         it 'creates an app usage event for STAGING_STARTED' do
@@ -251,9 +250,9 @@ module VCAP::CloudController
           expect(event.space_guid).to eq(app.space_guid)
           expect(event.organization_guid).to eq(app.space.organization.guid)
           expect(event.metadata).to eq({
-                                        'build_guid' => build.guid,
-                                        'package_guid' => package.guid
-                                      })
+                                         'build_guid' => build.guid,
+                                         'package_guid' => package.guid
+                                       })
         end
 
         it 'does not create a droplet audit event' do
@@ -264,7 +263,6 @@ module VCAP::CloudController
           end)
         end
       end
-
 
       describe 'creating a stage request' do
         it 'initiates a staging request' do

@@ -2066,14 +2066,35 @@ module VCAP::CloudController
       end
 
       context 'when cnb is specified' do
-        let(:parsed_yaml) { { cnb: true, buildpacks: %i[nodejs java], stack: stack.name } }
+        let(:parsed_yaml) { { name: 'cnb', cnb: true, buildpacks: %w[nodejs java], stack: stack.name } }
 
-        it 'returns an AppUpdateMessage containing mapped attributes' do
-          message = AppManifestMessage.create_from_yml(parsed_yaml)
+        context 'when cnb is enabled' do
+          before do
+            FeatureFlag.make(name: 'diego_cnb', enabled: true, error_message: nil)
+          end
 
-          expect(message.app_update_message.lifecycle_type).to eq(Lifecycles::CNB)
-          expect(message.app_update_message.buildpack_data.buildpacks).to eq(%i[nodejs java])
-          expect(message.app_update_message.buildpack_data.stack).to eq(stack.name)
+          it 'is valid' do
+            message = AppManifestMessage.create_from_yml(parsed_yaml)
+
+            expect(message).to be_valid
+            expect(message.app_update_message.lifecycle_type).to eq(Lifecycles::CNB)
+            expect(message.app_update_message.buildpack_data.buildpacks).to eq(%w[nodejs java])
+            expect(message.app_update_message.buildpack_data.stack).to eq(stack.name)
+          end
+        end
+
+        context 'when cnb is disabled' do
+          before do
+            FeatureFlag.make(name: 'diego_cnb', enabled: false, error_message: 'I am a banana')
+          end
+
+          it 'is not valid' do
+            message = AppManifestMessage.create_from_yml(parsed_yaml)
+
+            expect(message).not_to be_valid
+            expect(message.errors).to have(1).items
+            expect(message.errors.full_messages).to include('Feature Disabled: I am a banana')
+          end
         end
       end
     end

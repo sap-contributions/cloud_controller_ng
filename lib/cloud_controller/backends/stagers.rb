@@ -19,6 +19,8 @@ module VCAP::CloudController
 
       raise CloudController::Errors::ApiError.new_from_details('AppPackageInvalid', 'The app package hash is empty') if process.package_hash.blank?
 
+      raise CloudController::Errors::ApiError.new_from_details('CNBDisabled') if process.cnb? && FeatureFlag.disabled?(:diego_cnb)
+
       return unless Buildpack.empty? && using_admin_buildpack?(process.app.lifecycle_data.buildpacks)
 
       raise CloudController::Errors::ApiError.new_from_details('NoBuildpacksFound')

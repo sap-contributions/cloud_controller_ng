@@ -77,7 +77,6 @@ module VCAP::CloudController
     end
 
     describe '#buildpack_models' do
-
       context 'when the buildpacks are only custom buildpacks' do
         let(:buildpack1_url) { 'http://example.com/buildpack1' }
         let(:buildpack2_url) { 'http://example.com/buildpack2' }
@@ -236,7 +235,6 @@ module VCAP::CloudController
         lifecycle_data.buildpacks = ['docker://gcr.io/acme', 'https://example.com']
         expect(lifecycle_data.valid?).to be(true)
       end
-
     end
 
     describe 'associations' do

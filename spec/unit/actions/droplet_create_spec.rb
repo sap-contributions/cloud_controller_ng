@@ -159,9 +159,7 @@ module VCAP::CloudController
     end
 
     describe '#create_buildpack_droplet' do
-
       context 'buildpack lifecycle' do
-
         let!(:buildpack_lifecycle_data) { BuildpackLifecycleDataModel.make(build:) }
 
         it 'sets it on the droplet' do
@@ -228,7 +226,6 @@ module VCAP::CloudController
       end
 
       context 'cnb lifecycle' do
-
         let!(:cnb_lifecycle_data) { CNBLifecycleDataModel.make(build:) }
 
         it 'sets it on the droplet' do
@@ -293,7 +290,6 @@ module VCAP::CloudController
           end
         end
       end
-
     end
   end
 end

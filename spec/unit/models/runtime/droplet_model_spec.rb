@@ -185,7 +185,8 @@ module VCAP::CloudController
           expect do
             droplet_model.destroy
           end.to change(CNBLifecycleDataModel, :count).by(-1).
-                 and change(BuildpackLifecycleBuildpackModel, :count).by(-2)        end
+            and change(BuildpackLifecycleBuildpackModel, :count).by(-2)
+        end
       end
 
       context 'when there is no lifecycle data associated to the droplet' do

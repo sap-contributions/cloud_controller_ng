@@ -49,7 +49,7 @@ module VCAP::CloudController
       end
 
       context 'when a cnb buildpack is used' do
-        let(:cnb_lifecycle_data) { CNBLifecycleDataModel.make(buildpacks: ['nginx:latest']) }
+        let(:cnb_lifecycle_data) { CNBLifecycleDataModel.make(buildpacks: ['docker://nginx:latest']) }
 
         before do
           buildpack.buildpack_lifecycle_data = nil

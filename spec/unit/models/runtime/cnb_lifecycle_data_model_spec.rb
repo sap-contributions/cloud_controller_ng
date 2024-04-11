@@ -2,7 +2,7 @@ require 'spec_helper'
 
 module VCAP::CloudController
   RSpec.describe CNBLifecycleDataModel do
-    subject(:lifecycle_data) { CNBLifecycleDataModel.new }
+    subject(:lifecycle_data) { CNBLifecycleDataModel.make([]) }
 
     describe '#stack' do
       it 'persists the stack' do
@@ -223,6 +223,8 @@ module VCAP::CloudController
         app = AppModel.make
         lifecycle_data.app = app
         lifecycle_data.buildpacks = ['https://example.com', 'invalid_buildpack_name']
+        lifecycle_data.buildpack_lifecycle_buildpacks.each { |b| b.cnb_lifecycle_data = lifecycle_data }
+
         expect(lifecycle_data.valid?).to be(false)
         expect(lifecycle_data.errors.full_messages.size).to eq(1)
         expect(lifecycle_data.errors.full_messages.first).to include('Specified invalid buildpack URL: "invalid_buildpack_name"')

@@ -10,6 +10,24 @@ namespace :spec do
     end
   end
 
+  task cnb: ['db:pick', 'db:parallel:recreate'] do
+    run_specs('spec/unit/models/runtime/app_model_spec.rb')
+    run_specs('spec/unit/models/runtime/build_model_spec.rb')
+    run_specs('spec/unit/models/runtime/droplet_model_spec.rb')
+    run_specs('spec/unit/actions/build_create_spec.rb')
+    run_specs('spec/unit/models/runtime/cnb_lifecycle_data_model_spec.rb')
+    run_specs('spec/unit/lib/cloud_controller/diego/cnb/lifecycle_data_spec.rb')
+    run_specs('spec/unit/lib/cloud_controller/diego/cnb/staging_action_builder_spec.rb')
+    run_specs('spec/unit/lib/cloud_controller/diego/cnb/staging_completion_handler_spec.rb')
+    run_specs('spec/unit/lib/cloud_controller/diego/cnb/lifecycle_protocol_spec.rb')
+    run_specs('spec/unit/lib/cloud_controller/diego/lifecycles/app_cnb_lifecycle_spec.rb')
+    run_specs('spec/unit/lib/utils/uri_utils_spec.rb')
+    run_specs('spec/unit/messages/validators_spec.rb')
+    run_specs('spec/unit/lib/cloud_controller/errands/rotate_database_key_spec.rb')
+    run_specs('spec/unit/messages/app_create_message_spec.rb')
+    run_specs('spec/unit/models/runtime/buildpack_lifecycle_buildpack_model_spec.rb')
+  end
+
   task serial: ['db:pick', 'db:recreate'] do
     run_specs(ARGV[1] || 'spec')
   end

@@ -651,7 +651,6 @@ module VCAP::CloudController
     stack { Stack.make.name }
     app_guid { Sham.guid }
     droplet_guid { Sham.guid }
-    admin_buildpack_name { 'admin-bp' }
     build { BuildModel.make }
   end
 
@@ -667,6 +666,7 @@ module VCAP::CloudController
 
   BuildpackLifecycleBuildpackModel.blueprint(:all_fields) do
     buildpack_lifecycle_data_guid { BuildpackLifecycleDataModel.make.guid }
+    cnb_lifecycle_data_guid { CNBLifecycleDataModel.make.guid }
     version { Sham.version }
     buildpack_name { Sham.name }
   end

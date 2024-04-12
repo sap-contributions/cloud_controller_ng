@@ -281,7 +281,22 @@ module VCAP::CloudController
     end
 
     def cnb_lifecycle_data
-      { type: Lifecycles::CNB }
+      return unless requested?(:buildpacks) || requested?(:buildpack) || requested?(:stack)
+
+      if requested?(:buildpacks)
+        requested_buildpacks = @buildpacks
+      elsif requested?(:buildpack)
+        requested_buildpacks = []
+        requested_buildpacks.push(@buildpack)
+      end
+
+      {
+        type: Lifecycles::CNB,
+        data: {
+          buildpacks: requested_buildpacks,
+          stack: @stack
+        }.compact
+      }
     end
 
     def buildpacks_lifecycle_data

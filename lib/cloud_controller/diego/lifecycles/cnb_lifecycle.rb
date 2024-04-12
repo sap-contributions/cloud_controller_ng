@@ -50,5 +50,7 @@ module VCAP::CloudController
     def app_stack
       @package.app.buildpack_lifecycle_data.try(:stack)
     end
+
+    attr_reader :validator
   end
 end

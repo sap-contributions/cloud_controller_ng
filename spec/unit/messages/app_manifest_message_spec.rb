@@ -2066,12 +2066,14 @@ module VCAP::CloudController
       end
 
       context 'when cnb is specified' do
-        let(:parsed_yaml) { { cnb: true } }
+        let(:parsed_yaml) { { cnb: true, buildpacks: %i[nodejs java], stack: stack.name } }
 
         it 'returns an AppUpdateMessage containing mapped attributes' do
           message = AppManifestMessage.create_from_yml(parsed_yaml)
 
           expect(message.app_update_message.lifecycle_type).to eq(Lifecycles::CNB)
+          expect(message.app_update_message.buildpack_data.buildpacks).to eq(%i[nodejs java])
+          expect(message.app_update_message.buildpack_data.stack).to eq(stack.name)
         end
       end
     end

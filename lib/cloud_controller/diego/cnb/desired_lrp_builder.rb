@@ -22,11 +22,15 @@ module VCAP::CloudController
         def cached_dependencies
           return nil if @config.get(:diego, :enable_declarative_asset_downloads)
 
+          lifecycle_bundle_key = :"cnb/#{@stack}"
+          lifecycle_bundle = @config.get(:diego, :lifecycle_bundles)[lifecycle_bundle_key]
+          raise InvalidStack.new("no compiler defined for requested stack '#{@stack}'") unless lifecycle_bundle
+
           [
             ::Diego::Bbs::Models::CachedDependency.new(
-              from: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
+              from: LifecycleBundleUriGenerator.uri(lifecycle_bundle),
               to: '/tmp/lifecycle',
-              cache_key: 'buildpack-cnb-lifecycle'
+              cache_key: "cnb-#{@stack}-lifecycle"
             )
           ]
         end
@@ -57,13 +61,17 @@ module VCAP::CloudController
         def image_layers
           return [] unless @config.get(:diego, :enable_declarative_asset_downloads)
 
+          lifecycle_bundle_key = :"cnb/#{@stack}"
+          lifecycle_bundle = @config.get(:diego, :lifecycle_bundles)[lifecycle_bundle_key]
+          raise InvalidStack.new("no compiler defined for requested stack '#{@stack}'") unless lifecycle_bundle
+
           destination = @config.get(:diego, :droplet_destinations)[@stack.to_sym]
           raise InvalidStack.new("no droplet destination defined for requested stack '#{@stack}'") unless destination
 
           layers = [
             ::Diego::Bbs::Models::ImageLayer.new(
-              name: 'buildpack-cnb-lifecycle',
-              url: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
+              name: "cnb-#{@stack}-lifecycle",
+              url: LifecycleBundleUriGenerator.uri(lifecycle_bundle),
               destination_path: '/tmp/lifecycle',
               layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
               media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::TGZ

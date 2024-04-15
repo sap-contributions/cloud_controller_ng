@@ -17,7 +17,7 @@ module VCAP::CloudController
                          cc_uploader_url: 'http://cc-uploader.example.com',
                          file_server_url: 'http://file-server.example.com',
                          lifecycle_bundles: {
-                           'buildpack/buildpack-stack': 'the-buildpack-bundle'
+                           'cnb/buildpack-stack': 'the-buildpack-bundle'
                          },
                          enable_declarative_asset_downloads: enable_declarative_asset_downloads
                        },
@@ -227,10 +227,9 @@ module VCAP::CloudController
             result = builder.cached_dependencies
             expect(result).to include(
               ::Diego::Bbs::Models::CachedDependency.new(
-                name: 'custom cnb lifecycle',
-                from: 'https://storage.googleapis.com/cf-packages-public/lifecycle.tgz',
+                from: 'generated-uri',
                 to: '/tmp/lifecycle',
-                cache_key: 'cnb-lifecycle'
+                cache_key: 'cnb-buildpack-stack-lifecycle'
               )
             )
           end

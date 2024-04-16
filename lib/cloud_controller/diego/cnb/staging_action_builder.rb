@@ -135,7 +135,7 @@ module VCAP::CloudController
             path: '/tmp/lifecycle/builder',
             user: 'vcap',
             args: lifecycle_data[:buildpacks].map do |buildpack|
-              ['--buildpacks', buildpack[:url]]
+              ['--buildpack', buildpack[:url]]
             end.flatten
           )
         end

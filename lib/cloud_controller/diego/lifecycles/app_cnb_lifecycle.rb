@@ -32,7 +32,7 @@ module VCAP::CloudController
     end
 
     def valid?
-      true
+      !buildpacks.empty?
     end
 
     def errors

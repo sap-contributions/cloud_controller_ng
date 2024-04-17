@@ -25,6 +25,7 @@ namespace :spec do
     run_specs('spec/unit/messages/validators_spec.rb')
     run_specs('spec/unit/lib/cloud_controller/errands/rotate_database_key_spec.rb')
     run_specs('spec/unit/messages/app_create_message_spec.rb')
+    run_specs('spec/unit/messages/app_manifest_message_spec.rb')
     run_specs('spec/unit/models/runtime/buildpack_lifecycle_buildpack_model_spec.rb')
   end
 

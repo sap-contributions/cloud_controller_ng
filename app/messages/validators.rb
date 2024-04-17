@@ -184,7 +184,6 @@ module VCAP::CloudController::Validators
       data_message_class_table = {
         lifecycles::BUILDPACK => VCAP::CloudController::BuildpackLifecycleDataMessage,
         lifecycles::DOCKER => VCAP::CloudController::EmptyLifecycleDataMessage,
-        # FIXME: Do we want CNBLifecycleDataMessage ???
         lifecycles::CNB => VCAP::CloudController::BuildpackLifecycleDataMessage
       }
 

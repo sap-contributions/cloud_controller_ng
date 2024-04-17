@@ -94,5 +94,23 @@ module VCAP::CloudController
         expect(data_model.stack).to eq('sweetness')
       end
     end
+
+    describe '#validation' do
+      context 'with no buildpacks' do
+        let(:lifecycle_request_data) { {} }
+
+        it 'invalid' do
+          expect(lifecycle.valid?).to be(false)
+        end
+      end
+
+      context 'with buildpacks' do
+        let(:lifecycle_request_data) { { buildpacks: %w[foo bar] } }
+
+        it 'valid' do
+          expect(lifecycle.valid?).to be(true)
+        end
+      end
+    end
   end
 end

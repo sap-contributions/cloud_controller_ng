@@ -83,7 +83,7 @@ module VCAP::CloudController
           end
 
           it 'returns specific message for cnb lifecycle rc' do
-            staging_error = FailureReasonSanitizer.sanitize('exit status 353')
+            staging_error = FailureReasonSanitizer.sanitize('exit status 233')
             expect(staging_error[:id]).to eq(CCMessages::CNB_DETECTING_FAILED)
             expect(staging_error[:message]).to eq('staging failed')
           end

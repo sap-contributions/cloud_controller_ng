@@ -31,7 +31,7 @@ module VCAP::CloudController
       instances
       metadata
       memory
-      cnb
+      lifecycle
       name
       no_route
       processes
@@ -71,7 +71,7 @@ module VCAP::CloudController
     validate :validate_buildpack_and_buildpacks_combination!
     validate :validate_docker_enabled!
     validate :validate_cnb_enabled!
-    validate :validate_cnb_buildpacks!, if: ->(record) { record.requested?(:cnb) }
+    validate :validate_cnb_buildpacks!, if: ->(record) { record.lifecycle == 'cnb' }
     validate :validate_docker_buildpacks_combination!
     validate :validate_service_bindings_message!, if: ->(record) { record.requested?(:services) }
     validate :validate_env_update_message!,       if: ->(record) { record.requested?(:env) }
@@ -122,7 +122,7 @@ module VCAP::CloudController
     end
 
     def app_lifecycle_hash
-      lifecycle_data = if requested?(:cnb)
+      lifecycle_data = if requested?(:lifecycle) && @lifecycle == 'cnb'
                          cnb_lifecycle_data
                        elsif requested?(:docker)
                          docker_lifecycle_data
@@ -477,13 +477,13 @@ module VCAP::CloudController
     end
 
     def validate_cnb_enabled!
-      FeatureFlag.raise_unless_enabled!(:diego_cnb) if requested?(:cnb)
+      FeatureFlag.raise_unless_enabled!(:diego_cnb) if requested?(:lifecycle) && @lifecycle == 'cnb'
     rescue StandardError => e
       errors.add(:base, e.message)
     end
 
     def validate_cnb_buildpacks!
-      return if requested?(:cnb) && (requested?(:buildpack) || requested?(:buildpacks))
+      return if requested?(:lifecycle) && @lifecycle == 'cnb' && (requested?(:buildpack) || requested?(:buildpacks))
 
       errors.add(:base, 'Buildpack(s) must be specified when using Cloud Native Buildpacks')
     end

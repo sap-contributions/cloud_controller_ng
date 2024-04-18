@@ -6,7 +6,7 @@ module VCAP::CloudController
     module CNB
       class StagingCompletionHandler < VCAP::CloudController::Diego::StagingCompletionHandler
         def logger_prefix
-          'diego.staging.buildpack.'
+          'diego.staging.cnb.'
         end
 
         def self.schema

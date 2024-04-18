@@ -1120,7 +1120,7 @@ module VCAP::CloudController
           FeatureFlag.make(name: 'diego_cnb', enabled: true, error_message: nil)
         end
 
-        let(:params_from_yaml) { { name: 'eugene', cnb: true } }
+        let(:params_from_yaml) { { name: 'eugene', lifecycle: 'cnb' } }
 
         it 'is not valid' do
           message = AppManifestMessage.create_from_yml(params_from_yaml)
@@ -2082,7 +2082,7 @@ module VCAP::CloudController
       end
 
       context 'when cnb is specified' do
-        let(:parsed_yaml) { { name: 'cnb', cnb: true, buildpacks: %w[nodejs java], stack: stack.name } }
+        let(:parsed_yaml) { { name: 'cnb', lifecycle: 'cnb', buildpacks: %w[nodejs java], stack: stack.name } }
 
         context 'when cnb is enabled' do
           before do

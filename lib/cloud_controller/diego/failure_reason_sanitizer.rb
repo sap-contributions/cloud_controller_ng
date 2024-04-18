@@ -43,22 +43,22 @@ module VCAP::CloudController
         elsif message.ends_with?('224')
           id = CCMessages::BUILDPACK_RELEASE_FAILED
           message = staging_failed
-        elsif message.ends_with?('351')
+        elsif message.ends_with?('231')
           id = CCMessages::CNB_GENERIC_BUILD_FAILED
           message = staging_failed
-        elsif message.ends_with?('352')
+        elsif message.ends_with?('232')
           id = CCMessages::CNB_DOWNLOAD_BUILDPACK_FAILED
           message = staging_failed
-        elsif message.ends_with?('353')
+        elsif message.ends_with?('233')
           id = CCMessages::CNB_DETECTING_FAILED
           message = staging_failed
-        elsif message.ends_with?('354')
+        elsif message.ends_with?('234')
           id = CCMessages::CNB_BUILDING_FAILED
           message = staging_failed
-        elsif message.ends_with?('355')
+        elsif message.ends_with?('235')
           id = CCMessages::CNB_EXPORTING_FAILED
           message = staging_failed
-        elsif message.ends_with?('356')
+        elsif message.ends_with?('236')
           id = CCMessages::CNB_LAUNCHING_FAILED
           message = staging_failed
         elsif message.starts_with?(DiegoErrors::INSUFFICIENT_RESOURCES_MESSAGE)

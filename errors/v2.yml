@@ -1363,3 +1363,33 @@
   name: DeserializationError
   http_code: 500
   message: "%s"
+
+430001:
+  name: CNBGenericBuildFailed         
+  http_code: 400
+  message: "cnb: generic build failure"
+
+430002:
+  name: CNBDownloadBuildpackFailed 
+  http_code: 400
+  message: "cnb: downloading buildpacks failed"
+
+430003:
+  name: CNBDetectFailed            
+  http_code: 400
+  message: "cnb: detecting failed"
+
+430004:
+  name: CNBBuildFailed             
+  http_code: 400
+  message: "cnb: building failed"
+
+430005:
+  name: CNBExportFailed            
+  http_code: 400
+  message: "cnb: exporting failed"
+
+430006:
+  name: CNBLaunchFailed            
+  http_code: 400
+  message: "cnb: launching failed"

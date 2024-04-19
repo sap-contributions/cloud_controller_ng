@@ -47,7 +47,6 @@ module VCAP::CloudController
           ]
 
           if lifecycle_data[:app_bits_checksum][:type] == 'sha256'
-            # Type is exclusive, will be converted to DownloadActions
             layers << ::Diego::Bbs::Models::ImageLayer.new({
               name: 'app package',
               url: lifecycle_data[:app_bits_download_uri],
@@ -61,7 +60,6 @@ module VCAP::CloudController
 
           return unless lifecycle_data[:build_artifacts_cache_download_uri] && lifecycle_data[:buildpack_cache_checksum].present?
 
-          # Type is exclusive, will be converted to DownloadActions
           layers << ::Diego::Bbs::Models::ImageLayer.new({
             name: 'build artifacts cache',
             url: lifecycle_data[:build_artifacts_cache_download_uri],

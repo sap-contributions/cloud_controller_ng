@@ -1,3 +1,4 @@
+require 'spec_helper'
 require 'utils/uri_utils'
 
 RSpec.describe UriUtils do
@@ -84,6 +85,18 @@ RSpec.describe UriUtils do
 
     it 'is true if it is a uri with docker scheme with tag' do
       expect(UriUtils.is_cnb_buildpack_uri?('docker://nginx:latest')).to be true
+    end
+
+    it 'is true if it is a uri with docker scheme with registry, port and tag' do
+      expect(UriUtils.is_cnb_buildpack_uri?('docker://registry.corp:1111/nginx:latest')).to be true
+    end
+
+    it 'returns false if it is an invalid https uri' do
+      expect(UriUtils.is_cnb_buildpack_uri?('https://nginx:latest')).to be false
+    end
+
+    it 'returns false if it is an invalid docker uri' do
+      expect(UriUtils.is_cnb_buildpack_uri?('docker://nginx?latest')).to be false
     end
 
     it 'is false if it is a uri without any scheme' do

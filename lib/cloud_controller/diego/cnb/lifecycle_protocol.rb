@@ -38,7 +38,6 @@ module VCAP
             raise InvalidDownloadUri.new("Failed to get blobstore download url for package #{staging_details.package.guid}")
           end
 
-          # Called from the task_recipe_builder
           def staging_action_builder(config, staging_details)
             StagingActionBuilder.new(config, staging_details, lifecycle_data(staging_details))
           end

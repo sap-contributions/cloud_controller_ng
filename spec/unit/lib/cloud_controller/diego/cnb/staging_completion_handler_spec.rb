@@ -342,7 +342,7 @@ module VCAP::CloudController
                 subject.staging_complete(success_response)
 
                 expect(logger).to have_received(:error).with(
-                  'diego.staging.buildpack.saving-staging-result-failed',
+                  'diego.staging.cnb.saving-staging-result-failed',
                   hash_including(
                     staging_guid: build.guid,
                     response: success_response,
@@ -354,7 +354,7 @@ module VCAP::CloudController
               it 'does not attempt to start the app' do
                 expect(runner).not_to receive(:start)
                 expect(logger).not_to receive(:error).with(
-                  'diego.staging.buildpack.starting-process-failed', anything
+                  'diego.staging.cnb.starting-process-failed', anything
                 )
 
                 subject.staging_complete(success_response, true)
@@ -526,7 +526,7 @@ module VCAP::CloudController
 
               it 'logs an error for the CF operator' do
                 expect(logger).to have_received(:error).with(
-                  'diego.staging.buildpack.success.invalid-message',
+                  'diego.staging.cnb.success.invalid-message',
                   staging_guid: build.guid,
                   payload: malformed_success_response,
                   error: '{ result => Missing key }'
@@ -548,7 +548,7 @@ module VCAP::CloudController
 
                 it 'logs a helpful error' do
                   expect(logger).to have_received(:error).with(
-                    'diego.staging.buildpack.success.invalid-message',
+                    'diego.staging.cnb.success.invalid-message',
                     staging_guid: build.guid,
                     payload: malformed_success_response,
                     error: '{ result => unexpected format }'
@@ -582,7 +582,7 @@ module VCAP::CloudController
                 end.to raise_error(CloudController::Errors::ApiError)
 
                 expect(logger).to have_received(:error).with(
-                  'diego.staging.buildpack.failure.invalid-message',
+                  'diego.staging.cnb.failure.invalid-message',
                   staging_guid: build.guid,
                   payload: malformed_fail_response,
                   error: '{ error => { message => Missing key } }'
@@ -601,7 +601,7 @@ module VCAP::CloudController
                 subject.staging_complete(fail_response)
 
                 expect(logger).to have_received(:error).with(
-                  'diego.staging.buildpack.saving-staging-result-failed',
+                  'diego.staging.cnb.saving-staging-result-failed',
                   hash_including(
                     staging_guid: build.guid,
                     response: fail_response,

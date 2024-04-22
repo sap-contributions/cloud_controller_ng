@@ -31,8 +31,8 @@ module VCAP::CloudController
           return [] unless @config.get(:diego, :enable_declarative_asset_downloads)
 
           [::Diego::Bbs::Models::ImageLayer.new(
-            name: 'docker-lifecycle',
-            url: LifecycleBundleUriGenerator.uri(config.get(:diego, :lifecycle_bundles)[:docker]),
+            name: "cnb-#{lifecycle_stack}-lifecycle",
+            url: LifecycleBundleUriGenerator.uri(config.get(:diego, :lifecycle_bundles)[lifecycle_bundle_key]),
             destination_path: '/tmp/lifecycle',
             layer_type: ::Diego::Bbs::Models::ImageLayer::Type::SHARED,
             media_type: ::Diego::Bbs::Models::ImageLayer::MediaType::TGZ
@@ -51,7 +51,7 @@ module VCAP::CloudController
         end
 
         def lifecycle_bundle_key
-          :docker
+          :"cnb/#{lifecycle_stack}"
         end
 
         def cached_dependencies
@@ -61,7 +61,7 @@ module VCAP::CloudController
           [::Diego::Bbs::Models::CachedDependency.new(
             from: LifecycleBundleUriGenerator.uri(bundle),
             to: '/tmp/lifecycle',
-            cache_key: 'docker-lifecycle'
+            cache_key: "cnb-#{lifecycle_stack}-lifecycle"
           )]
         end
 

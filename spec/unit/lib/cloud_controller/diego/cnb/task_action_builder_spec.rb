@@ -61,12 +61,23 @@ module VCAP::CloudController
           let(:run_task_action) do
             ::Diego::Bbs::Models::RunAction.new(
               path: '/tmp/lifecycle/launcher',
-              args: ['app', command, '{}'],
+              args: ['--', command],
               log_source: 'APP/TASK/my-task',
               user: 'root',
               resource_limits: ::Diego::Bbs::Models::ResourceLimits.new,
               env: generated_environment
             )
+          end
+
+          it 'returns the correct buildpack task action structure' do
+            result = builder.action
+
+            serial_action = result.serial_action
+            actions       = serial_action.actions
+
+            expect(actions.length).to eq(2)
+            expect(actions[0].download_action).to eq(download_app_droplet_action)
+            expect(actions[1].run_action).to eq(run_task_action)
           end
 
           context 'when the droplet does not have a sha256 checksum calculated' do
@@ -84,6 +95,16 @@ module VCAP::CloudController
             before do
               task.droplet.sha256_checksum = nil
               task.droplet.save
+            end
+
+            it 'uses sha1 in the download droplet action' do
+              result = builder.action
+
+              serial_action = result.serial_action
+              actions       = serial_action.actions
+
+              expect(actions.length).to eq(2)
+              expect(actions[0].download_action).to eq(download_app_droplet_action)
             end
           end
 
@@ -111,6 +132,17 @@ module VCAP::CloudController
               before do
                 task.droplet.sha256_checksum = nil
                 task.droplet.save
+              end
+
+              it 'creates an action to download the droplet' do
+                result = builder.action
+
+                serial_action = result.serial_action
+                actions       = serial_action.actions
+
+                expect(actions.length).to eq(2)
+                expect(actions[0].download_action).to eq(download_app_droplet_action)
+                expect(actions[1].run_action).to eq(run_task_action)
               end
             end
           end

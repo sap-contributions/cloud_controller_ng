@@ -94,7 +94,8 @@ module VCAP::CloudController
           [
             ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_USER_ID', value: '2000'),
             ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_GROUP_ID', value: '2000'),
-            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_STACK_ID', value: lifecycle_stack)
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'CNB_STACK_ID', value: lifecycle_stack),
+            ::Diego::Bbs::Models::EnvironmentVariable.new(name: 'LANG', value: STAGING_DEFAULT_LANG)
           ]
         end
 
@@ -135,7 +136,8 @@ module VCAP::CloudController
             user: 'vcap',
             args: lifecycle_data[:buildpacks].map do |buildpack|
               ['--buildpack', buildpack[:url]]
-            end.flatten
+            end.flatten,
+            env: BbsEnvironmentBuilder.build(staging_details.environment_variables)
           )
         end
 

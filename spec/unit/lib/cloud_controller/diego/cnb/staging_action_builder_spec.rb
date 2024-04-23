@@ -106,7 +106,7 @@ module VCAP::CloudController
             ::Diego::Bbs::Models::RunAction.new(
               path: '/tmp/lifecycle/builder',
               user: 'vcap',
-              args: ['--buildpack', 'gcr.io/paketo-buildpacks/node-start', '--buildpack', 'gcr.io/paketo-buildpacks/node-engine'],
+              args: ['--buildpack', 'gcr.io/paketo-buildpacks/node-start', '--buildpack', 'gcr.io/paketo-buildpacks/node-engine', '--pass-env-var', 'generated-environment'],
               env: generated_environment
             )
           end

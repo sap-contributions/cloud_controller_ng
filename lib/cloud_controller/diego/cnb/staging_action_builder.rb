@@ -131,13 +131,22 @@ module VCAP::CloudController
         end
 
         def stage_action
+          args = []
+
+          lifecycle_data[:buildpacks].each do |buildpack|
+            args.push('--buildpack', buildpack[:url])
+          end
+
+          env_vars = BbsEnvironmentBuilder.build(staging_details.environment_variables)
+          env_vars.each do |e|
+            args.push('--pass-env-var', e.name)
+          end
+
           ::Diego::Bbs::Models::RunAction.new(
             path: '/tmp/lifecycle/builder',
             user: 'vcap',
-            args: lifecycle_data[:buildpacks].map do |buildpack|
-              ['--buildpack', buildpack[:url]]
-            end.flatten,
-            env: BbsEnvironmentBuilder.build(staging_details.environment_variables)
+            args: args,
+            env: env_vars
           )
         end
 

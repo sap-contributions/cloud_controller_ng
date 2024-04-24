@@ -146,6 +146,17 @@ module VCAP::CloudController
     sidecars { 'a-sidecar' }
   end
 
+  DropletModel.blueprint(:cnb) do
+    guid { Sham.guid }
+    droplet_hash { nil }
+    sha256_checksum { nil }
+    state { VCAP::CloudController::DropletModel::STAGED_STATE }
+    app { AppModel.make(:cnb, droplet_guid: guid) }
+    cnb_lifecycle_data { CNBLifecycleDataModel.make(droplet: object.save) }
+    buildpack_lifecycle_data { nil.tap { |_| object.save } }
+    kpack_lifecycle_data { nil.tap { |_| object.save } }
+  end
+
   DropletModel.blueprint(:docker) do
     guid { Sham.guid }
     droplet_hash { nil }

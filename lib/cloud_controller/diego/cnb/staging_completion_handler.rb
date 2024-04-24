@@ -13,7 +13,6 @@ module VCAP::CloudController
           lambda { |_dsl|
             {
               result: {
-                execution_metadata: String,
                 lifecycle_type: Lifecycles::CNB,
                 lifecycle_metadata: {
                   optional(:buildpacks) => [
@@ -37,22 +36,11 @@ module VCAP::CloudController
         end
 
         def save_staging_result(payload)
-          lifecycle_data = payload[:result][:lifecycle_metadata]
-
           droplet.class.db.transaction do
             droplet.lock!
             build.lock!
 
-            # TODO: What if lifecycle_data[:buildpacks] is nil?  Delete current buildpacks?
-            # if lifecycle_data[:buildpacks]
-            #   droplet.cnb_lifecycle_data.buildpacks = lifecycle_data[:buildpacks]
-            #   droplet.cnb_lifecycle_data.save_changes(raise_on_save_failure: true)
-            # end
-            # droplet.save_changes(raise_on_save_failure: true)
-            # build.droplet.reload
-
             droplet.process_types = payload[:result][:process_types]
-            droplet.execution_metadata = payload[:result][:execution_metadata]
             droplet.mark_as_staged
             build.mark_as_staged
             build.save_changes(raise_on_save_failure: true)

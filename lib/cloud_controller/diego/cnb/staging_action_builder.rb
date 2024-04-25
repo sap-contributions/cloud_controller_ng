@@ -131,7 +131,10 @@ module VCAP::CloudController
         end
 
         def stage_action
-          args = []
+          args = [
+            '--cache-dir', '/tmp/cache',
+            '--cache-output', '/tmp/cache-output.tgz'
+          ]
 
           lifecycle_data[:buildpacks].each do |buildpack|
             args.push('--buildpack', buildpack[:url])
@@ -157,6 +160,13 @@ module VCAP::CloudController
               artifact: 'droplet',
               from: '/tmp/droplet',
               to: upload_droplet_uri.to_s
+            ),
+
+            ::Diego::Bbs::Models::UploadAction.new(
+              user: 'vcap',
+              artifact: 'build artifacts cache',
+              from: '/tmp/cache-output.tgz',
+              to: upload_buildpack_artifacts_cache_uri.to_s
             )
           ]
         end
@@ -171,6 +181,16 @@ module VCAP::CloudController
 
         def lifecycle_bundle_key
           :"cnb/#{lifecycle_stack}"
+        end
+
+        def upload_buildpack_artifacts_cache_uri
+          upload_buildpack_artifacts_cache_uri       = URI(config.get(:diego, :cc_uploader_url))
+          upload_buildpack_artifacts_cache_uri.path  = "/v1/build_artifacts/#{staging_details.staging_guid}"
+          upload_buildpack_artifacts_cache_uri.query = {
+            'cc-build-artifacts-upload-uri' => lifecycle_data[:build_artifacts_cache_upload_uri],
+            'timeout' => config.get(:staging, :timeout_in_seconds)
+          }.to_param
+          upload_buildpack_artifacts_cache_uri.to_s
         end
 
         def upload_droplet_uri

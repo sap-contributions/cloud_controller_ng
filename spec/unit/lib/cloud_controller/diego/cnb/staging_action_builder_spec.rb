@@ -96,7 +96,7 @@ module VCAP::CloudController
           let(:upload_build_artifacts_cache_action) do
             ::Diego::Bbs::Models::UploadAction.new(
               artifact: 'build artifacts cache',
-              from: '/tmp/output-cache',
+              from: '/tmp/cache-output.tgz',
               to: "http://cc-uploader.example.com/v1/build_artifacts/#{droplet.guid}?cc-build-artifacts-upload-uri=#{cache_upload_url}&timeout=90",
               user: 'vcap'
             )
@@ -106,7 +106,7 @@ module VCAP::CloudController
             ::Diego::Bbs::Models::RunAction.new(
               path: '/tmp/lifecycle/builder',
               user: 'vcap',
-              args: ['--buildpack', 'gcr.io/paketo-buildpacks/node-start', '--buildpack', 'gcr.io/paketo-buildpacks/node-engine', '--pass-env-var', 'generated-environment'],
+              args: ['--cache-dir', '/tmp/cache', '--cache-output', '/tmp/cache-output.tgz', '--buildpack', 'gcr.io/paketo-buildpacks/node-start', '--buildpack', 'gcr.io/paketo-buildpacks/node-engine', '--pass-env-var', 'generated-environment'],
               env: generated_environment
             )
           end
@@ -139,6 +139,7 @@ module VCAP::CloudController
             expect(parallel_upload_action.parallel_action).not_to be_nil
             upload_actions = parallel_upload_action.parallel_action.actions
             expect(upload_actions[0].upload_action).to eq(upload_droplet_action)
+            expect(upload_actions[1].upload_action).to eq(upload_build_artifacts_cache_action)
           end
 
           describe 'credhub' do

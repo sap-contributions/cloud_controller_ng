@@ -14,7 +14,7 @@ module VCAP::CloudController
     ].freeze
     STAGING_FAILED_REASONS = %w[StagerError StagingError StagingTimeExpired NoAppDetectedError BuildpackCompileFailed
                                 BuildpackReleaseFailed InsufficientResources NoCompatibleCell
-                                CNBGenericBuildFailed CNBDownloadBuildpackFailed CNBDetectFailed CNBBuildFailed CNBExportFailed CNBLaunchFailed].map(&:freeze).freeze
+                                CNBGenericBuildFailed CNBDownloadBuildpackFailed CNBDetectFailed CNBBuildFailed CNBExportFailed CNBLaunchFailed CNBRestoreFailed].map(&:freeze).freeze
 
     many_to_one :app,
                 class: 'VCAP::CloudController::AppModel',

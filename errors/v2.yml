@@ -1393,3 +1393,8 @@
   name: CNBLaunchFailed            
   http_code: 400
   message: "cnb: launching failed"
+
+430007:
+  name: CNBRestoreFailed            
+  http_code: 400
+  message: "cnb: restore failed"

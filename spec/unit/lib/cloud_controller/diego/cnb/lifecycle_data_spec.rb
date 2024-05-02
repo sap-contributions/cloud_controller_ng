@@ -15,6 +15,7 @@ module VCAP::CloudController
           data.stack                              = 'stack'
           data.buildpack_cache_checksum           = 'bp-cache-checksum'
           data.app_bits_checksum                  = { type: 'sha256', value: 'package-checksum' }
+          data.credentials                        = '{"registry":{"username":"password"}}'
           data
         end
 
@@ -27,7 +28,8 @@ module VCAP::CloudController
             buildpacks: ['docker://gcr.io/paketo-buildpacks/nodejs'],
             stack: 'stack',
             buildpack_cache_checksum: 'bp-cache-checksum',
-            app_bits_checksum: { type: 'sha256', value: 'package-checksum' }
+            app_bits_checksum: { type: 'sha256', value: 'package-checksum' },
+            credentials: '{"registry":{"username":"password"}}'
           }
         end
 
@@ -67,6 +69,22 @@ module VCAP::CloudController
 
             it 'omits buildpack_cache_checksum from the message' do
               expect(lifecycle_data.message.keys).not_to include(:buildpack_cache_checksum)
+            end
+          end
+
+          context 'when credentials are missing' do
+            before do
+              lifecycle_data.credentials = nil
+            end
+
+            it 'does not raise an error' do
+              expect do
+                lifecycle_data.message
+              end.not_to raise_error
+            end
+
+            it 'omits credentials from the message' do
+              expect(lifecycle_data.message.keys).not_to include(:credentials)
             end
           end
 

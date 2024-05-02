@@ -8,6 +8,7 @@ module VCAP::CloudController
       CNBLifecycleDataModel.create(
         buildpacks:,
         stack:,
+        credentials:,
         app:
       )
     end
@@ -29,6 +30,12 @@ module VCAP::CloudController
       return unless message.buildpack_data.requested?(:stack)
 
       app.lifecycle_data.stack = message.buildpack_data.stack
+    end
+
+    def update_lifecycle_data_credentials(app)
+      return unless message.buildpack_data.requested?(:credentials)
+
+      app.lifecycle_data.credentials = message.buildpack_data.credentials
     end
 
     def valid?
@@ -57,6 +64,10 @@ module VCAP::CloudController
       else
         Stack.default.name
       end
+    end
+
+    def credentials
+      message.buildpack_data.credentials
     end
   end
 end

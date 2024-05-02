@@ -25,7 +25,8 @@ module VCAP::CloudController
       VCAP::CloudController::CNBLifecycleDataModel.create(
         buildpacks: Array(buildpacks_to_use),
         stack: staging_stack,
-        build: build
+        build: build,
+        credentials: credentials_to_use
       )
     end
 
@@ -37,7 +38,15 @@ module VCAP::CloudController
       requested_stack || app_stack || VCAP::CloudController::Stack.default.name
     end
 
+    def credentials
+      JSON.generate(credentials_to_use)
+    end
+    
     private
+
+    def credentials_to_use
+      staging_message.buildpack_data.credentials || @package.app.lifecycle_data.credentials
+    end
 
     def buildpacks_to_use
       staging_message.buildpack_data.buildpacks || @package.app.lifecycle_data.buildpacks

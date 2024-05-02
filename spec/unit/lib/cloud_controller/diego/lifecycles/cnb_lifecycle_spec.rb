@@ -80,6 +80,31 @@ module VCAP::CloudController
         end
       end
 
+      context 'when the user specifies credentials' do
+        let(:request_data) do
+          { credentials: '{"auth": {}}' }
+        end
+
+        it 'uses those credentials' do
+          data_model = cnb_lifecycle.create_lifecycle_data_model(BuildModel.make)
+          expect(data_model.credentials).to eq('{"auth": {}}')
+        end
+      end
+
+      context 'when the user does not specify credentials' do
+        let(:app) { AppModel.make(:cnb, name: 'some-app', space: Space.make) }
+        let(:request_data) { {} }
+
+        before do
+          app.lifecycle_data.update(credentials: '{"auth": {}}')
+        end
+
+        it 'uses credentials from package' do
+          data_model = cnb_lifecycle.create_lifecycle_data_model(BuildModel.make)
+          expect(data_model.credentials).to eq('{"auth": {}}')
+        end
+      end
+
       context 'when the user specifies a stack' do
         let(:request_data) do
           { stack: 'cool-stack' }

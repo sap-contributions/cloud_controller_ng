@@ -29,6 +29,7 @@ module VCAP
             lifecycle_data.droplet_upload_uri                 = @blobstore_url_generator.droplet_upload_url(staging_details.staging_guid)
             lifecycle_data.buildpacks                         = @buildpack_entry_generator.buildpack_entries(staging_details.lifecycle.buildpack_infos, stack)
             lifecycle_data.stack                              = stack
+            lifecycle_data.credentials                        = staging_details.lifecycle.credentials
 
             lifecycle_data.message
           rescue Membrane::SchemaValidationError => e

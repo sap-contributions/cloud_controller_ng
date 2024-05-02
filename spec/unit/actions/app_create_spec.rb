@@ -139,6 +139,18 @@ module VCAP::CloudController
         end
       end
 
+      describe 'cnb' do
+        let(:lifecycle_request) { { type: 'cnb', data: { stack: 'cflinuxfs4' } } }
+        let(:lifecycle) { AppCNBLifecycle.new(message) }
+
+        it 'creates app with lifecycle type cnb' do
+          expect do
+            app = app_create.create(message, lifecycle)
+            expect(app.lifecycle_type).to eq 'cnb'
+          end.to change(AppModel, :count).by(1)
+        end
+      end
+
       context 'when using a custom buildpack' do
         let(:buildpack_identifier) { 'https://github.com/buildpacks/my-special-buildpack' }
 

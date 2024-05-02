@@ -112,6 +112,14 @@ module VCAP::CloudController
     sha256_checksum { Sham.guid }
   end
 
+  PackageModel.blueprint(:cnb) do
+    guid     { Sham.guid }
+    state    { VCAP::CloudController::PackageModel::CREATED_STATE }
+    type     { 'bits' }
+    app { AppModel.make(:cnb) }
+    sha256_checksum { Sham.guid }
+  end
+
   PackageModel.blueprint(:docker) do
     guid     { Sham.guid }
     state    { VCAP::CloudController::PackageModel::READY_STATE }
@@ -148,8 +156,9 @@ module VCAP::CloudController
 
   DropletModel.blueprint(:cnb) do
     guid { Sham.guid }
-    droplet_hash { nil }
-    sha256_checksum { nil }
+    droplet_hash { Sham.guid }
+    sha256_checksum { Sham.guid }
+    process_types { { 'web' => '$HOME/boot.sh' } }
     state { VCAP::CloudController::DropletModel::STAGED_STATE }
     app { AppModel.make(:cnb, droplet_guid: guid) }
     cnb_lifecycle_data { CNBLifecycleDataModel.make(droplet: object.save) }
@@ -199,6 +208,19 @@ module VCAP::CloudController
     app { AppModel.make }
     name { Sham.name }
     droplet { DropletModel.make(app:) }
+    command { 'bundle exec rake' }
+    state { VCAP::CloudController::TaskModel::RUNNING_STATE }
+    memory_in_mb { 256 }
+    disk_in_mb {}
+    sequence_id { Sham.sequence_id }
+    failure_reason {}
+  end
+
+  TaskModel.blueprint(:cnb) do
+    guid { Sham.guid }
+    app { AppModel.make(:cnb) }
+    name { Sham.name }
+    droplet { DropletModel.make(:cnb, app:) }
     command { 'bundle exec rake' }
     state { VCAP::CloudController::TaskModel::RUNNING_STATE }
     memory_in_mb { 256 }
@@ -467,6 +489,14 @@ module VCAP::CloudController
     diego { true }
     instances { 1 }
     type { Sham.name }
+    metadata { {} }
+  end
+
+  ProcessModel.blueprint(:cnb) do
+    instances { 1 }
+    type { 'web' }
+    diego { true }
+    app { AppModel.make(:cnb) }
     metadata { {} }
   end
 

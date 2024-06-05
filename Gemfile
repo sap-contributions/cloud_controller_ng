@@ -51,7 +51,7 @@ gem 'yajl-ruby'
 
 # Rails Components
 gem 'actionpack', '~> 7.1.0'
-gem 'actionview', '~> 7.1.0'
+gem 'actionview', '~> 7.1.3'
 gem 'activemodel', '~> 7.1.0'
 gem 'railties', '~> 7.1.0'
 

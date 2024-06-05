@@ -52,7 +52,7 @@ gem 'yajl-ruby'
 # Rails Components
 gem 'actionpack', '~> 7.1.0'
 gem 'actionview', '~> 7.1.0'
-gem 'activemodel', '~> 7.1.0'
+gem 'activemodel', '~> 7.1.3'
 gem 'railties', '~> 7.1.0'
 
 gem 'azure-storage-blob', git: 'https://github.com/sethboyles/azure-storage-ruby.git', branch: 'x-ms-blob-content-type-fix-1.1'

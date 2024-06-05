@@ -60,7 +60,7 @@ gem 'fog-azure-rm', git: 'https://github.com/fog/fog-azure-rm.git', branch: 'fog
 gem 'fog-core', '~> 2.1.2'
 gem 'fog-google', '~> 1.24.1'
 gem 'fog-local'
-gem 'fog-openstack'
+gem 'fog-openstack', git: 'https://github.com/sap-contributions/fog-openstack.git', branch: 'add-app-credentials-for-swift'
 
 gem 'cf-uaa-lib', '~> 4.0.4'
 gem 'vcap-concurrency', git: 'https://github.com/cloudfoundry/vcap-concurrency.git', ref: '2a5b0179'

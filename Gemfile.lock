@@ -27,6 +27,15 @@ GIT
       vhd (= 0.0.4)
 
 GIT
+  remote: https://github.com/sap-contributions/fog-openstack.git
+  revision: 2ccc8234165e6211931e8425a220519249495159
+  branch: add-app-credentials-for-swift
+  specs:
+    fog-openstack (1.1.1)
+      fog-core (~> 2.1)
+      fog-json (>= 1.0)
+
+GIT
   remote: https://github.com/sethboyles/azure-storage-ruby.git
   revision: d4737cdfcef3f3c4c2463a54690b6b73c0f6f707
   branch: x-ms-blob-content-type-fix-1.1
@@ -203,9 +212,6 @@ GEM
       multi_json (~> 1.10)
     fog-local (0.8.0)
       fog-core (>= 1.27, < 3.0)
-    fog-openstack (1.1.1)
-      fog-core (~> 2.1)
-      fog-json (>= 1.0)
     fog-xml (0.1.4)
       fog-core
       nokogiri (>= 1.5.11, < 2.0.0)
@@ -611,7 +617,7 @@ DEPENDENCIES
   fog-core (~> 2.1.2)
   fog-google (~> 1.24.1)
   fog-local
-  fog-openstack
+  fog-openstack!
   googleapis-common-protos (>= 1.3.12)
   hashdiff
   honeycomb-beeline

@@ -50,7 +50,7 @@ gem 'vmstat', '~> 2.3'
 gem 'yajl-ruby'
 
 # Rails Components
-gem 'actionpack', '~> 7.1.0'
+gem 'actionpack', '~> 7.1.3'
 gem 'actionview', '~> 7.1.0'
 gem 'activemodel', '~> 7.1.0'
 gem 'railties', '~> 7.1.0'

@@ -3,7 +3,7 @@ RSpec::Matchers.define :add_index_options do
 
   match do |passed_options|
     options = passed_options.keys
-    !options.delete(:name).nil? && (options - %i[where if_not_exists concurrently]).empty?
+    !options.delete(:name).nil? && (options - %i[where if_not_exists concurrently unique]).empty?
   end
 end
 

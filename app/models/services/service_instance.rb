@@ -39,7 +39,16 @@ module VCAP::CloudController
                  right_key: :target_space_guid,
                  right_primary_key: :guid,
                  join_table: :service_instance_shares,
-                 class: VCAP::CloudController::Space
+                 class: VCAP::CloudController::Space,
+                 after_add: proc { |service_instance, space|
+                   begin
+                     refresh_si_and_shared_si_names_view
+                   rescue Sequel::UniqueConstraintViolation => e
+                     raise e unless e.message.include?('si_and_shared_si_names_with_space_and_target_space_guids_index')
+
+                     raise ServiceInstanceShare::Error.new("A service instance called #{service_instance.name} already exists in / has already been shared with #{space.name}.")
+                   end
+                 }
 
     many_to_many :routes, join_table: :route_bindings
 
@@ -112,8 +121,9 @@ module VCAP::CloudController
 
     def around_save
       yield
+      self.class.refresh_si_and_shared_si_names_view
     rescue Sequel::UniqueConstraintViolation => e
-      raise e unless e.message.include?('si_space_id_name_index')
+      raise e unless e.message.include?('si_space_id_name_index') || e.message.include?('si_and_shared_si_names_with_space_and_target_space_guids_index')
 
       errors.add(:name, :unique)
       raise validation_failed_error
@@ -246,6 +256,10 @@ module VCAP::CloudController
         ServiceInstanceOperation.create(last_operation.merge(service_instance_id: id))
         service_instance_operation(reload: true)
       end
+    end
+
+    def self.refresh_si_and_shared_si_names_view
+      ServiceInstance.db.refresh_view(:si_and_shared_si_names_with_space_and_target_space_guids) if ServiceInstance.db.database_type == :postgres
     end
 
     private

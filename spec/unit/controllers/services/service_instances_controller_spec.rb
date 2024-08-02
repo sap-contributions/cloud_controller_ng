@@ -3153,7 +3153,6 @@ module VCAP::CloudController
             let(:source_space_auditor) { make_auditor_for_space(originating_space) }
 
             before do
-              service_instance.add_shared_space(originating_space)
               set_current_user(source_space_auditor)
             end
 

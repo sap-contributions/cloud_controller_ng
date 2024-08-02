@@ -64,7 +64,7 @@ module VCAP::CloudController
         it 'does not share with any spaces' do
           expect do
             service_instance_share.create(service_instance, [target_space1, service_instance.space], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error,
+          end.to raise_error(ServiceInstanceShare::Error,
                              "Unable to share service instance '#{service_instance.name}' with space '#{service_instance.space.guid}'. " \
                              'Service instances cannot be shared into the space where they were created.')
 
@@ -78,7 +78,7 @@ module VCAP::CloudController
 
           expect do
             service_instance_share.create(service_instance, [target_space1, service_instance.space], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error,
+          end.to raise_error(ServiceInstanceShare::Error,
                              "Unable to share service instance '#{service_instance.name}' with space '#{service_instance.space.guid}'. " \
                              'Service instances cannot be shared into the space where they were created.')
         end
@@ -92,7 +92,7 @@ module VCAP::CloudController
         it 'raises an api error' do
           expect do
             service_instance_share.create(service_instance, [target_space1, target_space2], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, /The #{service_instance.service.label} service does not support service instance sharing./)
+          end.to raise_error(ServiceInstanceShare::Error, /The #{service_instance.service.label} service does not support service instance sharing./)
         end
       end
 
@@ -103,7 +103,7 @@ module VCAP::CloudController
         it 'raises an api error' do
           expect do
             service_instance_share.create(service_instance, [target_space1], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, /A service instance called #{service_instance.name} already exists in #{target_space1.name}/)
+          end.to raise_error(ServiceInstanceShare::Error, /A service instance called #{service_instance.name} already exists in #{target_space1.name}/)
           expect(service_instance.shared_spaces).to be_empty
         end
       end
@@ -122,10 +122,51 @@ module VCAP::CloudController
           target_space1.reload
           expect do
             service_instance_share.create(service_instance2, [target_space1], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error,
-                             /A service instance called #{service_instance1.name} has already been shared with #{target_space1.name}/)
+          end.to raise_error(ServiceInstanceShare::Error, /A service instance called #{service_instance1.name} has already been shared with #{target_space1.name}/)
           expect(service_instance1.shared_spaces).to eq [target_space1]
           expect(service_instance2.shared_spaces).to be_empty
+        end
+      end
+
+      context 'parallel creation of managed service instances' do
+        let(:service_instance) { ManagedServiceInstance.make(name: 'banana') }
+
+        before do
+          # Create a service instance with the same name in the target space
+          ManagedServiceInstance.make(name: 'banana', space: target_space1)
+        end
+
+        it 'ensures sharing fails due to name conflict' do
+          skip unless ManagedServiceInstance.db.database_type == :postgres
+
+          # Mock the validation for the share request to simulate the race condition
+          allow_any_instance_of(ServiceInstanceShare).to receive(:validate_target_spaces!)
+
+          expect do
+            service_instance_share.create(service_instance, [target_space1], user_audit_info)
+          end.to raise_error(ServiceInstanceShare::Error,
+                             %r{A service instance called #{service_instance.name} already exists in / has already been shared with #{target_space1.name}.})
+        end
+      end
+
+      context 'parallel sharing of managed service instances' do
+        let(:service_instance) { ManagedServiceInstance.make(name: 'banana') }
+
+        before do
+          # Share a service instance with the same name to the target space
+          ManagedServiceInstance.make(name: 'banana', space: target_space2).add_shared_space(target_space1)
+        end
+
+        it 'ensures sharing fails due to name conflict' do
+          skip unless ManagedServiceInstance.db.database_type == :postgres
+
+          # Mock the validation for the share request to simulate the race condition
+          allow_any_instance_of(ServiceInstanceShare).to receive(:validate_target_spaces!)
+
+          expect do
+            service_instance_share.create(service_instance, [target_space1], user_audit_info)
+          end.to raise_error(ServiceInstanceShare::Error,
+                             %r{A service instance called #{service_instance.name} already exists in / has already been shared with #{target_space1.name}.})
         end
       end
 
@@ -133,7 +174,7 @@ module VCAP::CloudController
         it 'raises an api error' do
           expect do
             service_instance_share.create(user_provided_service_instance, [target_space1, target_space2], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, /User-provided services cannot be shared/)
+          end.to raise_error(ServiceInstanceShare::Error, /User-provided services cannot be shared/)
         end
       end
 
@@ -146,7 +187,7 @@ module VCAP::CloudController
           it 'raises an api error' do
             expect do
               service_instance_share.create(service_instance, [target_space1, target_space2], user_audit_info)
-            end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, /Route services cannot be shared/)
+            end.to raise_error(ServiceInstanceShare::Error, /Route services cannot be shared/)
           end
         end
 
@@ -158,7 +199,7 @@ module VCAP::CloudController
           it 'raises an api error' do
             expect do
               service_instance_share.create(user_provided_service_instance, [target_space1, target_space2], user_audit_info)
-            end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, /Route services cannot be shared/)
+            end.to raise_error(ServiceInstanceShare::Error, /Route services cannot be shared/)
           end
         end
       end
@@ -171,7 +212,7 @@ module VCAP::CloudController
           error_msg = 'The service instance could not be shared as the service-plan-name plan is inactive.'
           expect do
             service_instance_share.create(service_instance, [target_space1], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, error_msg)
+          end.to raise_error(ServiceInstanceShare::Error, error_msg)
         end
       end
 
@@ -188,7 +229,7 @@ module VCAP::CloudController
           error_msg = 'Access to service space-scoped-service and plan my-plan is not enabled in source-org/target-space.'
           expect do
             service_instance_share.create(service_instance, [target_space1], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, error_msg)
+          end.to raise_error(ServiceInstanceShare::Error, error_msg)
         end
       end
 
@@ -201,7 +242,7 @@ module VCAP::CloudController
                       "enabled in #{target_space1.organization.name}/#{target_space1.name}."
           expect do
             service_instance_share.create(service_instance, [target_space1], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, error_msg)
+          end.to raise_error(ServiceInstanceShare::Error, error_msg)
         end
 
         context 'and when the source org has service plan access enabled but the target org has service plan access disabled' do
@@ -218,7 +259,7 @@ module VCAP::CloudController
                         "enabled in #{target_space1.organization.name}/#{target_space1.name}."
             expect do
               service_instance_share.create(service_instance, [target_space1], user_audit_info)
-            end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, error_msg)
+            end.to raise_error(ServiceInstanceShare::Error, error_msg)
           end
         end
 
@@ -262,7 +303,7 @@ module VCAP::CloudController
         it 'raises' do
           expect do
             service_instance_share.create(service_instance, [target_space1], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, 'Service instance is currently being created. It can be shared after its creation succeeded.')
+          end.to raise_error(ServiceInstanceShare::Error, 'Service instance is currently being created. It can be shared after its creation succeeded.')
         end
       end
 
@@ -332,7 +373,7 @@ module VCAP::CloudController
         it 'raises' do
           expect do
             service_instance_share.create(service_instance, [target_space1], user_audit_info)
-          end.to raise_error(VCAP::CloudController::ServiceInstanceShare::Error, 'The service instance is getting deleted.')
+          end.to raise_error(ServiceInstanceShare::Error, 'The service instance is getting deleted.')
         end
       end
 

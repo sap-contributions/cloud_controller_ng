@@ -231,6 +231,27 @@ module VCAP::CloudController
           end
         end
 
+        context 'parallel sharing of managed service instances' do
+          let(:other_space) { Space.make(organization: org) }
+          let(:shared_service_instance) { ManagedServiceInstance.make(name: name, space: other_space) }
+
+          before do
+            # Share a service instance with the same name to the space
+            shared_service_instance.add_shared_space(space)
+          end
+
+          it 'ensures creation fails due to name conflict' do
+            skip unless ManagedServiceInstance.db.database_type == :postgres
+
+            # Mock the validation for the create request to simulate the race condition
+            allow_any_instance_of(ManagedServiceInstance).to receive(:validate).and_return(true)
+
+            expect do
+              action.precursor(message:, service_plan:)
+            end.to raise_error(ServiceInstanceCreateManaged::InvalidManagedServiceInstance, 'The service instance name is taken: si-test-name.')
+          end
+        end
+
         context 'quotas' do
           context 'when service instance limit has been reached for the space' do
             before do

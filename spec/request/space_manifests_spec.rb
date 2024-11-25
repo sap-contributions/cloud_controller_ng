@@ -769,7 +769,7 @@ RSpec.describe 'Space Manifests' do
           expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
         end
 
-        it 'removes a specific route option when options: { key: nil } is provided' do
+        it 'does not modify any option when options: { key: nil } is provided' do
           yml_manifest = {
             'applications' => [
               { 'name' => app1_model.name,
@@ -791,7 +791,7 @@ RSpec.describe 'Space Manifests' do
           Delayed::Worker.new.work_off
           expect(VCAP::CloudController::PollableJobModel.find(guid: job_guid)).to be_complete, VCAP::CloudController::PollableJobModel.find(guid: job_guid).cf_api_error
           app1_model.reload
-          expect(app1_model.routes.first.options).to eq({})
+          expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
         end
       end
 

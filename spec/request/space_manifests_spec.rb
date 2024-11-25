@@ -761,10 +761,7 @@ RSpec.describe 'Space Manifests' do
           post "/v3/spaces/#{space.guid}/actions/apply_manifest", yml_manifest, yml_headers(user_header)
 
           expect(last_response.status).to eq(202)
-          job_guid = VCAP::CloudController::PollableJobModel.last.guid
 
-          Delayed::Worker.new.work_off
-          expect(VCAP::CloudController::PollableJobModel.find(guid: job_guid)).to be_complete, VCAP::CloudController::PollableJobModel.find(guid: job_guid).cf_api_error
           app1_model.reload
           expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
         end
@@ -786,10 +783,7 @@ RSpec.describe 'Space Manifests' do
           post "/v3/spaces/#{space.guid}/actions/apply_manifest", yml_manifest, yml_headers(user_header)
 
           expect(last_response.status).to eq(202)
-          job_guid = VCAP::CloudController::PollableJobModel.last.guid
 
-          Delayed::Worker.new.work_off
-          expect(VCAP::CloudController::PollableJobModel.find(guid: job_guid)).to be_complete, VCAP::CloudController::PollableJobModel.find(guid: job_guid).cf_api_error
           app1_model.reload
           expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
         end

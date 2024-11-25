@@ -242,12 +242,9 @@ module VCAP::CloudController::Validators
 
   class OptionsValidator < ActiveModel::Validator
     def validate(record)
-
       if record.options.blank?
         # Route Creation with explicit 'null' options is not allowed
-        if record.is_a?(VCAP::CloudController::RouteCreateMessage) && record.options.nil?
-          record.errors.add(:options, message: 'is not a valid object')
-        end
+        record.errors.add(:options, message: 'is not a valid object') if record.is_a?(VCAP::CloudController::RouteCreateMessage) && record.options.nil?
         return
       end
 

@@ -242,6 +242,12 @@ module VCAP::CloudController::Validators
 
   class OptionsValidator < ActiveModel::Validator
     def validate(record)
+      # If the options key is provided, it must not be nil
+      if record.respond_to?(:options) && record.options.nil?
+        record.errors.add(:options, message: "'options' must not be explicitly set to null")
+        return
+      end
+
       # Empty option hashes are allowed, so we skip further validation
       record.options.blank? && return
 

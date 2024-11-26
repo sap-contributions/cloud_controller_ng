@@ -117,6 +117,16 @@ module VCAP::CloudController
           end
         end
 
+        context 'when options is set to null' do
+          let(:route) { 'http://example.com' }
+
+          it 'is invalid' do
+            options = nil
+            manifest_route = ManifestRoute.parse(route, options)
+            expect(manifest_route.valid?).to be(false)
+          end
+        end
+
         context 'when there is an invalid loadbalancing-algorithm' do
           let(:route) { 'http://example.com' }
           let(:options) { { 'loadbalancing-algorithm': 'invalid' } }
@@ -140,7 +150,7 @@ module VCAP::CloudController
                                       ],
                                       port: nil,
                                       path: '/path',
-                                      options: nil
+                                      options: {}
                                     })
       end
 
@@ -153,7 +163,7 @@ module VCAP::CloudController
                                       ],
                                       port: nil,
                                       path: '/path',
-                                      options: nil
+                                      options: {}
                                     })
       end
 
@@ -167,7 +177,7 @@ module VCAP::CloudController
                                       ],
                                       port: nil,
                                       path: '/path',
-                                      options: nil
+                                      options: {}
                                     })
       end
 
@@ -181,7 +191,7 @@ module VCAP::CloudController
                                       ],
                                       port: 1234,
                                       path: '',
-                                      options: nil
+                                      options: {}
                                     })
       end
 

@@ -28,9 +28,9 @@ module VCAP::CloudController
         expect(message).to be_valid
       end
 
-      it 'accepts options: nil to unset options' do
+      it 'does not accept options: nil' do
         message = RouteUpdateMessage.new(params.merge(options: nil))
-        expect(message).to be_valid
+        expect(message).not_to be_valid
       end
 
       it 'accepts lb_algo: nil to unset load-balancing algorithm' do

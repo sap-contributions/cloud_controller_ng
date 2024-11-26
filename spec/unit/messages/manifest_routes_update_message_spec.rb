@@ -225,12 +225,46 @@ module VCAP::CloudController
         end
       end
 
+      context 'when a route contains route-options: null' do
+        let(:body) do
+          { 'routes' =>
+              [
+                { 'route' => 'existing.example.com',
+                  'options' => nil }
+              ] }
+        end
+
+        it 'returns true' do
+          msg = ManifestRoutesUpdateMessage.new(body)
+
+          expect(msg.valid?).to be(false)
+        end
+      end
+
       context 'when a route contains invalid route options' do
         let(:body) do
           { 'routes' =>
               [
                 { 'route' => 'existing.example.com',
                   'options' => { 'invalid' => 'invalid' } }
+              ] }
+        end
+
+        it 'returns true' do
+          msg = ManifestRoutesUpdateMessage.new(body)
+
+          expect(msg.valid?).to be(false)
+        end
+      end
+
+      context 'when a route contains a route option key: null' do
+        let(:body) do
+          { 'routes' =>
+              [
+                { 'route' => 'existing.example.com',
+                  'options' => {
+                    'loadbalancing-algorithm' => nil
+                  } }
               ] }
         end
 

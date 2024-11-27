@@ -242,14 +242,11 @@ module VCAP::CloudController::Validators
 
   class OptionsValidator < ActiveModel::Validator
     def validate(record)
-      # If the options key is provided, it must not be nil
-      if record.respond_to?(:options) && record.options.nil?
-        record.errors.add(:options, message: "'options' must not be explicitly set to null")
+      if record.options.blank?
+        # Route Creation with explicit 'null' options is not allowed
+        record.errors.add(:options, message: 'is not a valid object') if record.is_a?(VCAP::CloudController::RouteCreateMessage) && record.options.nil?
         return
       end
-
-      # Empty option hashes are allowed, so we skip further validation
-      record.options.blank? && return
 
       unless record.options.is_a?(Hash)
         record.errors.add(:options, message: "'options' is not a valid object")

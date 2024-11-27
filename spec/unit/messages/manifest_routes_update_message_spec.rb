@@ -234,7 +234,7 @@ module VCAP::CloudController
               ] }
         end
 
-        it 'returns true' do
+        it 'returns false' do
           msg = ManifestRoutesUpdateMessage.new(body)
 
           expect(msg.valid?).to be(false)
@@ -268,7 +268,7 @@ module VCAP::CloudController
               ] }
         end
 
-        it 'returns true' do
+        it 'returns false' do
           msg = ManifestRoutesUpdateMessage.new(body)
 
           expect(msg.valid?).to be(false)

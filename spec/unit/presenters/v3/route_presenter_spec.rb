@@ -139,7 +139,7 @@ module VCAP::CloudController::Presenters::V3
         end
 
         it 'does not output options' do
-          expect(subject[:options]).to be_nil
+          expect(subject[:options]).to eq({})
         end
       end
 

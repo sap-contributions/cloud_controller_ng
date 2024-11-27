@@ -3,8 +3,8 @@ module VCAP::CloudController
     def update(route:, message:)
       Route.db.transaction do
         if message.requested?(:options)
-          route.options = if route.options.nil?
-                            message.options
+          route.options = if message.options.nil?
+                            {}
                           else
                             route.options.symbolize_keys.merge(message.options).compact
                           end

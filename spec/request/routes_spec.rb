@@ -89,6 +89,7 @@ RSpec.describe 'Routes Request' do
           labels: {},
           annotations: {}
         },
+        options: {},
         links: {
           self: { href: %r{#{Regexp.escape(link_prefix)}/v3/routes/#{route_in_org.guid}} },
           space: { href: %r{#{Regexp.escape(link_prefix)}/v3/spaces/#{route_in_org.space.guid}} },
@@ -121,6 +122,7 @@ RSpec.describe 'Routes Request' do
           labels: {},
           annotations: {}
         },
+        options: {},
         links: {
           self: { href: %r{#{Regexp.escape(link_prefix)}/v3/routes/#{route_in_other_org.guid}} },
           space: { href: %r{#{Regexp.escape(link_prefix)}/v3/spaces/#{route_in_other_org.space.guid}} },
@@ -305,6 +307,7 @@ RSpec.describe 'Routes Request' do
                 }
               }
             },
+            options: {},
             links: {
               self: { href: "http://api2.vcap.me/v3/routes/#{route1_domain1.guid}" },
               space: { href: "http://api2.vcap.me/v3/spaces/#{space.guid}" },
@@ -416,6 +419,7 @@ RSpec.describe 'Routes Request' do
               }
             }
           },
+          options: {},
           links: {
             self: { href: 'http://api2.vcap.me/v3/routes/route-without-host' },
             space: { href: "http://api2.vcap.me/v3/spaces/#{space.guid}" },
@@ -451,6 +455,7 @@ RSpec.describe 'Routes Request' do
               }
             }
           },
+          options: {},
           links: {
             self: { href: 'http://api2.vcap.me/v3/routes/route-without-host2' },
             space: { href: "http://api2.vcap.me/v3/spaces/#{space.guid}" },
@@ -489,6 +494,7 @@ RSpec.describe 'Routes Request' do
               }
             }
           },
+          options: {},
           links: {
             self: { href: 'http://api2.vcap.me/v3/routes/route-without-path' },
             space: { href: "http://api2.vcap.me/v3/spaces/#{space.guid}" },
@@ -977,6 +983,7 @@ RSpec.describe 'Routes Request' do
           labels: {},
           annotations: {}
         },
+        options: {},
         links: {
           self: { href: %r{#{Regexp.escape(link_prefix)}/v3/routes/#{UUID_REGEX}} },
           space: { href: %r{#{Regexp.escape(link_prefix)}/v3/spaces/#{route.space.guid}} },
@@ -1062,6 +1069,7 @@ RSpec.describe 'Routes Request' do
               labels: {},
               annotations: {}
             },
+            options: {},
             links: {
               self: { href: %r{#{Regexp.escape(link_prefix)}/v3/routes/#{UUID_REGEX}} },
               space: { href: %r{#{Regexp.escape(link_prefix)}/v3/spaces/#{route.space.guid}} },
@@ -2435,7 +2443,8 @@ RSpec.describe 'Routes Request' do
             potato: 'russet',
             style: 'fried'
           }
-        }
+        },
+        options: {}
       }
     end
 
@@ -2506,7 +2515,8 @@ RSpec.describe 'Routes Request' do
               potato: 'russet',
               style: 'fried'
             }
-          }
+          },
+          options: {}
         }
       end
       let(:expected_codes_and_responses) do
@@ -3606,7 +3616,8 @@ RSpec.describe 'Routes Request' do
           space: { href: %r{#{Regexp.escape(link_prefix)}/v3/spaces/#{route1.space.guid}} },
           destinations: { href: %r{#{Regexp.escape(link_prefix)}/v3/routes/#{route1.guid}/destinations} },
           domain: { href: %r{#{Regexp.escape(link_prefix)}/v3/domains/#{route1.domain.guid}} }
-        }
+        },
+        options: {}
       }
     end
 
@@ -3649,7 +3660,8 @@ RSpec.describe 'Routes Request' do
           space: { href: %r{#{Regexp.escape(link_prefix)}/v3/spaces/#{route2.space.guid}} },
           destinations: { href: %r{#{Regexp.escape(link_prefix)}/v3/routes/#{route2.guid}/destinations} },
           domain: { href: %r{#{Regexp.escape(link_prefix)}/v3/domains/#{route2.domain.guid}} }
-        }
+        },
+        options: {}
       }
     end
 

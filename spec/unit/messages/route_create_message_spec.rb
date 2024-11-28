@@ -21,7 +21,7 @@ module VCAP::CloudController
               annotations: { style: 'mashed' }
             },
             options: {
-              lb_algo: 'round-robin'
+              loadbalancing_algorithm: 'round-robin'
             }
           }
         end
@@ -410,7 +410,7 @@ module VCAP::CloudController
           end
         end
 
-        context 'when lb_algo has value round-robin' do
+        context 'when loadbalancing_algorithm has value round-robin' do
           let(:params) do
             {
               host: 'some-host',
@@ -418,7 +418,7 @@ module VCAP::CloudController
                 space: { data: { guid: 'space-guid' } },
                 domain: { data: { guid: 'domain-guid' } }
               },
-              options: { lb_algo: 'round-robin' }
+              options: { loadbalancing_algorithm: 'round-robin' }
             }
           end
 
@@ -426,7 +426,7 @@ module VCAP::CloudController
             expect(subject).to be_valid
           end
 
-          context 'when lb_algo has value least-connections' do
+          context 'when loadbalancing_algorithm has value least-connections' do
             let(:params) do
               {
                 host: 'some-host',
@@ -434,7 +434,7 @@ module VCAP::CloudController
                   space: { data: { guid: 'space-guid' } },
                   domain: { data: { guid: 'domain-guid' } }
                 },
-                options: { lb_algo: 'least-connections' }
+                options: { loadbalancing_algorithm: 'least-connections' }
               }
             end
 
@@ -443,7 +443,7 @@ module VCAP::CloudController
             end
           end
 
-          context 'when lb_algo has invalid value' do
+          context 'when loadbalancing_algorithm has invalid value' do
             let(:params) do
               {
                 host: 'some-host',
@@ -451,7 +451,7 @@ module VCAP::CloudController
                   space: { data: { guid: 'space-guid' } },
                   domain: { data: { guid: 'domain-guid' } }
                 },
-                options: { lb_algo: 'random' }
+                options: { loadbalancing_algorithm: 'random' }
               }
             end
 

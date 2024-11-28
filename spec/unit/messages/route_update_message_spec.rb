@@ -19,12 +19,12 @@ module VCAP::CloudController
       end
 
       it 'accepts options params with round-robin load-balancing algorithm' do
-        message = RouteUpdateMessage.new(params.merge(options: { lb_algo: 'round-robin' }))
+        message = RouteUpdateMessage.new(params.merge(options: { loadbalancing_algorithm: 'round-robin' }))
         expect(message).to be_valid
       end
 
       it 'accepts options params with least-connections load-balancing algorithm' do
-        message = RouteUpdateMessage.new(params.merge(options: { lb_algo: 'least-connections' }))
+        message = RouteUpdateMessage.new(params.merge(options: { loadbalancing_algorithm: 'least-connections' }))
         expect(message).to be_valid
       end
 
@@ -33,8 +33,8 @@ module VCAP::CloudController
         expect(message).to be_valid
       end
 
-      it 'accepts lb_algo: nil to unset load-balancing algorithm' do
-        message = RouteUpdateMessage.new(params.merge(options: { lb_algo: nil }))
+      it 'accepts loadbalancing_algorithm: nil to unset load-balancing algorithm' do
+        message = RouteUpdateMessage.new(params.merge(options: { loadbalancing_algorithm: nil }))
         expect(message).to be_valid
       end
 
@@ -45,7 +45,7 @@ module VCAP::CloudController
       end
 
       it 'does not accept unknown load-balancing algorithm' do
-        message = RouteUpdateMessage.new(params.merge(options: { lb_algo: 'cheesecake' }))
+        message = RouteUpdateMessage.new(params.merge(options: { loadbalancing_algorithm: 'cheesecake' }))
         expect(message).not_to be_valid
         expect(message.errors.full_messages[0]).to include("Options Lb algo 'cheesecake' is not a supported load-balancing algorithm")
       end

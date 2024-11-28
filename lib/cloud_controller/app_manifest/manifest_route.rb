@@ -19,7 +19,7 @@ module VCAP::CloudController
 
       if options
         attrs[:options] = {}
-        attrs[:options][:lb_algo] = options[:'loadbalancing-algorithm'] if options.key?(:'loadbalancing-algorithm')
+        attrs[:options][:loadbalancing_algorithm] = options[:'loadbalancing-algorithm'] if options.key?(:'loadbalancing-algorithm')
       end
 
       ManifestRoute.new(attrs)
@@ -29,7 +29,7 @@ module VCAP::CloudController
       if @attrs[:options] && !@attrs[:options].empty?
         return false if @attrs[:options].keys.any? { |key| RouteOptionsMessage::VALID_ROUTE_OPTIONS.exclude?(key) }
         # validation for loadbalancing algorithm
-        return false if @attrs[:options][:lb_algo] && RouteOptionsMessage::VALID_LOADBALANCING_ALGORITHMS.exclude?(@attrs[:options][:lb_algo])
+        return false if @attrs[:options][:loadbalancing_algorithm] && RouteOptionsMessage::VALID_LOADBALANCING_ALGORITHMS.exclude?(@attrs[:options][:loadbalancing_algorithm])
       end
 
       return false if @attrs[:host].blank?

@@ -205,7 +205,7 @@ module VCAP::CloudController
                                       ],
                                       port: nil,
                                       path: '',
-                                      options: { lb_algo: 'round-robin' }
+                                      options: { loadbalancing_algorithm: 'round-robin' }
                                     })
       end
     end

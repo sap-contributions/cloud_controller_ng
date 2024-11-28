@@ -18,7 +18,7 @@ module VCAP::CloudController
           return
         end
 
-        return unless contains_invalid_lb_algo?(record.routes)
+        return unless contains_invalid_loadbalancing_algorithm?(record.routes)
 
         record.errors.add(:routes, message: 'contains an invalid loadbalancing-algorithm option')
         nil
@@ -44,7 +44,7 @@ module VCAP::CloudController
         end
       end
 
-      def contains_invalid_lb_algo?(routes)
+      def contains_invalid_loadbalancing_algorithm?(routes)
         routes.any? do |r|
           next unless r[:options] && r[:options][:'loadbalancing-algorithm']
 

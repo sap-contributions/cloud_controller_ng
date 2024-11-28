@@ -21,6 +21,10 @@ module VCAP::CloudController::Presenters::Mixins
       hashified_metadata(annotations)
     end
 
+    def hashified_options(options)
+      hashified_metadata(options)
+    end
+
     private
 
     def hashified_metadata(metadata)

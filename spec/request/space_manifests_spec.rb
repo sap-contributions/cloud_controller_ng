@@ -674,7 +674,7 @@ RSpec.describe 'Space Manifests' do
           Delayed::Worker.new.work_off
           expect(VCAP::CloudController::PollableJobModel.find(guid: job_guid)).to be_complete, VCAP::CloudController::PollableJobModel.find(guid: job_guid).cf_api_error
           app1_model.reload
-          expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
+          expect(app1_model.routes.first.options).to eq({ 'loadbalancing_algorithm' => 'round-robin' })
         end
 
         it 'updates the route option when a new value is provided' do
@@ -698,7 +698,7 @@ RSpec.describe 'Space Manifests' do
           Delayed::Worker.new.work_off
           expect(VCAP::CloudController::PollableJobModel.find(guid: job_guid)).to be_complete, VCAP::CloudController::PollableJobModel.find(guid: job_guid).cf_api_error
           app1_model.reload
-          expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'least-connections' })
+          expect(app1_model.routes.first.options).to eq({ 'loadbalancing_algorithm' => 'least-connections' })
         end
 
         it 'does not modify any route options when the options hash is not provided' do
@@ -720,7 +720,7 @@ RSpec.describe 'Space Manifests' do
           Delayed::Worker.new.work_off
           expect(VCAP::CloudController::PollableJobModel.find(guid: job_guid)).to be_complete, VCAP::CloudController::PollableJobModel.find(guid: job_guid).cf_api_error
           app1_model.reload
-          expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
+          expect(app1_model.routes.first.options).to eq({ 'loadbalancing_algorithm' => 'round-robin' })
         end
 
         it 'does not modify any route options options: nil is provided' do
@@ -743,7 +743,7 @@ RSpec.describe 'Space Manifests' do
           Delayed::Worker.new.work_off
           expect(VCAP::CloudController::PollableJobModel.find(guid: job_guid)).to be_complete, VCAP::CloudController::PollableJobModel.find(guid: job_guid).cf_api_error
           app1_model.reload
-          expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
+          expect(app1_model.routes.first.options).to eq({ 'loadbalancing_algorithm' => 'round-robin' })
         end
 
         it 'does not modify any route options if an empty options hash is provided' do
@@ -763,7 +763,7 @@ RSpec.describe 'Space Manifests' do
           expect(last_response.status).to eq(202)
 
           app1_model.reload
-          expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
+          expect(app1_model.routes.first.options).to eq({ 'loadbalancing_algorithm' => 'round-robin' })
         end
 
         it 'does not modify any option when options: { key: nil } is provided' do
@@ -785,7 +785,7 @@ RSpec.describe 'Space Manifests' do
           expect(last_response.status).to eq(202)
 
           app1_model.reload
-          expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
+          expect(app1_model.routes.first.options).to eq({ 'loadbalancing_algorithm' => 'round-robin' })
         end
       end
 
@@ -840,7 +840,7 @@ RSpec.describe 'Space Manifests' do
             expect(VCAP::CloudController::PollableJobModel.find(guid: job_guid)).to be_complete, VCAP::CloudController::PollableJobModel.find(guid: job_guid).cf_api_error
 
             app1_model.reload
-            expect(app1_model.routes.first.options).to eq({ 'lb_algo' => 'round-robin' })
+            expect(app1_model.routes.first.options).to eq({ 'loadbalancing_algorithm' => 'round-robin' })
           end
         end
       end

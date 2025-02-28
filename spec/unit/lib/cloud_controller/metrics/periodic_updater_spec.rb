@@ -79,6 +79,8 @@ module VCAP::CloudController::Metrics
         allow(statsd_updater).to receive(:update_log_counts)
         allow(statsd_updater).to receive(:update_task_stats)
         allow(statsd_updater).to receive(:update_deploying_count)
+        allow(statsd_updater).to receive(:update_processed_jobs_count)
+        allow(statsd_updater).to receive(:update_processed_jobs_per_queue)
 
         allow(prometheus_updater).to receive(:update_user_count)
         allow(prometheus_updater).to receive(:update_job_queue_length)
@@ -89,6 +91,8 @@ module VCAP::CloudController::Metrics
         allow(prometheus_updater).to receive(:update_log_counts)
         allow(prometheus_updater).to receive(:update_task_stats)
         allow(prometheus_updater).to receive(:update_deploying_count)
+        allow(prometheus_updater).to receive(:update_processed_jobs_count)
+        allow(prometheus_updater).to receive(:update_processed_jobs_per_queue)
 
         allow(EventMachine).to receive(:add_periodic_timer)
       end
@@ -135,6 +139,16 @@ module VCAP::CloudController::Metrics
 
       it 'updates the deploying count' do
         expect(periodic_updater).to receive(:update_deploying_count).once
+        periodic_updater.setup_updates
+      end
+
+      it 'updates the processed_jobs_count' do
+        expect(periodic_updater).to receive(:update_processed_jobs_count).once
+        periodic_updater.setup_updates
+      end
+
+      it 'updates the processed_jobs_per_queue' do
+        expect(periodic_updater).to receive(:update_processed_jobs_per_queue).once
         periodic_updater.setup_updates
       end
 
@@ -233,6 +247,57 @@ module VCAP::CloudController::Metrics
         expect(statsd_updater).to have_received(:update_deploying_count).with(deploying_count)
         expect(prometheus_updater).to have_received(:update_deploying_count).with(deploying_count)
       end
+    end
+
+    describe '#update_processed_jobs_count' do
+      let(:processed_jobs_by_queue) do
+        [
+          { queue: 'default', count: 5 },
+          { queue: 'critical', count: 3 }
+        ]
+      end
+
+      before do
+        allow(Delayed::Job).to receive(:where).and_return(processed_jobs_by_queue)
+        allow(statsd_updater).to receive(:update_processed_jobs_count)
+        allow(prometheus_updater).to receive(:update_processed_jobs_count)
+      end
+
+      it 'calculates and updates processed job counts correctly' do
+        periodic_updater.update_processed_jobs_count
+
+        expected_total = processed_jobs_by_queue.sum { |job| job[:count] }
+        expect(statsd_updater).to have_received(:update_processed_jobs_count).with(expected_total)
+        expect(prometheus_updater).to have_received(:update_processed_jobs_count).with(expected_total)
+      end
+    end
+
+    describe '#update_processed_jobs_per_queue' do
+      let(:processed_jobs_by_queue) do
+        [
+          { queue: 'default', count: 10 },
+          { queue: 'high_priority', count: 7 }
+        ]
+      end
+
+      before do
+        allow(Delayed::Job).to receive(:where).and_return(processed_jobs_by_queue)
+        allow(statsd_updater).to receive(:update_processed_jobs_per_queue)
+        allow(prometheus_updater).to receive(:update_processed_jobs_per_queue)
+      end
+
+      it 'updates processed jobs per queue correctly' do
+        periodic_updater.update_processed_jobs_per_queue
+
+        expected_data = {
+          default: 10,
+          high_priority: 7
+        }
+
+        expect(statsd_updater).to have_received(:update_processed_jobs_per_queue).with(expected_data)
+        expect(prometheus_updater).to have_received(:update_processed_jobs_per_queue).with(expected_data)
+      end
+    end
     end
 
     describe '#update_user_count' do
@@ -742,6 +807,8 @@ module VCAP::CloudController::Metrics
         expect(periodic_updater).to receive(:update_log_counts).once
         expect(periodic_updater).to receive(:update_task_stats).once
         expect(periodic_updater).to receive(:update_deploying_count).once
+        expect(periodic_updater).to receive(:update_processed_jobs_count).once
+        expect(periodic_updater).to receive(:update_processed_jobs_per_queue).once
         expect(periodic_updater).to receive(:update_webserver_stats).once
 
         periodic_updater.update!

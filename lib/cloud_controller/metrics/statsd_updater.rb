@@ -110,6 +110,13 @@ module VCAP::CloudController::Metrics
       end
     end
 
+    def track_processed_job(queue_name = nil)
+      @statsd.batch do |batch|
+        batch.increment 'cc.worker.jobs.processed'
+        batch.increment "cc.worker.queue.#{queue_name}.processed" if queue_name
+      end
+    end
+
     private
 
     def nanoseconds_to_milliseconds(time_ns)

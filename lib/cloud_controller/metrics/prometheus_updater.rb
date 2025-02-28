@@ -28,6 +28,8 @@ module VCAP::CloudController::Metrics
       { type: :histogram, name: :cc_staging_failed_duration_seconds, docstring: 'Durations of failed staging events', buckets: DURATION_BUCKETS },
       { type: :gauge, name: :cc_requests_outstanding_total, docstring: 'Requests outstanding', aggregation: :sum },
       { type: :counter, name: :cc_requests_completed_total, docstring: 'Requests completed' },
+      { type: :counter, name: :cc_worker_jobs_processed_total, docstring: 'Total number of jobs processed by CC-Worker' },
+      { type: :counter, name: :cc_worker_jobs_processed_per_queue, docstring: 'Total number of jobs processed per queue', labels: [:queue] },
       { type: :gauge, name: :cc_vitals_started_at, docstring: 'CloudController Vitals: started_at', aggregation: :most_recent },
       { type: :gauge, name: :cc_vitals_mem_bytes, docstring: 'CloudController Vitals: mem_bytes', aggregation: :most_recent },
       { type: :gauge, name: :cc_vitals_cpu_load_avg, docstring: 'CloudController Vitals: cpu_load_avg', aggregation: :most_recent },
@@ -180,6 +182,16 @@ module VCAP::CloudController::Metrics
     end
 
     private
+
+    def track_processed_job(queue_name = nil)
+      increment_counter_metric(:cc_worker_jobs_processed_total)
+
+      if queue_name
+        # Ensure queue-specific metric exists
+        metric_name = "cc_worker_jobs_processed_per_queue".to_sym
+        @registry.get(metric_name).increment(labels: { queue: queue_name })
+      end
+    end
 
     def register(metric)
       return if @registry.exist?(metric[:name])

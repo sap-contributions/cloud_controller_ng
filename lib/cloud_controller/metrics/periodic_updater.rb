@@ -25,6 +25,8 @@ module VCAP::CloudController::Metrics
       EM.add_periodic_timer(30)  { catch_error { update_log_counts } }
       EM.add_periodic_timer(30)  { catch_error { update_task_stats } }
       EM.add_periodic_timer(30)  { catch_error { update_deploying_count } }
+      EM.add_periodic_timer(30)  { catch_error { update_processed_jobs_count } }
+      EM.add_periodic_timer(30)  { catch_error { update_processed_jobs_per_queue } }
       EM.add_periodic_timer(30)  { catch_error { update_webserver_stats } }
     end
 
@@ -38,6 +40,8 @@ module VCAP::CloudController::Metrics
       update_log_counts
       update_task_stats
       update_deploying_count
+      update_processed_jobs_count
+      update_processed_jobs_per_queue
       update_webserver_stats
     end
 
@@ -131,6 +135,38 @@ module VCAP::CloudController::Metrics
       @statsd_updater.update_failed_job_count(failed_jobs_by_queue, total)
       @prometheus_updater.update_failed_job_count(failed_jobs_by_queue)
     end
+
+    def update_processed_jobs_count
+      jobs_by_queue_with_count = Delayed::Job.where(Sequel.lit('deleted_at IS NOT NULL')).group_and_count(:queue)
+
+      total                = 0
+      processed_jobs_by_queue = jobs_by_queue_with_count.each_with_object({}) do |row, hash|
+        @known_job_queues[row[:queue].to_sym] = 0
+        total += row[:count]
+        hash[row[:queue].to_sym] = row[:count]
+      end
+
+      processed_jobs_by_queue.reverse_merge!(@known_job_queues)
+
+      @statsd_updater.update_processed_job_count(processed_jobs_by_queue, total)
+      @prometheus_updater.update_processed_job_count(processed_jobs_by_queue)
+    end
+
+
+    def update_processed_jobs_per_queue
+      jobs_by_queue_with_count = Delayed::Job.where(Sequel.lit('deleted_at IS NOT NULL')).group_and_count(:queue)
+
+      processed_jobs_by_queue = jobs_by_queue_with_count.each_with_object({}) do |row, hash|
+        @known_job_queues[row[:queue].to_sym] = 0
+        hash[row[:queue].to_sym] = row[:count]
+      end
+
+      processed_jobs_by_queue.reverse_merge!(@known_job_queues)
+
+      @statsd_updater.update_processed_jobs_per_queue(processed_jobs_by_queue)
+      @prometheus_updater.update_processed_jobs_per_queue(processed_jobs_by_queue)
+    end
+
 
     def update_vitals
       rss_bytes, pcpu = VCAP::Stats.process_memory_bytes_and_cpu

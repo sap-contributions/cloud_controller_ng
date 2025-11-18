@@ -22,8 +22,10 @@ curl "https://api.example.org/v3/routes" \
       }
     },
     "options": {
-        "loadbalancing": "round-robin"
-    }
+      "loadbalancing": "hash",
+      "hash_header": "X-Resource-ID",
+      "hash_balance": 1.25
+    },
     "metadata": {
       "labels": { "key": "value" },
       "annotations": { "note": "detailed information"}

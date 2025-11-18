@@ -28,6 +28,7 @@ module VCAP::CloudController
     validate :route_protocols_are_valid, if: proc { |record| record.requested?(:routes) }
     validate :route_options_are_valid, if: proc { |record| record.requested?(:routes) }
     validate :loadbalancings_are_valid, if: proc { |record| record.requested?(:routes) }
+    validate :hash_based_routing_options_are_valid, if: proc { |record| record.requested?(:routes) && record.routes&.any? { |r| r.dig(:options, :loadbalancing) == 'hash' } }
     validate :no_route_is_boolean
     validate :default_route_is_boolean
     validate :random_route_is_boolean
@@ -85,6 +86,38 @@ Valid values are: '#{RouteOptionsMessage::VALID_LOADBALANCING_ALGORITHMS.join(',
 Valid values are: '#{RouteOptionsMessage::VALID_LOADBALANCING_ALGORITHMS.join(', ')}'")
       end
     end
+
+    def hash_based_routing_options_are_valid
+      return if errors[:routes].present?
+      routes.each do |r|
+        next unless r.keys.include?(:options) && r[:options].is_a?(Hash)
+
+        next unless r[:options].keys.include?(:loadbalancing) && r[:options][:loadbalancing] == 'hash'
+
+        # hash_header needs to be a non-empty string that is a valid HTTP header name
+        hash_header = r[:options][:hash_header]
+        if hash_header.nil? || !hash_header.is_a?(String) || hash_header.strip.empty?
+          errors.add(:base,
+                     message: "Route '#{r[:route]}' with 'hash' loadbalancing must specify a non-empty 'hash_header' option")
+          next
+        end
+        unless hash_header.match?(/\A[!#$%&'*+\-.^_`|~0-9a-zA-Z]+\z/)
+          errors.add(:base,
+                     message: "Route '#{r[:route]}' has invalid 'hash_header' option '#{hash_header}'; \
+It must be a valid HTTP header name")
+        end
+
+        # hash_balance is optional, may be 0.0 or >= 1.0
+        if r[:options].keys.include?(:hash_balance)
+          hash_balance = r[:options][:hash_balance]
+          unless hash_balance.is_a?(Numeric) && (hash_balance == 0.0 || hash_balance >= 1.0)
+            errors.add(:base,
+                       message: "Route '#{r[:route]}' has invalid 'hash_balance' option '#{hash_balance}'; \
+It must be 0.0 or a number greater than or equal to 1.0")
+          end
+        end
+
+      end
 
     def routes_are_uris
       return if errors[:routes].present?

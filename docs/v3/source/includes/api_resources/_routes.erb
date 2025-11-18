@@ -39,7 +39,9 @@
     }
  ],
   "options": {
-    "loadbalancing": "round-robin"
+    "loadbalancing": "hash",
+    "hash_header": "X-Resource-ID",
+    "hash_balance": 1.25
   },
   "metadata": {
     "labels": <%= metadata.fetch(:labels, {}).to_json(space: ' ', object_nl: ' ')%>,
@@ -136,7 +138,9 @@
         }
       ],
       "options": {
-        "loadbalancing": "round-robin"
+        "loadbalancing": "hash",
+        "hash_header": "X-Resource-ID",
+        "hash_balance": 1.25
       },
       "metadata": {
         "labels": {},
@@ -234,7 +238,7 @@
 <% end %>
 
 <% content_for :route_options do %>
-  {
-    "loadbalancing": "round-robin"
-  }
+  "loadbalancing": "hash",
+  "hash_header": "X-Resource-ID",
+  "hash_balance": 1.25
 <% end %>

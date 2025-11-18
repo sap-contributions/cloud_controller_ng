@@ -7,6 +7,8 @@ Example Route-Options object
 <%= yield_content :route_options %>
 ```
 
-| Name              | Type     | Description                                                                                          |
-|-------------------|----------|------------------------------------------------------------------------------------------------------|
-| **loadbalancing** | _string_ | The load-balancer associated with this route. Valid values are 'round-robin' and 'least-connection' |
+| Name              | Type     | Description                                                                                                 |
+|-------------------|----------|-------------------------------------------------------------------------------------------------------------|
+| **loadbalancing** | _string_ | The load-balancer associated with this route. Valid values are 'round-robin', 'least-connection' and 'hash' |
+| **hash_header** | _string_ | TODO |
+| **hash_balance** | _string_ | TODO |

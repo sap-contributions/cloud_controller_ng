@@ -28,6 +28,8 @@ module VCAP::CloudController
     validate :route_protocols_are_valid, if: proc { |record| record.requested?(:routes) }
     validate :route_options_are_valid, if: proc { |record| record.requested?(:routes) }
     validate :loadbalancings_are_valid, if: proc { |record| record.requested?(:routes) }
+    validate :hash_headers_are_valid, if: proc { |record| record.requested?(:routes) }
+    validate :hash_balances_are_valid, if: proc { |record| record.requested?(:routes) }
     validate :no_route_is_boolean
     validate :default_route_is_boolean
     validate :random_route_is_boolean
@@ -83,6 +85,79 @@ Valid values are: '#{RouteOptionsMessage::VALID_LOADBALANCING_ALGORITHMS.join(',
           errors.add(:base,
                      message: "Cannot use loadbalancing value '#{loadbalancing}' for Route '#{r[:route]}'; \
 Valid values are: '#{RouteOptionsMessage::VALID_LOADBALANCING_ALGORITHMS.join(', ')}'")
+      end
+    end
+
+    def hash_headers_are_valid
+      return if errors[:routes].present?
+
+      routes.each do |r|
+        next unless r.keys.include?(:options) && r[:options].is_a?(Hash)
+
+        options = r[:options]
+        loadbalancing = options[:loadbalancing]
+        hash_header = options[:hash_header]
+
+        # Check if hash_header is required but missing
+        if loadbalancing == 'hash' && (hash_header.nil? || (hash_header.is_a?(String) && hash_header.strip.empty?))
+          errors.add(:base,
+                     message: "Route '#{r[:route]}': hash_header is required when load balancing algorithm is hash")
+          next
+        end
+
+        # Check if hash_header is present but loadbalancing is not hash
+        if loadbalancing != 'hash' && !hash_header.nil?
+          errors.add(:base,
+                     message: "Route '#{r[:route]}': hash_header can only be set when load balancing algorithm is hash")
+          next
+        end
+
+        # Validate hash_header type if present
+        if hash_header.present? && !hash_header.is_a?(String)
+          errors.add(:base,
+                     message: "Route '#{r[:route]}': hash_header must be a string")
+        end
+      end
+    end
+
+    def hash_balances_are_valid
+      return if errors[:routes].present?
+
+      routes.each do |r|
+        next unless r.keys.include?(:options) && r[:options].is_a?(Hash)
+
+        options = r[:options]
+        loadbalancing = options[:loadbalancing]
+        hash_balance = options[:hash_balance]
+
+        next if hash_balance.nil?
+
+        # Check if hash_balance is present but loadbalancing is not hash
+        if loadbalancing != 'hash'
+          errors.add(:base,
+                     message: "Route '#{r[:route]}': hash_balance can only be set when load balancing algorithm is hash")
+          next
+        end
+
+        # Accept numeric (from YAML) or string (from CLI-style input)
+        unless hash_balance.is_a?(Numeric) || hash_balance.is_a?(String)
+          errors.add(:base,
+                     message: "Route '#{r[:route]}': hash_balance must be a number")
+          next
+        end
+
+        # Convert to float
+        begin
+          value = Float(hash_balance)
+          options[:hash_balance] = value # Convert in place
+          unless (0.0..100.0).cover?(value)
+            errors.add(:base,
+                       message: "Route '#{r[:route]}': hash_balance must be between 0.0 and 100.0")
+          end
+        rescue ArgumentError
+          errors.add(:base,
+                     message: "Route '#{r[:route]}': hash_balance must be a valid number between 0.0 and 100.0")
+        end
       end
     end
 

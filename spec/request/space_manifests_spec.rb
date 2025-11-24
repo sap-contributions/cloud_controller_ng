@@ -647,7 +647,7 @@ RSpec.describe 'Space Manifests' do
 
           expect(last_response).to have_status_code(422)
           expect(last_response).to have_error_message("For application '#{app1_model.name}': \
-Route 'https://#{route.host}.#{route.domain.name}' contains invalid route option 'doesnt-exist'. Valid keys: 'loadbalancing'")
+Route 'https://#{route.host}.#{route.domain.name}' contains invalid route option 'doesnt-exist'. Valid keys: 'loadbalancing, hash_header, hash_balance'")
         end
       end
 
@@ -787,7 +787,7 @@ Route 'https://#{route.host}.#{route.domain.name}': options must be an object")
 
           expect(last_response.status).to eq(422)
           expect(last_response).to have_error_message("For application '#{app1_model.name}': \
-Invalid value for 'loadbalancing' for Route 'https://#{route.host}.#{route.domain.name}'; Valid values are: 'round-robin, least-connection'")
+Invalid value for 'loadbalancing' for Route 'https://#{route.host}.#{route.domain.name}'; Valid values are: 'round-robin, least-connection, hash'")
 
           app1_model.reload
           expect(app1_model.routes.first.options).to eq({ 'loadbalancing' => 'round-robin' })
@@ -817,7 +817,7 @@ Invalid value for 'loadbalancing' for Route 'https://#{route.host}.#{route.domai
 
             expect(last_response).to have_status_code(422)
             expect(last_response).to have_error_message("For application '#{app1_model.name}': \
-Cannot use loadbalancing value 'unsupported-lb-algorithm' for Route 'https://#{route.host}.#{route.domain.name}'; Valid values are: 'round-robin, least-connection'")
+Cannot use loadbalancing value 'unsupported-lb-algorithm' for Route 'https://#{route.host}.#{route.domain.name}'; Valid values are: 'round-robin, least-connection, hash'")
           end
         end
 

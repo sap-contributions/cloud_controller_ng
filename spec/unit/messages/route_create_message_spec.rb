@@ -478,6 +478,58 @@ module VCAP::CloudController
             end
           end
 
+          context 'when loadbalancing is hash' do
+            let(:params) do
+              {
+                host: 'some-host',
+                relationships: {
+                  space: { data: { guid: 'space-guid' } },
+                  domain: { data: { guid: 'domain-guid' } }
+                },
+                options: { loadbalancing: 'hash', hash_header: 'X-User-ID' }
+              }
+            end
+
+            it 'is valid' do
+              expect(subject).to be_valid
+            end
+
+            context 'with hash_balance' do
+              let(:params) do
+                {
+                  host: 'some-host',
+                  relationships: {
+                    space: { data: { guid: 'space-guid' } },
+                    domain: { data: { guid: 'domain-guid' } }
+                  },
+                  options: { loadbalancing: 'hash', hash_header: 'X-User-ID', hash_balance: 50.5 }
+                }
+              end
+
+              it 'is valid' do
+                expect(subject).to be_valid
+              end
+            end
+
+            context 'without hash_header' do
+              let(:params) do
+                {
+                  host: 'some-host',
+                  relationships: {
+                    space: { data: { guid: 'space-guid' } },
+                    domain: { data: { guid: 'domain-guid' } }
+                  },
+                  options: { loadbalancing: 'hash' }
+                }
+              end
+
+              it 'is not valid' do
+                expect(subject).not_to be_valid
+                expect(subject.errors[:options]).to include('Hash header is required when load balancing algorithm is hash')
+              end
+            end
+          end
+
           context 'when loadbalancing has invalid value' do
             let(:params) do
               {
@@ -492,7 +544,7 @@ module VCAP::CloudController
 
             it 'is not valid' do
               expect(subject).not_to be_valid
-              expect(subject.errors[:options]).to include("Loadbalancing must be one of 'round-robin, least-connection' if present")
+              expect(subject.errors[:options]).to include("Loadbalancing must be one of 'round-robin, least-connection, hash' if present")
             end
           end
         end

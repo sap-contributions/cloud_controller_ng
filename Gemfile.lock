@@ -272,8 +272,8 @@ GEM
       pp (>= 0.6.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    jaro_winkler (1.6.1)
-    json (2.18.1)
+    jaro_winkler (1.7.0)
+    json (2.19.1)
     json-diff (0.4.1)
     json-schema (6.1.0)
       addressable (~> 2.8)
@@ -353,7 +353,7 @@ GEM
     parallel (1.27.0)
     parallel_tests (5.6.0)
       parallel
-    parser (3.3.10.1)
+    parser (3.3.10.2)
       ast (~> 2.4.1)
       racc
     pg (1.6.3)
@@ -547,7 +547,7 @@ GEM
       rack-protection (= 4.2.1)
       sinatra (= 4.2.1)
       tilt (~> 2.0)
-    solargraph (0.58.2)
+    solargraph (0.58.3)
       ast (~> 2.4.3)
       backport (~> 1.2)
       benchmark (~> 0.4)

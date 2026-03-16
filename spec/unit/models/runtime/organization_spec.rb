@@ -125,7 +125,6 @@ module VCAP::CloudController
       let(:org) { Organization.make }
 
       it { is_expected.to validate_presence :name }
-      it { is_expected.to validate_uniqueness :name }
       it { is_expected.to strip_whitespace :name }
 
       describe 'name' do

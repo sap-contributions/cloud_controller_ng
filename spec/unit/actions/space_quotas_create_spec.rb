@@ -210,8 +210,6 @@ module VCAP::CloudController
             space_quotas_create.create(message, organization: org)
           end.not_to raise_error
 
-          # Mock the validation for the second request to simulate the race condition and trigger a unique constraint violation
-          allow_any_instance_of(SpaceQuotaDefinition).to receive(:validate).and_return(true)
 
           # Second request, should fail with correct error
           expect do

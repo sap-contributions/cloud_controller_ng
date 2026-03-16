@@ -63,7 +63,6 @@ module VCAP::CloudController
 
     describe 'Validations' do
       it { is_expected.to validate_presence :guid }
-      it { is_expected.to validate_uniqueness :guid }
     end
 
     describe 'Serialization' do

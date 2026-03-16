@@ -84,7 +84,7 @@ module VCAP::CloudController
     rescue Sequel::UniqueConstraintViolation => e
       raise e unless e.message.include?('apps_v3_space_guid_name_index')
 
-      errors.add(%i[space_guid name], :unique)
+      errors.add(%i[space_guid name], Sequel.lit("App with the name '#{name}' already exists."))
       raise validation_failed_error
     rescue Sequel::ForeignKeyConstraintViolation => e
       raise e unless e.message.include?('fk_apps_droplet_guid')
@@ -100,7 +100,6 @@ module VCAP::CloudController
       validate_environment_variables
       validate_droplet_is_staged
 
-      validates_unique %i[space_guid name], message: Sequel.lit("App with the name '#{name}' already exists.")
     end
 
     def lifecycle_type

@@ -87,7 +87,6 @@ module VCAP::CloudController
 
     def validate
       validates_presence :guid
-      validates_unique :guid
     end
 
     def validate_organization(org)

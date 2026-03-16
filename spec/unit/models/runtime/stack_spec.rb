@@ -24,7 +24,6 @@ module VCAP::CloudController
 
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
-      it { is_expected.to validate_uniqueness :name }
       it { is_expected.to strip_whitespace :name }
 
       describe 'state validation' do

@@ -229,7 +229,6 @@ module VCAP::CloudController
     def validate
       validates_presence :name
       validates_presence :organization
-      validates_unique %i[organization_id name]
       validates_format SPACE_NAME_REGEX, :name
 
       errors.add(:space_quota_definition, :invalid_organization) if space_quota_definition && space_quota_definition.organization_id != organization.id

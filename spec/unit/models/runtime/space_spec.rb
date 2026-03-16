@@ -7,7 +7,6 @@ module VCAP::CloudController
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
       it { is_expected.to validate_presence :organization }
-      it { is_expected.to validate_uniqueness %i[organization_id name] }
       it { is_expected.to strip_whitespace :name }
 
       context 'name' do

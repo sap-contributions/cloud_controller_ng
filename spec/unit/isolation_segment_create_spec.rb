@@ -53,13 +53,11 @@ module VCAP::CloudController
             IsolationSegmentCreate.create(message)
           end.not_to raise_error
 
-          # Mock the validation for the second request to simulate the race condition and trigger a unique constraint violation
-          allow_any_instance_of(IsolationSegmentModel).to receive(:validate).and_return(true)
 
           # Second request, should fail with correct error
           expect do
             IsolationSegmentCreate.create(message)
-          end.to raise_error(IsolationSegmentCreate::Error, 'name unique')
+          end.to raise_error(IsolationSegmentCreate::Error, 'Isolation Segment names are case insensitive and must be unique')
         end
       end
     end

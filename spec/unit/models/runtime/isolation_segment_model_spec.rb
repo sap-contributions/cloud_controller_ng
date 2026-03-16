@@ -124,22 +124,6 @@ module VCAP::CloudController
         end.to raise_error(Sequel::ValidationFailed, 'Isolation Segment names can only contain non-blank unicode characters')
       end
 
-      it 'requires a unique name' do
-        IsolationSegmentModel.make(name: 'segment1')
-
-        expect do
-          IsolationSegmentModel.make(name: 'segment1')
-        end.to raise_error(Sequel::ValidationFailed, 'Isolation Segment names are case insensitive and must be unique')
-      end
-
-      it 'uniqueness is case insensitive' do
-        IsolationSegmentModel.make(name: 'lowercase')
-
-        expect do
-          IsolationSegmentModel.make(name: 'lowerCase')
-        end.to raise_error(Sequel::ValidationFailed, 'Isolation Segment names are case insensitive and must be unique')
-      end
-
       it 'allows standard ascii characters' do
         expect do
           IsolationSegmentModel.make(name: "A -_- word 2!?()'\"&+.")

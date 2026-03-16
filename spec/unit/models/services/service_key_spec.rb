@@ -19,12 +19,20 @@ module VCAP::CloudController
       it { is_expected.to have_associated :service_instance, associated_instance: ->(service_key) { ServiceInstance.make(space: service_key.space) } }
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name and service_instance_id' do
+        existing = ServiceKey.make
+        expect {
+          ServiceKey.make(name: existing.name, service_instance: existing.service_instance)
+        }.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :service_instance }
       it { is_expected.to validate_presence :name }
       it { is_expected.to validate_db_presence :service_instance_id }
       it { is_expected.to validate_db_presence :credentials }
-      it { is_expected.to validate_uniqueness %i[name service_instance_id] }
 
       context 'MaxServiceKeysPolicy' do
         let(:service_key) { ServiceKey.make }

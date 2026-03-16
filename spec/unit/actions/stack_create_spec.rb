@@ -130,8 +130,6 @@ module VCAP::CloudController
             stack_create.create(message)
           end.not_to raise_error
 
-          # Mock the validation for the second request to simulate the race condition and trigger a unique constraint violation
-          allow_any_instance_of(Stack).to receive(:validate).and_return(true)
 
           # Second request, should fail with correct error
           expect do

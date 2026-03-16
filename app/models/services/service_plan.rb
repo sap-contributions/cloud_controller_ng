@@ -75,13 +75,22 @@ module VCAP::CloudController
 
     alias_method :broker_provided_id, :unique_id
 
+    def around_save
+      yield
+    rescue Sequel::UniqueConstraintViolation => e
+      raise e unless e.message.include?('svc_plan_svc_id_name_index')
+
+      errors.add(%i[name service_id], Sequel.lit("Plan names must be unique within a service. Service #{service.try(:label)} already has a plan named #{name}"))
+      raise validation_failed_error
+    end
+
+
     def validate
       validates_presence :name,                message: 'is required'
       validates_presence :description,         message: 'is required'
       validates_presence :free,                message: 'is required'
       validates_presence :service,             message: 'is required'
       validates_presence :unique_id,           message: 'is required'
-      validates_unique %i[service_id name], message: Sequel.lit("Plan names must be unique within a service. Service #{service.try(:label)} already has a plan named #{name}")
       validate_private_broker_plan_not_public
     end
 

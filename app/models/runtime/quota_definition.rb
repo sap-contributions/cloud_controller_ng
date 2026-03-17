@@ -30,7 +30,6 @@ module VCAP::CloudController
 
     def validate
       validates_presence :name
-      validates_unique :name
       validates_presence :non_basic_services_allowed
       validates_presence :total_services
       validates_presence :total_routes

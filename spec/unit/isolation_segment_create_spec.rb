@@ -53,7 +53,6 @@ module VCAP::CloudController
             IsolationSegmentCreate.create(message)
           end.not_to raise_error
 
-
           # Second request, should fail with correct error
           expect do
             IsolationSegmentCreate.create(message)

@@ -99,7 +99,6 @@ module VCAP::CloudController
       validates_format APP_NAME_REGEX, :name
       validate_environment_variables
       validate_droplet_is_staged
-
     end
 
     def lifecycle_type

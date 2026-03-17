@@ -90,7 +90,6 @@ module VCAP::CloudController
               SpaceCreate.new(user_audit_info:).create(org, message)
             end.not_to raise_error
 
-
             # Second request, should fail with correct error
             expect do
               SpaceCreate.new(user_audit_info:).create(org, message)

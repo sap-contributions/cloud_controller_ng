@@ -15,9 +15,9 @@ module VCAP::CloudController
     describe 'uniqueness' do
       it 'enforces uniqueness of name within a service' do
         existing = ServicePlan.make
-        expect {
+        expect do
           ServicePlan.make(name: existing.name, service: existing.service)
-        }.to raise_error(Sequel::ValidationFailed, /already has a plan named/)
+        end.to raise_error(Sequel::ValidationFailed, /already has a plan named/)
       end
     end
 

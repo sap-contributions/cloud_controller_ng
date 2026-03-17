@@ -9,9 +9,9 @@ module VCAP::CloudController
     describe 'uniqueness' do
       it 'enforces uniqueness of name' do
         existing_flag = FeatureFlag.make
-        expect {
+        expect do
           FeatureFlag.create(name: existing_flag.name, enabled: true)
-        }.to raise_error(Sequel::ValidationFailed, /unique/)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
       end
     end
 

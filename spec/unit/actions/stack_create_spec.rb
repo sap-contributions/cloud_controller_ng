@@ -130,7 +130,6 @@ module VCAP::CloudController
             stack_create.create(message)
           end.not_to raise_error
 
-
           # Second request, should fail with correct error
           expect do
             stack_create.create(message)

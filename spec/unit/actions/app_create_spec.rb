@@ -200,7 +200,6 @@ module VCAP::CloudController
         end
       end
 
-
       describe 'stack state validation' do
         let(:test_stack) { Stack.make(name: 'test-stack-for-validation') }
         let(:lifecycle_request) { { type: 'buildpack', data: { buildpacks: [buildpack_identifier], stack: test_stack.name } } }

@@ -12,9 +12,9 @@ module VCAP::CloudController
     describe 'uniqueness' do
       it 'enforces uniqueness of organization and service plan combination' do
         existing = ServicePlanVisibility.make
-        expect {
+        expect do
           ServicePlanVisibility.create(service_plan: existing.service_plan, organization: existing.organization)
-        }.to raise_error(Sequel::ValidationFailed, /unique/)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
       end
     end
 

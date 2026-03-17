@@ -121,7 +121,6 @@ module VCAP::CloudController
               org_create.create(message)
             end.not_to raise_error
 
-
             # Second request, should fail with correct error
             expect do
               org_create.create(message)

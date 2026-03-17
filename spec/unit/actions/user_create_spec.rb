@@ -44,7 +44,6 @@ module VCAP::CloudController
             subject.create(message:)
           end.not_to raise_error
 
-
           # Second request, should fail with correct error
           expect do
             subject.create(message:)

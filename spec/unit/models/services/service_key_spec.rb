@@ -22,9 +22,9 @@ module VCAP::CloudController
     describe 'uniqueness' do
       it 'enforces uniqueness of name and service_instance_id' do
         existing = ServiceKey.make
-        expect {
+        expect do
           ServiceKey.make(name: existing.name, service_instance: existing.service_instance)
-        }.to raise_error(Sequel::ValidationFailed, /unique/)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
       end
     end
 

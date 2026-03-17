@@ -140,7 +140,6 @@ module VCAP
             action.create(message)
           end.not_to raise_error
 
-
           # Second request, should fail with correct error
           expect do
             action.create(message)

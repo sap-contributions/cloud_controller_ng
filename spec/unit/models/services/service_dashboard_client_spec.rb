@@ -15,9 +15,9 @@ module VCAP::CloudController
     describe 'uniqueness' do
       it 'enforces uniqueness of uaa_id' do
         existing = ServiceDashboardClient.make(service_broker:)
-        expect {
+        expect do
           ServiceDashboardClient.create(uaa_id: existing.uaa_id, service_broker: other_broker)
-        }.to raise_error(Sequel::ValidationFailed, /unique/)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
       end
     end
 

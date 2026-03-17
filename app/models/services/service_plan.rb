@@ -84,7 +84,6 @@ module VCAP::CloudController
       raise validation_failed_error
     end
 
-
     def validate
       validates_presence :name,                message: 'is required'
       validates_presence :description,         message: 'is required'

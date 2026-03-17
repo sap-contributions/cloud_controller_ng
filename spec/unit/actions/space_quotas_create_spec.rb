@@ -210,7 +210,6 @@ module VCAP::CloudController
             space_quotas_create.create(message, organization: org)
           end.not_to raise_error
 
-
           # Second request, should fail with correct error
           expect do
             space_quotas_create.create(message, organization: org)

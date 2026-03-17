@@ -17,9 +17,9 @@ module VCAP::CloudController
     describe 'uniqueness' do
       it 'enforces uniqueness of name' do
         existing = QuotaDefinition.make
-        expect {
+        expect do
           QuotaDefinition.create(name: existing.name, non_basic_services_allowed: true, total_services: 0, total_routes: 0, memory_limit: 0)
-        }.to raise_error(Sequel::ValidationFailed, /unique/)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
       end
     end
 

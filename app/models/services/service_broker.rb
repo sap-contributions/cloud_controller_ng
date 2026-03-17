@@ -25,7 +25,7 @@ module VCAP::CloudController
     rescue Sequel::UniqueConstraintViolation => e
       raise e unless e.message.include?('service_brokers_name_index')
 
-      errors.add(:name, :unique)
+      errors.add(:name, Sequel.lit('Name must be unique'))
       raise validation_failed_error
     end
 

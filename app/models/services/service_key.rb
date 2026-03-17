@@ -49,6 +49,7 @@ module VCAP::CloudController
     def validate
       validates_presence :name
       validates_presence :service_instance
+      validates_unique %i[name service_instance_id]
 
       return unless service_instance
 

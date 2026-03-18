@@ -110,23 +110,6 @@ module VCAP::CloudController
             end.to raise_error(OrganizationCreate::Error, "Organization '#{name}' already exists.")
           end
         end
-
-        context 'when creating organizations concurrently' do
-          let(:name) { 'Alfredo' }
-
-          it 'ensures one creation is successful and the other fails due to name conflict' do
-            # First request, should succeed
-            message = VCAP::CloudController::OrganizationUpdateMessage.new(name:)
-            expect do
-              org_create.create(message)
-            end.not_to raise_error
-
-            # Second request, should fail with correct error
-            expect do
-              org_create.create(message)
-            end.to raise_error(OrganizationCreate::Error, "Organization 'Alfredo' already exists.")
-          end
-        end
       end
     end
   end

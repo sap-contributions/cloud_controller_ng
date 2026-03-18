@@ -4,6 +4,15 @@ module VCAP::CloudController
   RSpec.describe VCAP::CloudController::Space, type: :model do
     it { is_expected.to have_timestamp_columns }
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name within an organization' do
+        existing_space = Space.make
+        expect do
+          Space.create(name: existing_space.name, organization: existing_space.organization)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
       it { is_expected.to validate_presence :organization }

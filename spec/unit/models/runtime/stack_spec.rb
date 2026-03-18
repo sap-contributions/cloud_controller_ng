@@ -22,6 +22,15 @@ module VCAP::CloudController
       end
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name' do
+        existing_stack = Stack.make
+        expect do
+          Stack.create(name: existing_stack.name)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
       it { is_expected.to strip_whitespace :name }

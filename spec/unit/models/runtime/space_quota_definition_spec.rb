@@ -17,6 +17,15 @@ module VCAP::CloudController
       end
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name within an organization' do
+        existing_quota = SpaceQuotaDefinition.make
+        expect do
+          SpaceQuotaDefinition.make(name: existing_quota.name, organization: existing_quota.organization)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
       it { is_expected.to validate_presence :non_basic_services_allowed }

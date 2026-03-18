@@ -35,22 +35,6 @@ module VCAP::CloudController
         end
       end
 
-      context 'when creating users concurrently' do
-        let(:message) { UserCreateMessage.new({ guid: 'some-nice-user-gu-id' }) }
-
-        it 'ensures one creation is successful and the other fails due to name conflict' do
-          # First request, should succeed
-          expect do
-            subject.create(message:)
-          end.not_to raise_error
-
-          # Second request, should fail with correct error
-          expect do
-            subject.create(message:)
-          end.to raise_error(UserCreate::Error, "User with guid 'some-nice-user-gu-id' already exists.")
-        end
-      end
-
       describe 'creating users' do
         before do
           allow(User).to receive_messages(create_uaa_shadow_user: { 'id' => guid }, get_user_id_by_username_and_origin: nil)

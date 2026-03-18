@@ -44,21 +44,6 @@ module VCAP::CloudController
           end.to raise_error(IsolationSegmentCreate::Error, 'blork is busted')
         end
       end
-
-      context 'when creating isolation segments concurrently' do
-        it 'ensures one creation is successful and the other fails due to name conflict' do
-          # First request, should succeed
-          message = VCAP::CloudController::IsolationSegmentCreateMessage.new(name: 'foobar')
-          expect do
-            IsolationSegmentCreate.create(message)
-          end.not_to raise_error
-
-          # Second request, should fail with correct error
-          expect do
-            IsolationSegmentCreate.create(message)
-          end.to raise_error(IsolationSegmentCreate::Error, 'Isolation Segment names are case insensitive and must be unique')
-        end
-      end
     end
   end
 end

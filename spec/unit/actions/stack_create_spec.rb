@@ -119,23 +119,6 @@ module VCAP::CloudController
           end.to raise_error(StackCreate::Error, 'Name must be unique')
         end
       end
-
-      context 'when creating stack with the same name concurrently' do
-        let(:name) { 'Gaby' }
-
-        it 'ensures one creation is successful and the other fails due to name conflict' do
-          message = VCAP::CloudController::StackCreateMessage.new(name:)
-          # First request, should succeed
-          expect do
-            stack_create.create(message)
-          end.not_to raise_error
-
-          # Second request, should fail with correct error
-          expect do
-            stack_create.create(message)
-          end.to raise_error(StackCreate::Error, 'Name must be unique')
-        end
-      end
     end
   end
 end

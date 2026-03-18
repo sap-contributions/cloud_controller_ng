@@ -121,6 +121,15 @@ module VCAP::CloudController
       end
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name' do
+        existing_org = Organization.make
+        expect do
+          Organization.create(name: existing_org.name)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       let(:org) { Organization.make }
 

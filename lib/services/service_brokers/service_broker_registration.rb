@@ -30,6 +30,8 @@ module VCAP::Services::ServiceBrokers
         raise e
       end
       self
+    rescue Sequel::ValidationFailed
+      nil
     end
 
     def update
@@ -50,6 +52,8 @@ module VCAP::Services::ServiceBrokers
         synchronize_services_and_plans!
       end
       self
+    rescue Sequel::ValidationFailed
+      nil
     end
 
     delegate :errors, to: :broker

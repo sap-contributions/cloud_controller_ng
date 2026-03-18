@@ -291,6 +291,7 @@ module VCAP::CloudController
           post '/v2/service_brokers', public_body
           expect(last_response).to have_status_code(201)
 
+          stub_catalog
           post '/v2/service_brokers', body
           expect(last_response).to have_status_code(400)
         end

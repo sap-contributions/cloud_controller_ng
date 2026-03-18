@@ -34,7 +34,6 @@ module VCAP::CloudController
       validates_presence :broker_url
       validates_presence :auth_username
       validates_presence :auth_password
-      validates_unique :name, message: Sequel.lit('Name must be unique')
       validates_url :broker_url
       validates_url_no_basic_auth
     end

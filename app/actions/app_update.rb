@@ -44,12 +44,20 @@ module VCAP::CloudController
         )
 
         # update process timestamp to trigger convergence if sending fails
-        app.processes.each(&:save) if updating_metric_tags?(message)
+        if updating_metric_tags?(message)
+          app.processes.each do |process|
+            process.skip_process_observer_on_update = true
+            process.save
+          end
+        end
       end
 
       if updating_metric_tags?(message)
         app.processes.each do |process|
-          @runners.runner_for_process(process).update_metric_tags if process.state == ProcessModel::STARTED
+          # Reload to get the DB-assigned updated_at, which ProcessesSync compares against
+          # the LRP annotation to detect drift. Without this, the stale in-memory value
+          # causes an unnecessary re-sync.
+          @runners.runner_for_process(process.reload).update_metric_tags if process.state == ProcessModel::STARTED
         rescue Diego::Runner::CannotCommunicateWithDiegoError => e
           @logger.error("failed communicating with diego backend: #{e.message}")
         end

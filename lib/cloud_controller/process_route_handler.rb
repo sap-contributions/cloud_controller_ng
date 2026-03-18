@@ -28,7 +28,10 @@ module VCAP::CloudController
     end
 
     def notify_backend_of_route_update
-      @runners.runner_for_process(@process).update_routes if @process && @process.staged? && @process.started?
+      # Reload to get the DB-assigned updated_at, which ProcessesSync compares against
+      # the LRP annotation to detect drift. Without this, the stale in-memory value
+      # causes an unnecessary re-sync.
+      @runners.runner_for_process(@process.reload).update_routes if @process && @process.staged? && @process.started?
     rescue Diego::Runner::CannotCommunicateWithDiegoError => e
       logger.error("failed communicating with diego backend: #{e.message}")
     end

@@ -5,7 +5,7 @@ module VCAP::CloudController
     let(:stagers) { double(:stagers, stager_for_build: stager) }
     let(:runners) { instance_double(Runners, runner_for_process: runner) }
     let(:stager) { double(:stager) }
-    let(:runner) { instance_double(Diego::Runner, stop: nil, start: nil) }
+    let(:runner) { instance_double(Diego::Runner, stop: nil, start: nil, scale: nil) }
     let(:process_active) { true }
     let(:diego) { false }
     let(:process) do
@@ -33,6 +33,7 @@ module VCAP::CloudController
 
     before do
       ProcessObserver.configure(stagers, runners)
+      allow(process).to receive(:reload).and_return(process)
     end
 
     describe '.deleted' do
@@ -309,6 +310,37 @@ module VCAP::CloudController
               allow(runner).to receive(:scale).and_raise(VCAP::CloudController::Diego::Runner::CannotCommunicateWithDiegoError)
               expect { subject }.not_to raise_error
             end
+          end
+        end
+      end
+
+      context 'updated_at annotation accuracy' do
+        let(:received) { [] }
+
+        before do
+          allow(runners).to receive(:runner_for_process) do |p|
+            received << p.updated_at
+            runner
+          end
+        end
+
+        context 'when the process instances have changed' do
+          it 'passes a process with the correct updated_at timestamp to the runner', isolation: :truncation do
+            process_model = ProcessModelFactory.make(state: 'STARTED')
+            process_model.update(instances: process_model.instances + 1)
+
+            expect(runners).to have_received(:runner_for_process).once
+            expect(received.last).to eq(process_model.reload.updated_at)
+          end
+        end
+
+        context 'when the process state has changed' do
+          it 'passes a process with the correct updated_at timestamp to the runner', isolation: :truncation do
+            process_model = ProcessModelFactory.make(state: 'STOPPED')
+            process_model.update(state: ProcessModel::STARTED)
+
+            expect(runners).to have_received(:runner_for_process).once
+            expect(received.last).to eq(process_model.reload.updated_at)
           end
         end
       end

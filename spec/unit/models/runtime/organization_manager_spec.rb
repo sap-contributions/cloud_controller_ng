@@ -5,8 +5,8 @@ module VCAP::CloudController
     let(:organization) { Organization.make }
     let(:user) { User.make }
 
-    describe 'uniquiness' do
-      it 'prevend dublicate organization_id and user_id combination' do
+    describe 'uniqueness' do
+      it 'prevents duplicate organization_id and user_id combination' do
         OrganizationManager.create(organization_id: organization.id, user_id: user.id)
         expect do
           OrganizationManager.create(organization_id: organization.id, user_id: user.id)

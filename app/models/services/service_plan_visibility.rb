@@ -6,10 +6,18 @@ module VCAP::CloudController
     import_attributes :service_plan_guid, :organization_guid
     export_attributes :service_plan_guid, :organization_guid
 
+    def around_save
+      yield
+    rescue Sequel::UniqueConstraintViolation => e
+      raise e unless e.message.include?('spv_org_id_sp_id_index')
+
+      errors.add(%i[organization_id service_plan_id], :unique)
+      raise validation_failed_error
+    end
+
     def validate
       validates_presence :service_plan
       validates_presence :organization
-      validates_unique %i[organization_id service_plan_id]
       validate_plan_is_not_private
       validate_plan_is_not_public
     end

@@ -97,6 +97,8 @@ module VCAP::CloudController
 
     def validate
       validates_presence :name
+      # Keep validates_unique to check across all Domain subclasses (STI: SharedDomain, PrivateDomain).
+      # Without it, exact name duplicates would be caught by name_overlaps? below with a misleading error message.
       validates_unique :name, dataset: Domain.dataset
 
       validates_format CloudController::DomainDecorator::DOMAIN_REGEX, :name,

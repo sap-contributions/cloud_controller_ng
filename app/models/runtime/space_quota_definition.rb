@@ -41,7 +41,6 @@ module VCAP::CloudController
       validates_presence :total_routes
       validates_presence :memory_limit
       validates_presence :organization
-      validates_unique %i[organization_id name]
 
       validates_limit(:memory_limit, memory_limit)
       validates_limit(:instance_memory_limit, instance_memory_limit)

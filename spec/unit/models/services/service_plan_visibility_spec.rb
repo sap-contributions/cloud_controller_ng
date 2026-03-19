@@ -9,10 +9,18 @@ module VCAP::CloudController
       it { is_expected.to have_associated :organization }
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of organization and service plan combination' do
+        existing = ServicePlanVisibility.make
+        expect do
+          ServicePlanVisibility.create(service_plan: existing.service_plan, organization: existing.organization)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :service_plan }
       it { is_expected.to validate_presence :organization }
-      it { is_expected.to validate_uniqueness %i[organization_id service_plan_id] }
 
       context 'when the service plan visibility is for a private broker' do
         it 'returns a validation error' do

@@ -5,8 +5,16 @@ module VCAP::CloudController
     let(:organization) { Organization.make }
     let(:user) { User.make }
 
+    describe 'uniqueness' do
+      it 'prevents duplicate organization_id and user_id combination' do
+        OrganizationManager.create(organization_id: organization.id, user_id: user.id)
+        expect do
+          OrganizationManager.create(organization_id: organization.id, user_id: user.id)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
-      it { is_expected.to validate_uniqueness %i[organization_id user_id] }
       it { is_expected.to validate_presence :organization_id }
       it { is_expected.to validate_presence :user_id }
 

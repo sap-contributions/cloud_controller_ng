@@ -218,7 +218,6 @@ module VCAP::CloudController
 
     def validate
       validates_presence :name
-      validates_unique :name
       validates_format ORG_NAME_REGEX, :name
       validates_includes ORG_STATUS_VALUES, :status, allow_missing: true
 

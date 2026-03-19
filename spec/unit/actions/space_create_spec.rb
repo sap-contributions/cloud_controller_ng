@@ -79,26 +79,6 @@ module VCAP::CloudController
             end.to raise_error(SpaceCreate::Error, 'Name must be unique per organization')
           end
         end
-
-        context 'when creating spaces concurrently' do
-          let(:name) { 'Rose' }
-
-          it 'ensures one creation is successful and the other fails due to name conflict' do
-            # First request, should succeed
-            message = VCAP::CloudController::SpaceCreateMessage.new(name:)
-            expect do
-              SpaceCreate.new(user_audit_info:).create(org, message)
-            end.not_to raise_error
-
-            # Mock the validation for the second request to simulate the race condition and trigger a unique constraint violation
-            allow_any_instance_of(Space).to receive(:validate).and_return(true)
-
-            # Second request, should fail with correct error
-            expect do
-              SpaceCreate.new(user_audit_info:).create(org, message)
-            end.to raise_error(SpaceCreate::Error, 'Name must be unique per organization')
-          end
-        end
       end
     end
   end

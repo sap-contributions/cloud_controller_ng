@@ -12,6 +12,15 @@ module VCAP::CloudController
       it { is_expected.to have_associated :annotations, class: ServicePlanAnnotationModel }
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name within a service' do
+        existing = ServicePlan.make
+        expect do
+          ServicePlan.make(name: existing.name, service: existing.service)
+        end.to raise_error(Sequel::ValidationFailed, /already has a plan named/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :name, message: 'is required' }
       it { is_expected.to validate_presence :free, message: 'is required' }

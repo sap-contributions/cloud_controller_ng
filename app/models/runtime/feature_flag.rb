@@ -43,9 +43,17 @@ module VCAP::CloudController
     export_attributes :name, :enabled, :error_message
     import_attributes :name, :enabled, :error_message
 
+    def around_save
+      yield
+    rescue Sequel::UniqueConstraintViolation => e
+      raise e unless e.message.include?('feature_flags_name_index')
+
+      errors.add(:name, :unique)
+      raise validation_failed_error
+    end
+
     def validate
       validates_presence :name
-      validates_unique :name
       validates_presence :enabled
 
       validates_includes DEFAULT_FLAGS.keys.map(&:to_s), :name

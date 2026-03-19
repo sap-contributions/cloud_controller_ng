@@ -6,16 +6,18 @@ module VCAP::CloudController
 
     it { is_expected.to have_timestamp_columns }
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name' do
+        existing_flag = FeatureFlag.make
+        expect do
+          FeatureFlag.create(name: existing_flag.name, enabled: true)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
       it { is_expected.to validate_presence :enabled }
-
-      it 'validates name is unique' do
-        existing_flag       = FeatureFlag.make
-        duplicate_flag      = FeatureFlag.new
-        duplicate_flag.name = existing_flag.name
-        expect { duplicate_flag.save }.to raise_error(Sequel::ValidationFailed, /name unique/)
-      end
 
       context 'name validation' do
         context 'with a valid name' do

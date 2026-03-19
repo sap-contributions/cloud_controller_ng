@@ -43,7 +43,6 @@ module VCAP::CloudController
 
     def validate
       validates_presence :name
-      validates_unique :name
       validates_includes StackStates::VALID_STATES, :state, allow_missing: true
     end
 

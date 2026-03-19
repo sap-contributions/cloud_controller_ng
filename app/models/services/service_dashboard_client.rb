@@ -2,9 +2,17 @@ module VCAP::CloudController
   class ServiceDashboardClient < Sequel::Model
     many_to_one :service_broker
 
+    def around_save
+      yield
+    rescue Sequel::UniqueConstraintViolation => e
+      raise e unless e.message.include?('s_d_clients_uaa_id_unique')
+
+      errors.add(:uaa_id, :unique)
+      raise validation_failed_error
+    end
+
     def validate
       validates_presence :uaa_id
-      validates_unique :uaa_id
     end
 
     class << self

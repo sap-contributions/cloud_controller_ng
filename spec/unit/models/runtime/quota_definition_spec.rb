@@ -14,13 +14,21 @@ module VCAP::CloudController
       it { is_expected.to have_associated :organizations }
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name' do
+        existing = QuotaDefinition.make
+        expect do
+          QuotaDefinition.create(name: existing.name, non_basic_services_allowed: true, total_services: 0, total_routes: 0, memory_limit: 0)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
       it { is_expected.to validate_presence :non_basic_services_allowed }
       it { is_expected.to validate_presence :total_services }
       it { is_expected.to validate_presence :total_routes }
       it { is_expected.to validate_presence :memory_limit }
-      it { is_expected.to validate_uniqueness :name }
 
       describe 'memory_limits' do
         it 'total memory_limit cannot be less than -1 ("unlimited")' do

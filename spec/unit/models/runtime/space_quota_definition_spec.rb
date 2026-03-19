@@ -17,6 +17,15 @@ module VCAP::CloudController
       end
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of name within an organization' do
+        existing_quota = SpaceQuotaDefinition.make
+        expect do
+          SpaceQuotaDefinition.make(name: existing_quota.name, organization: existing_quota.organization)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
       it { is_expected.to validate_presence :non_basic_services_allowed }
@@ -24,7 +33,6 @@ module VCAP::CloudController
       it { is_expected.to validate_presence :total_routes }
       it { is_expected.to validate_presence :memory_limit }
       it { is_expected.to validate_presence :organization }
-      it { is_expected.to validate_uniqueness %i[organization_id name] }
 
       describe 'memory_limits' do
         it 'total memory_limit cannot be less than zero' do

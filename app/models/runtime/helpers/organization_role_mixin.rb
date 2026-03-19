@@ -24,7 +24,6 @@ module VCAP::CloudController
     end
 
     def validate
-      validates_unique %i[organization_id user_id]
       validates_presence :organization_id
       validates_presence :user_id
     end

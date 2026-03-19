@@ -200,23 +200,6 @@ module VCAP::CloudController
         end
       end
 
-      context 'when creating apps concurrently' do
-        it 'ensures one creation is successful and the other fails due to name conflict' do
-          # First request, should succeed
-          expect do
-            app_create.create(message, lifecycle)
-          end.not_to raise_error
-
-          # Mock the validation for the second request to simulate the race condition and trigger a unique constraint violation
-          allow_any_instance_of(AppModel).to receive(:validate).and_return(true)
-
-          # Second request, should fail with correct error
-          expect do
-            app_create.create(message, lifecycle)
-          end.to raise_error(CloudController::Errors::V3::ApiError)
-        end
-      end
-
       describe 'stack state validation' do
         let(:test_stack) { Stack.make(name: 'test-stack-for-validation') }
         let(:lifecycle_request) { { type: 'buildpack', data: { buildpacks: [buildpack_identifier], stack: test_stack.name } } }

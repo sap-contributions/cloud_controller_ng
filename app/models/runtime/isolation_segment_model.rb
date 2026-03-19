@@ -25,14 +25,12 @@ module VCAP::CloudController
     rescue Sequel::UniqueConstraintViolation => e
       raise e unless e.message.include?('isolation_segment_name_unique_constraint')
 
-      errors.add(:name, :unique)
+      errors.add(:name, Sequel.lit('Isolation Segment names are case insensitive and must be unique'))
       raise validation_failed_error
     end
 
     def validate
       validates_format ISOLATION_SEGMENT_MODEL_REGEX, :name, message: Sequel.lit('Isolation Segment names can only contain non-blank unicode characters')
-
-      validates_unique [:name], message: Sequel.lit('Isolation Segment names are case insensitive and must be unique')
     end
 
     def is_shared_segment?

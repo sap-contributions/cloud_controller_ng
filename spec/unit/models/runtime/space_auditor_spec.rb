@@ -5,8 +5,16 @@ module VCAP::CloudController
     let(:space) { Space.make }
     let(:user) { User.make }
 
+    describe 'uniqueness' do
+      it 'prevents duplicate space_id and user_id combination' do
+        SpaceAuditor.create(space_id: space.id, user_id: user.id)
+        expect do
+          SpaceAuditor.create(space_id: space.id, user_id: user.id)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
-      it { is_expected.to validate_uniqueness %i[space_id user_id] }
       it { is_expected.to validate_presence :space_id }
       it { is_expected.to validate_presence :user_id }
 

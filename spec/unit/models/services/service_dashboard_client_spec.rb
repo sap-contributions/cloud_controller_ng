@@ -12,9 +12,17 @@ module VCAP::CloudController
       it { is_expected.to have_associated :service_broker }
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of uaa_id' do
+        existing = ServiceDashboardClient.make(service_broker:)
+        expect do
+          ServiceDashboardClient.create(uaa_id: existing.uaa_id, service_broker: other_broker)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :uaa_id }
-      it { is_expected.to validate_uniqueness :uaa_id }
 
       context 'when all fields are valid' do
         let(:client) { ServiceDashboardClient.make_unsaved(service_broker:) }

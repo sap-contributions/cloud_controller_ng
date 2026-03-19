@@ -61,9 +61,17 @@ module VCAP::CloudController
       end
     end
 
+    describe 'uniqueness' do
+      it 'enforces uniqueness of guid' do
+        existing_user = User.make
+        expect do
+          User.create(guid: existing_user.guid)
+        end.to raise_error(Sequel::ValidationFailed, /unique/)
+      end
+    end
+
     describe 'Validations' do
       it { is_expected.to validate_presence :guid }
-      it { is_expected.to validate_uniqueness :guid }
     end
 
     describe 'Serialization' do

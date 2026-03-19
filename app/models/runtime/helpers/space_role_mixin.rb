@@ -26,7 +26,6 @@ module VCAP::CloudController
     def validate
       validates_presence :space_id
       validates_presence :user_id
-      validates_unique %i[space_id user_id]
     end
   end
 end

@@ -31,6 +31,7 @@ module VCAP::Services::ServiceBrokers
       end
       self
     rescue Sequel::ValidationFailed
+      # Errors have been added to the broker model by around_save (e.g. unique constraint violations)
       nil
     end
 
@@ -53,6 +54,7 @@ module VCAP::Services::ServiceBrokers
       end
       self
     rescue Sequel::ValidationFailed
+      # Errors have been added to the broker model by around_save (e.g. unique constraint violations)
       nil
     end
 

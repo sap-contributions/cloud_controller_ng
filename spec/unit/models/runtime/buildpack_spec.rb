@@ -9,8 +9,6 @@ module VCAP::CloudController
     it { is_expected.to have_timestamp_columns }
 
     describe 'Validations' do
-      it { is_expected.to validate_uniqueness %i[name stack lifecycle] }
-
       describe 'stack' do
         let(:stack) {  Stack.make(name: 'happy') }
 
@@ -35,11 +33,6 @@ module VCAP::CloudController
 
           expect(buildpack).not_to be_valid
           expect(buildpack.errors.on(:stack)).to include(:buildpack_stack_does_not_exist)
-        end
-
-        it 'validates duplicate buildpacks with the same name and stack' do
-          Buildpack.create(name: 'oscar', stack: stack.name)
-          expect(Buildpack.new(name: 'oscar', stack: stack.name)).not_to be_valid
         end
 
         it 'validates duplicate buildpacks with the same name and nil stack' do
@@ -82,6 +75,26 @@ module VCAP::CloudController
 
           expect(buildpack).not_to be_valid
           expect(buildpack.errors.on(:lifecycle)).to include(:buildpack_cant_change_lifecycle)
+        end
+      end
+
+      context 'when unique constraint violation is occures' do
+        let(:stack) { Stack.make }
+
+        it 'raise validation error when name, stack and lifecyle is same' do
+          Buildpack.create(name: 'oscar', stack: stack.name, lifecycle: 'cnb')
+          expect do
+            Buildpack.create(name: 'oscar', stack: stack.name, lifecycle: 'cnb')
+          end.to raise_error(Sequel::ValidationFailed, /unique/) do |e|
+            expect(e.errors.on(%i[name stack lifecycle])).to include(:unique)
+          end
+        end
+
+        it 'raise validation error different than the unique name, stack and lifecyle' do
+          existing = Buildpack.create(name: 'oscar', stack: stack.name, lifecycle: 'cnb')
+          duplicate_guid = Buildpack.new(name: 'other', stack: stack.name, lifecycle: 'cnb')
+          duplicate_guid.guid = existing.guid
+          expect { duplicate_guid.save }.to raise_error(Sequel::UniqueConstraintViolation)
         end
       end
     end

@@ -13,9 +13,10 @@ module VCAP::CloudController
 
     context "when there's another domain with the same name" do
       it 'fails to validate' do
-        expect do
-          described_class.make(name: subject.name)
-        end.to raise_error(Sequel::ValidationFailed, /already reserved by another domain|unique/)
+        other_domain = described_class.make
+        other_domain.name = subject.name
+        expect(other_domain).not_to be_valid
+        expect(other_domain.errors[:name]).to include(:unique)
       end
     end
 

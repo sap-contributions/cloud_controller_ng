@@ -67,7 +67,7 @@ module VCAP::CloudController
 
       it 'denies shared foo.com when private foo.com exists' do
         PrivateDomain.make name: 'foo.com'
-        expect { SharedDomain.make name: 'foo.com' }.to raise_error(Sequel::ValidationFailed, /already reserved by another domain|unique/)
+        expect { SharedDomain.make name: 'foo.com' }.to raise_error(Sequel::ValidationFailed, /name unique/)
       end
 
       context 'when the domain is internal' do

@@ -97,6 +97,7 @@ module VCAP::CloudController
 
     def validate
       validates_presence :name
+      validates_unique :name, dataset: Domain.dataset
 
       validates_format CloudController::DomainDecorator::DOMAIN_REGEX, :name,
                        message: 'can contain multiple subdomains, each having only alphanumeric characters and hyphens of up to 63 characters, see RFC 1035.'

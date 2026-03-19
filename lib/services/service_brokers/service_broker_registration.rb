@@ -30,9 +30,6 @@ module VCAP::Services::ServiceBrokers
         raise e
       end
       self
-    rescue Sequel::ValidationFailed
-      # Errors have been added to the broker model by around_save (e.g. unique constraint violations)
-      nil
     end
 
     def update
@@ -53,9 +50,6 @@ module VCAP::Services::ServiceBrokers
         synchronize_services_and_plans!
       end
       self
-    rescue Sequel::ValidationFailed
-      # Errors have been added to the broker model by around_save (e.g. unique constraint violations)
-      nil
     end
 
     delegate :errors, to: :broker

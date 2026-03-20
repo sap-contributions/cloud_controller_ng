@@ -12,7 +12,7 @@ module VCAP::CloudController
           prefix, name = VCAP::CloudController::MetadataHelpers.extract_prefix(label_key)
 
           if label_value.nil? && destroy_nil # Delete Label
-            label_klass.find(key_prefix: prefix.to_s, resource_guid: resource.guid, key_name: name)&.destroy
+            label_klass.where(key_prefix: prefix.to_s, resource_guid: resource.guid, key_name: name).destroy
             next
           end
 

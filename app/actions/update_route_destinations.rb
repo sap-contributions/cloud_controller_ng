@@ -93,10 +93,6 @@ module VCAP::CloudController
 
           update_processes(processes_to_ports_map)
         end
-
-        route.reload
-
-        route
       end
 
       def update_processes(processes_to_ports_map)

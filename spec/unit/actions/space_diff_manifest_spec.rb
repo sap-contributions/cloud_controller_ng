@@ -251,7 +251,10 @@ module VCAP::CloudController
               'name' => 'new-app'
             },
             {
-              'name' => 'newer-app'
+              'name' => 'newer-app',
+              'features' => {
+                'ssh' => true
+              }
             }
           ]
         end
@@ -259,7 +262,8 @@ module VCAP::CloudController
         it 'returns the correct diff' do
           expect(subject).to eq([
             { 'op' => 'add', 'path' => '/applications/0/name', 'value' => 'new-app' },
-            { 'op' => 'add', 'path' => '/applications/1/name', 'value' => 'newer-app' }
+            { 'op' => 'add', 'path' => '/applications/1/name', 'value' => 'newer-app' },
+            { 'op' => 'add', 'path' => '/applications/1/features', 'value' => { 'ssh' => true } }
           ])
         end
       end

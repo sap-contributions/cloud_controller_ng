@@ -36,6 +36,19 @@ module VCAP::CloudController
         ProcessRestart.restart(process: process, config: config, stop_in_runtime: true)
       end
 
+      it 'passes a process with the correct updated_at timestamp to the runner', isolation: :truncation do
+        received = nil
+        allow(VCAP::CloudController::Diego::Runner).to receive(:new) do |p, _config|
+          received = p.updated_at
+          runner
+        end
+
+        ProcessRestart.restart(process: process, config: config, stop_in_runtime: false)
+
+        expect(VCAP::CloudController::Diego::Runner).to have_received(:new).once
+        expect(received).to eq(process.reload.updated_at)
+      end
+
       context 'when the process is STARTED' do
         it 'keeps process state as STARTED' do
           ProcessRestart.restart(process: process, config: config, stop_in_runtime: true)

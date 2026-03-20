@@ -103,6 +103,25 @@ module VCAP::CloudController
             expect(runner).to have_received(:update_metric_tags).twice
           end
 
+          it 'does not trigger ProcessObserver when saving processes', isolation: :truncation do
+            expect(ProcessObserver).not_to receive(:updated)
+            app_update.update(app_model, message, lifecycle)
+          end
+
+          it 'passes a process with the correct updated_at timestamp to the runner', isolation: :truncation do
+            received = {}
+            allow(runners).to receive(:runner_for_process) do |p|
+              received[p.guid] = p.updated_at
+              runner
+            end
+
+            app_update.update(app_model, message, lifecycle)
+
+            expect(runners).to have_received(:runner_for_process).twice
+            expect(received[web_process.guid]).to eq(web_process.reload.updated_at)
+            expect(received[worker_process.guid]).to eq(worker_process.reload.updated_at)
+          end
+
           context 'when there is a CannotCommunicateWithDiegoError' do
             before do
               allow(runner).to receive(:update_metric_tags).and_invoke(
@@ -130,10 +149,12 @@ module VCAP::CloudController
               let!(:worker_process) { instance_double(VCAP::CloudController::ProcessModel) }
 
               before do
+                allow(web_process).to receive(:skip_process_observer_on_update=)
                 allow(web_process).to receive(:save)
-                allow(web_process).to receive(:state).and_return(ProcessModel::STARTED)
+                allow(web_process).to receive_messages(reload: web_process, state: ProcessModel::STARTED)
+                allow(worker_process).to receive(:skip_process_observer_on_update=)
                 allow(worker_process).to receive(:save)
-                allow(worker_process).to receive(:state).and_return(ProcessModel::STARTED)
+                allow(worker_process).to receive_messages(reload: worker_process, state: ProcessModel::STARTED)
                 allow(app_model).to receive(:processes).and_return([web_process, worker_process])
               end
 
@@ -180,10 +201,12 @@ module VCAP::CloudController
               let!(:worker_process) { instance_double(VCAP::CloudController::ProcessModel) }
 
               before do
+                allow(web_process).to receive(:skip_process_observer_on_update=)
                 allow(web_process).to receive(:save)
-                allow(web_process).to receive(:state).and_return(ProcessModel::STARTED)
+                allow(web_process).to receive_messages(reload: web_process, state: ProcessModel::STARTED)
+                allow(worker_process).to receive(:skip_process_observer_on_update=)
                 allow(worker_process).to receive(:save)
-                allow(worker_process).to receive(:state).and_return(ProcessModel::STARTED)
+                allow(worker_process).to receive_messages(reload: worker_process, state: ProcessModel::STARTED)
                 allow(app_model).to receive(:processes).and_return([web_process, worker_process])
               end
 

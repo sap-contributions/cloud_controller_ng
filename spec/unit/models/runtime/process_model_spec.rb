@@ -1495,7 +1495,7 @@ module VCAP::CloudController
     end
 
     describe 'saving' do
-      it 'calls AppObserver.updated', isolation: :truncation do
+      it 'calls ProcessObserver.updated', isolation: :truncation do
         process = ProcessModelFactory.make
         expect(ProcessObserver).to receive(:updated).with(process)
         process.update(instances: process.instances + 1)

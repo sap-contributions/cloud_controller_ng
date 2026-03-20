@@ -37,11 +37,15 @@ module VCAP::CloudController
 
         process.update(revision: process.app.latest_revision) if process.revisions_enabled?
 
-        @runners.runner_for_process(process).start unless process.needs_staging?
+        # Reload to get the DB-assigned updated_at, which ProcessesSync compares against
+        # the LRP annotation to detect drift. Without this, the stale in-memory value
+        # causes an unnecessary re-sync.
+        @runners.runner_for_process(process.reload).start unless process.needs_staging?
       end
 
       def react_to_instances_change(process)
-        @runners.runner_for_process(process).scale if process.started? && process.active?
+        # Same as above: reload to get the DB-assigned updated_at before building the LRP annotation.
+        @runners.runner_for_process(process.reload).scale if process.started? && process.active?
       end
 
       def with_diego_communication_handling

@@ -196,5 +196,22 @@ module VCAP::CloudController
         end
       end
     end
+
+    describe 'updated_at annotation accuracy' do
+      let(:process) { ProcessModelFactory.make(state: 'STARTED') }
+
+      it 'passes a process with the correct updated_at timestamp to the runner', isolation: :truncation do
+        received = nil
+        allow(runners).to receive(:runner_for_process) do |p|
+          received = p.updated_at
+          runner
+        end
+
+        handler.update_route_information
+
+        expect(runners).to have_received(:runner_for_process).once
+        expect(received).to eq(process.reload.updated_at)
+      end
+    end
   end
 end

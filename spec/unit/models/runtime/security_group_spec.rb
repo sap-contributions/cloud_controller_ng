@@ -441,7 +441,6 @@ module VCAP::CloudController
 
     describe 'Validations' do
       it { is_expected.to validate_presence :name }
-      it { is_expected.to validate_uniqueness :name }
 
       context 'name' do
         subject(:sec_group) { SecurityGroup.make }
@@ -968,6 +967,29 @@ module VCAP::CloudController
             expect(subject.errors.on(:rules)).to include "length must not exceed #{SecurityGroup::MAX_RULES_CHAR_LENGTH} characters"
           end
         end
+      end
+    end
+
+    describe 'security_group_model #around_save' do
+      it 'raises validation error on unique constraint violation for securit group' do
+        sg = SecurityGroup.make(name: 'sec')
+        expect do
+          SecurityGroup.make(name: sg.name)
+        end.to raise_error(Sequel::ValidationFailed) { |error| expect(error.message).to match(/unique/) }
+      end
+
+      it 'raises the original error on other unique constraint violations' do
+        sg = SecurityGroup.make(name: 'sec1')
+
+        # Unlike other models, security_groups.guid does not have a unique index,
+        # so we use the primary key (id) to trigger a UniqueConstraintViolation.
+        # Sequel restricts setting id by default, so unrestrict_primary_key is required.
+        SecurityGroup.unrestrict_primary_key
+        expect do
+          SecurityGroup.create(id: sg.id, name: 'sec2')
+        end.to raise_error(Sequel::UniqueConstraintViolation)
+      ensure
+        SecurityGroup.restrict_primary_key
       end
     end
 

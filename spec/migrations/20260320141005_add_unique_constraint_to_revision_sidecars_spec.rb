@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'migrations/helpers/migration_shared_context'
 RSpec.describe 'add unique constraint to revision sidecar types', isolation: :truncation, type: :migration do
   include_context 'migration' do
-    let(:migration_filename) { '20260320141005_add_unique_constraint_to_revision_sidecar.rb' }
+    let(:migration_filename) { '20260320141005_add_unique_constraint_to_revision_sidecars.rb' }
   end
 
   let!(:app) { VCAP::CloudController::AppModel.make }

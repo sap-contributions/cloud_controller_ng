@@ -45,8 +45,6 @@ module VCAP::CloudController
     end
 
     describe 'Validations' do
-      let!(:revision_sidecar) { RevisionSidecarModel.make(name: 'revision1', command: 'exec') }
-
       it { is_expected.to validate_presence :name }
       it { is_expected.to validate_presence :command }
     end
@@ -62,7 +60,7 @@ module VCAP::CloudController
       it 'raises the original error on other unique constraint violations' do
         revision_sidecar = RevisionSidecarModel.make(name: 'revision3', command: 'exec')
         expect do
-          RevisionSidecarModel.make(guid: revision_sidecar.guid, name: 'revision4', command: 'exe')
+          RevisionSidecarModel.make(guid: revision_sidecar.guid, name: 'revision4', command: 'exec')
         end.to raise_error(Sequel::UniqueConstraintViolation)
       end
     end

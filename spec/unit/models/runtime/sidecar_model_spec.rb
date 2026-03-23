@@ -14,12 +14,24 @@ module VCAP::CloudController
     end
 
     describe 'validations' do
-      let(:app_model) { AppModel.make }
-      let!(:sidecar) { SidecarModel.make(name: 'my_sidecar', app: app_model) }
+      it { is_expected.to validate_presence :name }
+      it { is_expected.to validate_presence :command }
+    end
 
-      it 'validates unique sidecar name per app' do
-        expect { SidecarModel.create(app: app_model, name: 'my_sidecar', command: 'some-command') }.
-          to raise_error(Sequel::ValidationFailed, /Sidecar with name 'my_sidecar' already exists for given app/)
+    describe 'sidecar model #around_save' do
+      let(:app_model) { AppModel.make }
+      let!(:sidecar) { SidecarModel.make(app_guid: app_model.guid, name: 'sidecar1', command: 'exec') }
+
+      it 'raises validation error on unique constraint violation for sidecar' do
+        expect do
+          SidecarModel.create(guid: SecureRandom.uuid, app_guid: app_model.guid, name: sidecar.name, command: 'exec')
+        end.to raise_error(Sequel::ValidationFailed) { |error| expect(error.message).to include("Sidecar with name 'sidecar1' already exists for given app") }
+      end
+
+      it 'raises the original error on other unique constraint violations' do
+        expect do
+          SidecarModel.create(guid: sidecar.guid, app_guid: app_model.guid, name: 'sidecar2', command: 'exec')
+        end.to raise_error(Sequel::UniqueConstraintViolation)
       end
     end
 

@@ -3,10 +3,7 @@ Sequel.migration do
   up do
     transaction do
       # Remove duplicate entries if they exist
-      duplicates = self[:buildpacks].
-                   select(:name, :stack, :lifecycle).
-                   group(:name, :stack, :lifecycle).
-                   having { count(1) > 1 }
+      duplicates = self[:buildpacks].select(:name, :stack, :lifecycle).group(:name, :stack, :lifecycle).having { count(1) > 1 }
 
       duplicates.each do |dup|
         ids_to_remove = self[:buildpacks].
@@ -48,15 +45,8 @@ Sequel.migration do
   down do
     if database_type == :postgres
       VCAP::Migration.with_concurrent_timeout(self) do
-        drop_index :buildpacks, nil,
-                   name: :buildpacks_name_stack_lifecycle_index,
-                   concurrently: true,
-                   if_exists: true
-        add_index :buildpacks, %i[name stack],
-                  name: :unique_name_and_stack,
-                  unique: true,
-                  concurrently: true,
-                  if_not_exists: true
+        drop_index :buildpacks, nil, name: :buildpacks_name_stack_lifecycle_index, concurrently: true, if_exists: true
+        add_index :buildpacks, %i[name stack], name: :unique_name_and_stack, unique: true, concurrently: true, if_not_exists: true
       end
     else
       alter_table(:buildpacks) do

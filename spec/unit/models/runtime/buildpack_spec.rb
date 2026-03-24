@@ -78,7 +78,7 @@ module VCAP::CloudController
         end
       end
 
-      context 'when unique constraint violation is occures' do
+      context 'when unique constraint violation occures' do
         let(:stack) { Stack.make }
 
         it 'raises validation error when name, stack and lifecyle is same' do

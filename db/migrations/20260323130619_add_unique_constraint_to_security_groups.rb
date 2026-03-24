@@ -1,4 +1,6 @@
-Sequel.migration do
+Sequel.migration do # rubocop:disable Metrics/BlockLength
+  no_transaction # required for concurrently option on postgres
+
   up do
     transaction do
       duplicates = self[:security_groups].select(:name).
@@ -14,10 +16,23 @@ Sequel.migration do
                         map(:id)
         self[:security_groups].where(id: ids_to_remove).delete
       end
+    end
 
+    if database_type == :postgres
+      VCAP::Migration.with_concurrent_timeout(self) do
+        drop_index :security_groups, nil,
+                   name: :sg_name_index,
+                   concurrently: true,
+                   if_exists: true
+        add_index :security_groups, :name,
+                  name: :security_group_name_index,
+                  unique: true,
+                  concurrently: true,
+                  if_not_exists: true
+      end
+    else
       alter_table(:security_groups) do
-        # Cannot add unique constraint concurrently as it requires a transaction
-        # rubocop:disable Sequel/ConcurrentIndex
+        # rubocop:disable Sequel/ConcurrentIndex -- MySQL does not support concurrent index operations
         drop_index :name, name: :sg_name_index if @db.indexes(:security_groups).key?(:sg_name_index)
         add_index :name, name: :security_group_name_index, unique: true unless @db.indexes(:security_groups).key?(:security_group_name_index)
         # rubocop:enable Sequel/ConcurrentIndex
@@ -26,11 +41,24 @@ Sequel.migration do
   end
 
   down do
-    alter_table(:security_groups) do
-      # rubocop:disable Sequel/ConcurrentIndex
-      drop_index :name, name: :security_group_name_index if @db.indexes(:security_groups).key?(:security_group_name_index)
-      add_index :name, name: :sg_name_index unless @db.indexes(:security_groups).key?(:sg_name_index)
-      # rubocop:enable Sequel/ConcurrentIndex
+    if database_type == :postgres
+      VCAP::Migration.with_concurrent_timeout(self) do
+        drop_index :security_groups, nil,
+                   name: :security_group_name_index,
+                   concurrently: true,
+                   if_exists: true
+        add_index :security_groups, :name,
+                  name: :sg_name_index,
+                  concurrently: true,
+                  if_not_exists: true
+      end
+    else
+      alter_table(:security_groups) do
+        # rubocop:disable Sequel/ConcurrentIndex -- MySQL does not support concurrent index operations
+        drop_index :name, name: :security_group_name_index if @db.indexes(:security_groups).key?(:security_group_name_index)
+        add_index :name, name: :sg_name_index unless @db.indexes(:security_groups).key?(:sg_name_index)
+        # rubocop:enable Sequel/ConcurrentIndex
+      end
     end
   end
 end

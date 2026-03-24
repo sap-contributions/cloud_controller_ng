@@ -1,4 +1,5 @@
 Sequel.migration do
+  no_transaction # required for concurrently option on postgres
   up do
     transaction do
       # Remove duplicate entries if they exist
@@ -17,9 +18,23 @@ Sequel.migration do
 
         self[:buildpacks].where(id: ids_to_remove).delete
       end
+    end
 
+    if database_type == :postgres
+      VCAP::Migration.with_concurrent_timeout(self) do
+        drop_index :buildpacks, nil,
+                   name: :unique_name_and_stack,
+                   concurrently: true,
+                   if_exists: true
+        add_index :buildpacks, %i[name stack lifecycle],
+                  name: :buildpacks_name_stack_lifecycle_index,
+                  unique: true,
+                  concurrently: true,
+                  if_not_exists: true
+      end
+    else
       alter_table(:buildpacks) do
-        # rubocop:disable Sequel/ConcurrentIndex
+        # rubocop:disable Sequel/ConcurrentIndex -- MySQL does not support concurrent index operations
         drop_index %i[name stack], name: :unique_name_and_stack if @db.indexes(:buildpacks).key?(:unique_name_and_stack)
         unless @db.indexes(:buildpacks).key?(:buildpacks_name_stack_lifecycle_index)
           add_index %i[name stack lifecycle], unique: true,
@@ -31,11 +46,25 @@ Sequel.migration do
   end
 
   down do
-    alter_table(:buildpacks) do
-      # rubocop:disable Sequel/ConcurrentIndex
-      drop_index %i[name stack lifecycle], name: :buildpacks_name_stack_lifecycle_index if @db.indexes(:buildpacks).key?(:buildpacks_name_stack_lifecycle_index)
-      add_index %i[name stack], unique: true, name: :unique_name_and_stack unless @db.indexes(:buildpacks).key?(:unique_name_and_stack)
-      # rubocop:enable Sequel/ConcurrentIndex
+    if database_type == :postgres
+      VCAP::Migration.with_concurrent_timeout(self) do
+        drop_index :buildpacks, nil,
+                   name: :buildpacks_name_stack_lifecycle_index,
+                   concurrently: true,
+                   if_exists: true
+        add_index :buildpacks, %i[name stack],
+                  name: :unique_name_and_stack,
+                  unique: true,
+                  concurrently: true,
+                  if_not_exists: true
+      end
+    else
+      alter_table(:buildpacks) do
+        # rubocop:disable Sequel/ConcurrentIndex -- MySQL does not support concurrent index operations
+        drop_index %i[name stack lifecycle], name: :buildpacks_name_stack_lifecycle_index if @db.indexes(:buildpacks).key?(:buildpacks_name_stack_lifecycle_index)
+        add_index %i[name stack], unique: true, name: :unique_name_and_stack unless @db.indexes(:buildpacks).key?(:unique_name_and_stack)
+        # rubocop:enable Sequel/ConcurrentIndex
+      end
     end
   end
 end

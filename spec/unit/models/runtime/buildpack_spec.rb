@@ -81,7 +81,7 @@ module VCAP::CloudController
       context 'when unique constraint violation is occures' do
         let(:stack) { Stack.make }
 
-        it 'raise validation error when name, stack and lifecyle is same' do
+        it 'raises validation error when name, stack and lifecyle is same' do
           Buildpack.create(name: 'oscar', stack: stack.name, lifecycle: 'cnb')
           expect do
             Buildpack.create(name: 'oscar', stack: stack.name, lifecycle: 'cnb')
@@ -90,7 +90,7 @@ module VCAP::CloudController
           end
         end
 
-        it 'raise validation error different than the unique name, stack and lifecyle' do
+        it 'raises validation error different than the unique name, stack and lifecyle' do
           existing = Buildpack.create(name: 'oscar', stack: stack.name, lifecycle: 'cnb')
           duplicate_guid = Buildpack.new(name: 'other', stack: stack.name, lifecycle: 'cnb')
           duplicate_guid.guid = existing.guid

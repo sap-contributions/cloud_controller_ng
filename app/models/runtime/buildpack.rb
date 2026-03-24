@@ -43,8 +43,16 @@ module VCAP::CloudController
       where(position: max(:position)).first
     end
 
+    def around_save
+      yield
+    rescue Sequel::UniqueConstraintViolation => e
+      raise e unless e.message.include?('buildpacks_name_stack_lifecycle_index')
+
+      errors.add(%i[name stack lifecycle], :unique)
+      raise validation_failed_error
+    end
+
     def validate
-      validates_unique %i[name stack lifecycle]
       validates_format(/\A(\w|-)+\z/, :name, message: 'can only contain alphanumeric characters')
 
       validate_stack_existence

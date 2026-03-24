@@ -10,7 +10,7 @@ module VCAP::CloudController
           prefix, key_name = VCAP::CloudController::MetadataHelpers.extract_prefix(key)
 
           if value.nil? && destroy_nil # Delete Annotation
-            annotation_klass.where(resource_guid: resource.guid, key_name: key_name).where(Sequel.or([[:key_prefix, prefix], [:key_prefix, prefix.to_s]])).try(:destroy)
+            annotation_klass.where(resource_guid: resource.guid, key_name: key_name).where(Sequel.or([[:key_prefix, prefix], [:key_prefix, prefix.to_s]])).destroy
             next
           end
 

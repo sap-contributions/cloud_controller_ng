@@ -186,12 +186,6 @@ Rails.application.routes.draw do
   delete '/security_groups/:guid/relationships/staging_spaces/:space_guid', to: 'security_groups#delete_staging_spaces'
   delete '/security_groups/:guid', to: 'security_groups#destroy'
 
-  # service_bindings
-  post '/service_bindings', to: 'service_bindings#create'
-  get '/service_bindings/:guid', to: 'service_bindings#show'
-  get '/service_bindings', to: 'service_bindings#index'
-  delete '/service_bindings/:guid', to: 'service_bindings#destroy'
-
   # service_credential_bindings
   resources :service_credential_bindings,
             param: :guid,

@@ -7,7 +7,7 @@ RSpec.describe 'add unique constraint to sidecars', isolation: :truncation, type
 
   let!(:app) { VCAP::CloudController::AppModel.make }
 
-  it 'remove dublicates, add constraint and revert migration' do
+  it 'remove duplicates, add constraint and revert migration' do
     # =========================================================================================
     # SETUP: Create duplicate entries to test the de-duplication logic.
     # =========================================================================================

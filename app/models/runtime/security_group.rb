@@ -25,7 +25,7 @@ module VCAP::CloudController
     def around_save
       yield
     rescue Sequel::UniqueConstraintViolation => e
-      raise e unless e.message.include?('security_group_name_index')
+      raise e unless e.message.include?('security_groups_name_index')
 
       errors.add(:name, :unique)
       raise validation_failed_error

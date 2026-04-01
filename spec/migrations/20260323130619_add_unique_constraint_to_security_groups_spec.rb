@@ -5,7 +5,7 @@ RSpec.describe 'add unique constraint to security_groups', isolation: :truncatio
     let(:migration_filename) { '20260323130619_add_unique_constraint_to_security_groups.rb' }
   end
 
-  it 'remove dublicates, add constraint and revert migration' do
+  it 'remove duplicates, add constraint and revert migration' do
     # =========================================================================================
     # SETUP: Create duplicate entries to test the de-duplication logic.
     # =========================================================================================
@@ -22,7 +22,7 @@ RSpec.describe 'add unique constraint to security_groups', isolation: :truncatio
     # ASSERT UP MIGRATION: Verify that duplicates are removed and constraints are enforced.
     # =========================================================================================
     expect(db[:security_groups].where(name: 'sec1').count).to eq(1)
-    expect(db.indexes(:security_groups)).to include(:security_group_name_index)
+    expect(db.indexes(:security_groups)).to include(:security_groups_name_index)
     expect { db[:security_groups].insert(guid: SecureRandom.uuid, name: 'sec1') }.to raise_error(Sequel::UniqueConstraintViolation)
 
     # =========================================================================================
@@ -38,7 +38,7 @@ RSpec.describe 'add unique constraint to security_groups', isolation: :truncatio
     # =========================================================================================
     # ASSERT DOWN MIGRATION: Verify that constraints are removed and duplicates can be re-inserted.
     # =========================================================================================
-    expect(db.indexes(:security_groups)).not_to include(:security_group_name_index)
+    expect(db.indexes(:security_groups)).not_to include(:security_groups_name_index)
     expect(db.indexes(:security_groups)).to include(:sg_name_index)
     expect { db[:security_groups].insert(guid: SecureRandom.uuid, name: 'sec1') }.not_to raise_error
   end

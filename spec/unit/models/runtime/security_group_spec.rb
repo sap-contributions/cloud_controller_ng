@@ -971,7 +971,7 @@ module VCAP::CloudController
     end
 
     describe 'security_group_model #around_save' do
-      it 'raises validation error on unique constraint violation for securit group' do
+      it 'raises validation error on unique constraint violation for security group' do
         sg = SecurityGroup.make(name: 'sec')
         expect do
           SecurityGroup.make(name: sg.name)

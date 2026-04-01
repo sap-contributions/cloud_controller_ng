@@ -21,7 +21,7 @@ Sequel.migration do # rubocop:disable Metrics/BlockLength
     if database_type == :postgres
       VCAP::Migration.with_concurrent_timeout(self) do
         add_index :security_groups, :name,
-                  name: :security_group_name_index,
+                  name: :security_groups_name_index,
                   unique: true,
                   concurrently: true,
                   if_not_exists: true
@@ -33,7 +33,7 @@ Sequel.migration do # rubocop:disable Metrics/BlockLength
     else
       alter_table(:security_groups) do
         # rubocop:disable Sequel/ConcurrentIndex -- MySQL does not support concurrent index operations
-        add_index :name, name: :security_group_name_index, unique: true unless @db.indexes(:security_groups).key?(:security_group_name_index)
+        add_index :name, name: :security_groups_name_index, unique: true unless @db.indexes(:security_groups).key?(:security_groups_name_index)
         drop_index :name, name: :sg_name_index if @db.indexes(:security_groups).key?(:sg_name_index)
         # rubocop:enable Sequel/ConcurrentIndex
       end
@@ -48,7 +48,7 @@ Sequel.migration do # rubocop:disable Metrics/BlockLength
                   concurrently: true,
                   if_not_exists: true
         drop_index :security_groups, nil,
-                   name: :security_group_name_index,
+                   name: :security_groups_name_index,
                    concurrently: true,
                    if_exists: true
       end
@@ -56,7 +56,7 @@ Sequel.migration do # rubocop:disable Metrics/BlockLength
       alter_table(:security_groups) do
         # rubocop:disable Sequel/ConcurrentIndex -- MySQL does not support concurrent index operations
         add_index :name, name: :sg_name_index unless @db.indexes(:security_groups).key?(:sg_name_index)
-        drop_index :name, name: :security_group_name_index if @db.indexes(:security_groups).key?(:security_group_name_index)
+        drop_index :name, name: :security_groups_name_index if @db.indexes(:security_groups).key?(:security_groups_name_index)
         # rubocop:enable Sequel/ConcurrentIndex
       end
     end

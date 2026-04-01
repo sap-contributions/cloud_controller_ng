@@ -8,7 +8,7 @@ RSpec.describe 'add unique constraint to revision sidecar types', isolation: :tr
   let!(:app) { VCAP::CloudController::AppModel.make }
   let!(:revision) { VCAP::CloudController::RevisionModel.make(:app) }
 
-  it 'remove dublicates, add constraint and revert migration' do
+  it 'remove duplicates, add constraint and revert migration' do
     # =========================================================================================
     # SETUP: Create duplicate entries to test the de-duplication logic.
     # =========================================================================================

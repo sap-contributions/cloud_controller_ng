@@ -11,7 +11,7 @@ module VCAP::CloudController
 
     add_association_dependencies service_plan_visibilities: :destroy
 
-    one_to_many(:orgs_visibility, clone: :service_plan_visibilities) { |ds| ds.select(:service_plan_id).distinct }
+    one_to_many(:orgs_visibility, clone: :service_plan_visibilities, order: :service_plan_id) { |ds| ds.select(:service_plan_id).distinct }
 
     one_to_many :labels, class: 'VCAP::CloudController::ServicePlanLabelModel', key: :resource_guid, primary_key: :guid
     add_association_dependencies labels: :destroy

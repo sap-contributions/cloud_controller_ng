@@ -29,6 +29,20 @@ RSpec.describe 'Sequel::Plugins::VcapRelations' do
       expect(@o.dogs).to be_empty
     end
 
+    it 'orders by id by default' do
+      expect(@o.dogs_dataset.sql).to match(/ORDER BY .id.$/)
+    end
+
+    it 'allows overriding the default order' do
+      owner_klass.one_to_many :dogs, order: Sequel.desc(:id)
+
+      expect(@o.dogs_dataset.sql).to match(/ORDER BY .id. DESC$/)
+    end
+
+    it 'allows overriding the default order via dataset' do
+      expect(@o.dogs_dataset.order(:created_at).sql).to match(/ORDER BY .created_at.$/)
+    end
+
     it 'adds a add_<relation> method that takes an object' do
       d = dog_klass.create
       @o.add_dog d
@@ -165,6 +179,20 @@ RSpec.describe 'Sequel::Plugins::VcapRelations' do
 
     it 'adds a <relation> method' do
       expect(@d1.names).to be_empty
+    end
+
+    it 'orders by id by default' do
+      expect(@d1.names_dataset.sql).to match(/ORDER BY .id.$/)
+    end
+
+    it 'allows overriding the default order' do
+      dog_klass.many_to_many :names, order: Sequel.desc(:id)
+
+      expect(@d1.names_dataset.sql).to match(/ORDER BY .id. DESC$/)
+    end
+
+    it 'allows overriding the default order via dataset' do
+      expect(@d1.names_dataset.order(:created_at).sql).to match(/ORDER BY .created_at.$/)
     end
 
     it 'adds a add_<relation> method that takes an object' do

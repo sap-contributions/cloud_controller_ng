@@ -43,5 +43,26 @@ module VCAP::CloudController
         end.to raise_error(Sequel::UniqueConstraintViolation)
       end
     end
+
+    describe 'Validations' do
+      it { is_expected.to validate_presence :name }
+      it { is_expected.to validate_presence :command }
+    end
+
+    describe 'revision_sidecar_model #around_save' do
+      it 'raises validation error on unique constraint violation for revision sidecar' do
+        revision_sidecar = RevisionSidecarModel.make(name: 'revision2', command: 'exec')
+        expect do
+          RevisionSidecarModel.make(name: revision_sidecar.name, revision_guid: revision_sidecar.revision_guid, command: 'exec')
+        end.to raise_error(Sequel::ValidationFailed) { |error| expect(error.message).to include('already exists for revision') }
+      end
+
+      it 'raises the original error on other unique constraint violations' do
+        revision_sidecar = RevisionSidecarModel.make(name: 'revision3', command: 'exec')
+        expect do
+          RevisionSidecarModel.make(guid: revision_sidecar.guid, name: 'revision4', command: 'exec')
+        end.to raise_error(Sequel::UniqueConstraintViolation)
+      end
+    end
   end
 end

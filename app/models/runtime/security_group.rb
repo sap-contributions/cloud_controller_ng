@@ -22,9 +22,17 @@ module VCAP::CloudController
 
     add_association_dependencies spaces: :nullify, staging_spaces: :nullify
 
+    def around_save
+      yield
+    rescue Sequel::UniqueConstraintViolation => e
+      raise e unless e.message.include?('security_groups_name_index')
+
+      errors.add(:name, :unique)
+      raise validation_failed_error
+    end
+
     def validate
       validates_presence :name
-      validates_unique :name
       validates_format SECURITY_GROUP_NAME_REGEX, :name
       validate_rules_length
       validate_rules

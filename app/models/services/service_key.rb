@@ -49,6 +49,7 @@ module VCAP::CloudController
     def validate
       validates_presence :name
       validates_presence :service_instance
+      # Keep validates_unique as a pre-guard to prevent broker HTTP call when key already exists
       validates_unique %i[name service_instance_id]
 
       return unless service_instance

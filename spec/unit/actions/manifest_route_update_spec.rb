@@ -650,8 +650,7 @@ module VCAP::CloudController
             ManifestRouteUpdate.update(app.guid, message, user_audit_info)
 
             route.reload
-            expect(route.options).to eq({})
-            expect(route.options).not_to have_key('loadbalancing')
+            expect(route.options).to eq({ 'loadbalancing' => '' })
             expect(route.options).not_to have_key('hash_header')
             expect(route.options).not_to have_key('hash_balance')
           end

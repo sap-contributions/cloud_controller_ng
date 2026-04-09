@@ -1346,6 +1346,23 @@ module VCAP::CloudController
         end
       end
 
+      context 'when setting an option value to nil' do
+        it 'serializes nil values as empty strings to signal explicit removal' do
+          route = Route.make(
+            host: 'test-route',
+            domain: domain,
+            space: space,
+            options: { loadbalancing: 'round-robin' }
+          )
+
+          route.update(options: { loadbalancing: nil })
+          route.reload
+
+          parsed_options = Oj.load(route.options_without_serialization)
+          expect(parsed_options['loadbalancing']).to eq('')
+        end
+      end
+
       context 'when using string keys instead of symbols' do
         it 'still removes hash options for non-hash loadbalancing' do
           route = Route.make(

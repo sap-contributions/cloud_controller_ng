@@ -209,7 +209,7 @@ module VCAP::CloudController
             expect(message).to be_valid
             subject.update(route:, message:)
             route.reload
-            expect(route.options).to eq({})
+            expect(route.options).to eq({ 'loadbalancing' => '' })
           end
 
           it 'notifies the backend' do
@@ -299,7 +299,7 @@ module VCAP::CloudController
             subject.update(route:, message:)
             route.reload
             expect(route.options).to include({ 'loadbalancing' => 'hash', 'hash_header' => 'foobar' })
-            expect(route.options).not_to have_key('hash_balance')
+            expect(route.options['hash_balance']).to eq('')
           end
 
           it 'notifies the backend' do
@@ -502,7 +502,7 @@ module VCAP::CloudController
             expect(message).to be_valid
             subject.update(route:, message:)
             route.reload
-            expect(route.options).to eq({})
+            expect(route.options).to eq({ 'loadbalancing' => '' })
           end
 
           it 'notifies the backend' do

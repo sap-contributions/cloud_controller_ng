@@ -74,8 +74,9 @@ module VCAP::CloudController
       cleaned_opts = remove_hash_options_for_non_hash_loadbalancing(opts)
       rounded_opts = round_hash_balance_to_one_decimal(cleaned_opts)
       normalized_opts = normalize_hash_balance_to_string(rounded_opts)
-      # Remove nil values after all processing
-      normalized_opts = normalized_opts.compact if normalized_opts.is_a?(Hash)
+      # Convert nil values to empty strings to signal explicit removal to downstream consumers (e.g. gorouter),
+      # so they can distinguish "option was explicitly removed" from "option was never set".
+      normalized_opts = normalized_opts.transform_values { |v| v.nil? ? '' : v } if normalized_opts.is_a?(Hash)
       self.options_without_serialization = Oj.dump(normalized_opts)
     end
 

@@ -5,6 +5,7 @@ require 'cloud_controller/db_connection/finalizer'
 require 'cloud_controller/execution_context'
 require 'sequel/extensions/query_length_logging'
 require 'sequel/extensions/request_query_metrics'
+require 'sequel/extensions/default_order_by_id'
 
 module VCAP::CloudController
   class DB
@@ -45,6 +46,7 @@ module VCAP::CloudController
       add_connection_expiration_extension(db, opts)
       add_connection_validator_extension(db, opts)
       db.extension(:requires_unique_column_names_in_subquery)
+      db.extension(:default_order_by_id)
       add_connection_metrics_extension(db)
       db
     end

@@ -195,7 +195,10 @@ module VCAP::CloudController
           },
 
           optional(:loggregator) => {
-            router: String
+            endpoint: String,
+            optional(:ca_file) => String,
+            optional(:cert_file) => String,
+            optional(:key_file) => String
           },
 
           optional(:fluent) => {

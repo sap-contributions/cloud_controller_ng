@@ -116,8 +116,8 @@ module VCAP::CloudController
       end
 
       it 'sets up loggregator emitter' do
-        loggregator_emitter = double(:loggregator_emitter)
-        expect(LoggregatorEmitter::Emitter).to receive(:new).and_return(loggregator_emitter)
+        loggregator_emitter = instance_double(LoggregatorEmitter::Client)
+        expect(LoggregatorEmitter::Client).to receive(:new).and_return(loggregator_emitter)
         expect(VCAP::AppLogEmitter).to receive(:emitter=).with(loggregator_emitter)
         subject
       end

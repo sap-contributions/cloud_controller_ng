@@ -180,7 +180,10 @@ module VCAP::CloudController
           optional(:uaa_client_scope) => String,
 
           optional(:loggregator) => {
-            router: String
+            endpoint: String,
+            optional(:ca_file) => String,
+            optional(:cert_file) => String,
+            optional(:key_file) => String
           },
 
           optional(:fluent) => {

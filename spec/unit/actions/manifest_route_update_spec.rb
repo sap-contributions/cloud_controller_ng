@@ -592,6 +592,43 @@ module VCAP::CloudController
           end
         end
 
+        context 'when updating an existing hash route removing the required hash_header' do
+          let!(:route) do
+            Route.make(
+              host: 'potato',
+              domain: domain,
+              path: '/some-path',
+              space: app.space,
+              options: {
+                loadbalancing: 'hash',
+                hash_header: 'X-Old-Header'
+              }
+            )
+          end
+
+          let(:message) do
+            ManifestRoutesUpdateMessage.new(
+              routes: [
+                {
+                  route: 'http://potato.tomato.avocado-toast.com/some-path',
+                  options: { loadbalancing: 'hash' }
+                }
+              ]
+            )
+          end
+
+          it 'raises an error indicating hash_header is required' do
+            expect do
+              ManifestRouteUpdate.update(app.guid, message, user_audit_info)
+
+              route.reload
+            end.to raise_error(
+              ManifestRouteUpdate::InvalidRoute,
+              %r{For route 'http://potato.tomato.avocado-toast.com/some-path': Hash header must be present when loadbalancing is set to hash.}
+            )
+          end
+        end
+
         context 'when updating an existing hash route with new hash_balance' do
           let!(:route) do
             Route.make(

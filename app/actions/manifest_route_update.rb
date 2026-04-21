@@ -103,6 +103,7 @@ module VCAP::CloudController
           elsif !route.available_in_space?(app.space)
             raise InvalidRoute.new('Routes cannot be mapped to destinations in different spaces')
           elsif manifest_route[:options]
+            validate_route_options!(manifest_route[:options])
             message = RouteUpdateMessage.new({
                                                'options' => manifest_route[:options]
                                              })
@@ -112,6 +113,18 @@ module VCAP::CloudController
           return route
         end
         nil
+      end
+
+      def validate_route_options!(options)
+        return unless options.is_a?(Hash)
+
+        loadbalancing = options[:loadbalancing]
+        return unless loadbalancing == 'hash'
+
+        hash_header = options[:hash_header]
+        return if hash_header.present?
+
+        raise Sequel::ValidationFailed.new('Hash header must be present when loadbalancing is set to hash.')
       end
     end
   end

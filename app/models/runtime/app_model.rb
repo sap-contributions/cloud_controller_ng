@@ -93,9 +93,14 @@ module VCAP::CloudController
       validates_format APP_NAME_REGEX, :name
       validate_environment_variables
       validate_droplet_is_staged
+
+      validates_includes %w[buildpack cnb docker], :lifecycle_type
     end
 
     def lifecycle_type
+      return self[:lifecycle_type] if self[:lifecycle_type].present?
+
+      # Fallback for records without lifecycle_type column value
       return BuildpackLifecycleDataModel::LIFECYCLE_TYPE if buildpack_lifecycle_data
       return CNBLifecycleDataModel::LIFECYCLE_TYPE if cnb_lifecycle_data
 
@@ -103,8 +108,8 @@ module VCAP::CloudController
     end
 
     def lifecycle_data
-      return buildpack_lifecycle_data if buildpack_lifecycle_data
-      return cnb_lifecycle_data if cnb_lifecycle_data
+      return buildpack_lifecycle_data if lifecycle_type == BuildpackLifecycleDataModel::LIFECYCLE_TYPE
+      return cnb_lifecycle_data if lifecycle_type == CNBLifecycleDataModel::LIFECYCLE_TYPE
 
       DockerLifecycleDataModel.new
     end

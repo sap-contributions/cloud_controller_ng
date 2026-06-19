@@ -269,6 +269,12 @@ rate_limiter:
   global_unauthenticated_limit: 1000
   reset_interval_in_minutes: 60
 
+secondary_rate_limiter:
+  enabled: false
+  strategy: 'concurrency-limiter'
+  max_concurrent_requests: 5
+  counter_ttl_seconds: 60
+
 rate_limiter_v2_api:
   enabled: false
   per_process_general_limit: 1000

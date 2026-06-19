@@ -118,6 +118,17 @@
   http_code: 429
   message: "Rate Limit of V2 API Exceeded. Please consider using the V3 API"
 
+10019:
+  name: ConcurrentRequestLimitExceeded
+  http_code: 429
+  message: "Too many concurrent requests. Please retry after a moment."
+
+10020:
+  name: IPBasedConcurrentRequestLimitExceeded
+  http_code: 429
+  message: "Too many concurrent requests from this IP. Please retry after a moment."
+
+
 20001:
   name: UserInvalid
   http_code: 400

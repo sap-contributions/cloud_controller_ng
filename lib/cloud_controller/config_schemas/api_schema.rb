@@ -124,7 +124,9 @@ module VCAP::CloudController
           },
 
           optional(:redis) => {
-            socket: String
+            optional(:socket) => String,
+            optional(:host) => String,
+            optional(:port) => Integer
           },
 
           staging: {
@@ -388,6 +390,15 @@ module VCAP::CloudController
             global_unauthenticated_limit: Integer,
             reset_interval_in_minutes: Integer
           },
+          secondary_rate_limiter: {
+            enabled: bool,
+            strategy: String,
+            optional(:max_concurrent_requests) => Integer,
+            optional(:redis_connection_pool_size) => Integer,
+            optional(:counter_ttl_seconds) => Integer
+
+          },
+
           max_concurrent_service_broker_requests: Integer,
           shared_isolation_segment_name: String,
 

@@ -11,6 +11,9 @@ require 'new_relic_custom_attributes'
 require 'zipkin'
 require 'block_v3_only_roles'
 require 'below_min_cli_warning'
+require 'secondary_rate_limiter'
+require 'ratelimiters/concurrency_limiter'
+require 'ratelimiters/secondary_rate_limiter_factory'
 
 module VCAP::CloudController
   class RackAppBuilder
@@ -19,6 +22,7 @@ module VCAP::CloudController
       configurer = VCAP::CloudController::Security::SecurityContextConfigurer.new(token_decoder)
 
       logger = access_log(config)
+      app_builder = self
 
       Rack::Builder.new do
         use CloudFoundry::Middleware::RequestMetrics, request_metrics
@@ -29,33 +33,8 @@ module VCAP::CloudController
         use CloudFoundry::Middleware::SecurityContextSetter, configurer
         use CloudFoundry::Middleware::Zipkin
         use CloudFoundry::Middleware::RequestLogs, request_logs
-        if config.get(:rate_limiter, :enabled)
-          use CloudFoundry::Middleware::RateLimiter, {
-            logger: Steno.logger('cc.rate_limiter'),
-            per_process_general_limit: config.get(:rate_limiter, :per_process_general_limit),
-            global_general_limit: config.get(:rate_limiter, :global_general_limit),
-            per_process_unauthenticated_limit: config.get(:rate_limiter, :per_process_unauthenticated_limit),
-            global_unauthenticated_limit: config.get(:rate_limiter, :global_unauthenticated_limit),
-            interval: config.get(:rate_limiter, :reset_interval_in_minutes)
-          }
-        end
-        if config.get(:max_concurrent_service_broker_requests) > 0
-          use CloudFoundry::Middleware::ServiceBrokerRateLimiter, {
-            logger: Steno.logger('cc.service_broker_rate_limiter'),
-            max_concurrent_requests: config.get(:max_concurrent_service_broker_requests),
-            broker_timeout_seconds: config.get(:broker_client_timeout_seconds)
-          }
-        end
-        if config.get(:rate_limiter_v2_api, :enabled)
-          use CloudFoundry::Middleware::RateLimiterV2API, {
-            logger: Steno.logger('cc.rate_limiter_v2_api'),
-            per_process_general_limit: config.get(:rate_limiter_v2_api, :per_process_general_limit),
-            global_general_limit: config.get(:rate_limiter_v2_api, :global_general_limit),
-            per_process_admin_limit: config.get(:rate_limiter_v2_api, :per_process_admin_limit),
-            global_admin_limit: config.get(:rate_limiter_v2_api, :global_admin_limit),
-            interval: config.get(:rate_limiter_v2_api, :reset_interval_in_minutes)
-          }
-        end
+
+        app_builder.build_rate_limiters(self, config)
 
         use CloudFoundry::Middleware::CefLogs, Logger.new(config.get(:security_event_logging, :file)), config.get(:local_route) if config.get(:security_event_logging, :enabled)
         use Rack::CommonLogger, logger if logger
@@ -72,7 +51,45 @@ module VCAP::CloudController
         map '/healthz' do
           run ->(_) { [200, { 'Content-Type' => 'application/json' }, ['OK']] }
         end
+      end.to_app
+    end
+
+    def build_rate_limiters(builder, config)
+      if config.get(:rate_limiter, :enabled)
+        builder.use CloudFoundry::Middleware::RateLimiter, {
+          logger: Steno.logger('cc.rate_limiter'),
+          per_process_general_limit: config.get(:rate_limiter, :per_process_general_limit),
+          global_general_limit: config.get(:rate_limiter, :global_general_limit),
+          per_process_unauthenticated_limit: config.get(:rate_limiter, :per_process_unauthenticated_limit),
+          global_unauthenticated_limit: config.get(:rate_limiter, :global_unauthenticated_limit),
+          interval: config.get(:rate_limiter, :reset_interval_in_minutes)
+        }
       end
+      if config.get(:secondary_rate_limiter, :enabled)
+        secondary_rl_logger = Steno.logger('cc.secondary_rate_limiter')
+        builder.use CloudFoundry::Middleware::SecondaryRateLimiter, {
+          logger: secondary_rl_logger,
+          rate_limiter_strategy: CloudFoundry::Middleware::Ratelimiters::SecondaryRateLimiterFactory.instance(config, secondary_rl_logger)
+        }
+      end
+
+      if config.get(:max_concurrent_service_broker_requests) > 0
+        builder.use CloudFoundry::Middleware::ServiceBrokerRateLimiter, {
+          logger: Steno.logger('cc.service_broker_rate_limiter'),
+          max_concurrent_requests: config.get(:max_concurrent_service_broker_requests),
+          broker_timeout_seconds: config.get(:broker_client_timeout_seconds)
+        }
+      end
+      return unless config.get(:rate_limiter_v2_api, :enabled)
+
+      builder.use CloudFoundry::Middleware::RateLimiterV2API, {
+        logger: Steno.logger('cc.rate_limiter_v2_api'),
+        per_process_general_limit: config.get(:rate_limiter_v2_api, :per_process_general_limit),
+        global_general_limit: config.get(:rate_limiter_v2_api, :global_general_limit),
+        per_process_admin_limit: config.get(:rate_limiter_v2_api, :per_process_admin_limit),
+        global_admin_limit: config.get(:rate_limiter_v2_api, :global_admin_limit),
+        interval: config.get(:rate_limiter_v2_api, :reset_interval_in_minutes)
+      }
     end
 
     private

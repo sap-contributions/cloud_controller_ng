@@ -1,9 +1,13 @@
 require 'uaa/info'
+require 'active_support/cache'
+require 'digest'
 
 module VCAP::CloudController
   class UaaTokenDecoder
     class BadToken < StandardError
     end
+
+    TOKEN_CACHE = ActiveSupport::Cache::MemoryStore.new(size: 8.megabytes, coder: nil)
 
     attr_reader :config
 
@@ -25,11 +29,19 @@ module VCAP::CloudController
     def decode_token(auth_token)
       return unless token_format_valid?(auth_token)
 
-      if symmetric_key
-        decode_token_with_symmetric_key(auth_token)
-      else
-        decode_token_with_asymmetric_key(auth_token)
-      end
+      cache_key = Digest::SHA256.hexdigest(auth_token)
+      cached = TOKEN_CACHE.read(cache_key)
+      return cached if cached
+
+      decoded = if symmetric_key
+                  decode_token_with_symmetric_key(auth_token)
+                else
+                  decode_token_with_asymmetric_key(auth_token)
+                end
+
+      expires_in = decoded['exp'] ? [decoded['exp'] - Time.now.utc.to_i, 0].max : 60
+      TOKEN_CACHE.write(cache_key, decoded, expires_in: expires_in)
+      decoded
     rescue CF::UAA::TokenExpired => e
       @logger.warn('Token expired')
       raise BadToken.new(e.message)

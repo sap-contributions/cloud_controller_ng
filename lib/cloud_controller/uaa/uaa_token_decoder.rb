@@ -1,9 +1,13 @@
 require 'uaa/info'
+require 'redis'
+require 'digest'
 
 module VCAP::CloudController
   class UaaTokenDecoder
     class BadToken < StandardError
     end
+
+    CACHE_KEY_PREFIX = 'uaa_token_cache'.freeze
 
     attr_reader :config
 
@@ -25,6 +29,53 @@ module VCAP::CloudController
     def decode_token(auth_token)
       return unless token_format_valid?(auth_token)
 
+      cache_key = "#{CACHE_KEY_PREFIX}:#{Digest::SHA256.hexdigest(auth_token)}"
+
+      if (store = redis_cache)
+        cached = store.get(cache_key)
+        return Oj.load(cached, symbol_keys: false) if cached
+      end
+
+      decoded = if symmetric_key
+                  decode_token_with_symmetric_key(auth_token)
+                else
+                  decode_token_with_asymmetric_key(auth_token)
+                end
+
+      if store
+        expires_in = decoded['exp'] ? [decoded['exp'] - Time.now.utc.to_i - 1, 1].max : 60
+        store.set(cache_key, Oj.dump(decoded), ex: expires_in)
+      end
+
+      decoded
+    rescue CF::UAA::TokenExpired => e
+      @logger.warn('Token expired')
+      raise BadToken.new(e.message)
+    rescue CF::UAA::DecodeError, CF::UAA::AuthError => e
+      @logger.warn("Invalid bearer token: #{e.inspect} #{e.backtrace}")
+      raise BadToken.new(e.message)
+    rescue Redis::BaseError => e
+      @logger.warn("Token cache Redis error: #{e.class} - #{e.message}")
+      decode_token_without_cache(auth_token)
+    end
+
+    private
+
+    def redis_cache
+      return @redis_cache if defined?(@redis_cache)
+
+      socket = VCAP::CloudController::Config.config.get(:redis, :socket)
+      @redis_cache = if socket
+                       pool_size = VCAP::CloudController::Config.config.get(:puma, :max_threads) || 1
+                       ConnectionPool::Wrapper.new(size: pool_size) do
+                         Redis.new(timeout: 1, path: socket)
+                       end
+                     end
+    end
+
+    def decode_token_without_cache(auth_token)
+      return unless token_format_valid?(auth_token)
+
       if symmetric_key
         decode_token_with_symmetric_key(auth_token)
       else
@@ -37,8 +88,6 @@ module VCAP::CloudController
       @logger.warn("Invalid bearer token: #{e.inspect} #{e.backtrace}")
       raise BadToken.new(e.message)
     end
-
-    private
 
     def token_format_valid?(auth_token)
       auth_token && auth_token.upcase.start_with?('BEARER')

@@ -39,7 +39,7 @@ module VCAP::CloudController
                   decode_token_with_asymmetric_key(auth_token)
                 end
 
-      expires_in = decoded['exp'] ? [decoded['exp'] - Time.now.utc.to_i, 0].max : 60
+      expires_in = decoded['exp'] ? [decoded['exp'] - Time.now.utc.to_i - 1, 0].max : 60
       TOKEN_CACHE.write(cache_key, decoded, expires_in: expires_in)
       decoded
     rescue CF::UAA::TokenExpired => e

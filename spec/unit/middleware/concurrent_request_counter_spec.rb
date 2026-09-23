@@ -149,6 +149,31 @@ module CloudFoundry
           end
         end
       end
+
+      describe 'shared RedisStore' do
+        before do
+          redis_store_class = ConcurrentRequestCounter::RedisStore
+          redis_store_class.remove_instance_variable(:@instance) if redis_store_class.instance_variable_defined?(:@instance)
+
+          config = double('config')
+          allow(config).to receive(:get).with(:redis, :socket).and_return('/tmp/redis.sock')
+          allow(VCAP::CloudController::Config).to receive(:config).and_return(config)
+          allow(ConcurrentRequestCounter::RedisStore).to receive(:new).and_return(double('redis_store'))
+        end
+
+        after do
+          redis_store_class = ConcurrentRequestCounter::RedisStore
+          redis_store_class.remove_instance_variable(:@instance) if redis_store_class.instance_variable_defined?(:@instance)
+        end
+
+        it 'uses the same RedisStore instance across different counters' do
+          counter1 = ConcurrentRequestCounter.new('prefix-1', blocking_limit: 5)
+          counter2 = ConcurrentRequestCounter.new('prefix-2', blocking_limit: 5)
+
+          expect(counter1.send(:store)).to equal(counter2.send(:store))
+          expect(ConcurrentRequestCounter::RedisStore).to have_received(:new).once
+        end
+      end
     end
 
     RSpec.describe ConcurrentRequestCounter::InMemoryStore do

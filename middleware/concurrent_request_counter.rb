@@ -67,11 +67,7 @@ module CloudFoundry
         return @store if defined?(@store)
 
         redis_socket = VCAP::CloudController::Config.config.get(:redis, :socket)
-        @store = if redis_socket.nil?
-                   InMemoryStore.new
-                 else
-                   RedisStore.new(redis_socket, @redis_connection_pool_size, @redis_counter_ttl_seconds)
-                 end
+        @store = redis_socket.nil? ? InMemoryStore.new : RedisStore.instance(redis_socket, @redis_connection_pool_size, @redis_counter_ttl_seconds)
       end
 
       class RedisStore
@@ -106,6 +102,15 @@ module CloudFoundry
           return count
         LUA
         LOG_INCREMENT_SHA = Digest::SHA1.hexdigest(LOG_INCREMENT_SCRIPT).freeze
+
+        @mutex = Mutex.new
+
+        def self.instance(socket, connection_pool_size, counter_ttl_seconds)
+          return @instance if defined?(@instance)
+
+          @mutex.synchronize { @instance ||= new(socket, connection_pool_size, counter_ttl_seconds) }
+          @instance
+        end
 
         def initialize(socket, connection_pool_size, counter_ttl_seconds)
           @redis = ConnectionPool::Wrapper.new(size: connection_pool_size) do

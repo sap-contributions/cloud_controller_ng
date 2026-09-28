@@ -79,6 +79,8 @@ tags:
     description: Root API endpoints that provide entry points and API information.
   - name: Routes
     description: Routes are used to map a URL to an app.
+  - name: Route Policies
+    description: Route policies control which callers can access routes on identity-aware domains.
   - name: Security Groups
     description: Security groups are used to control access to apps.
   - name: Service Brokers
@@ -2689,14 +2691,27 @@ paths:
   /v3/domains:
     get:
       summary: List domains
-      description: Retrieve all domains the user has access to.
+      description: |-
+        Retrieve all domains the user has access to.
+
+        **Permitted roles:** All Roles
       operationId: listDomains
       tags:
         - Domains
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
-        - $ref: '#/components/parameters/OrderBy'
+        - name: order_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - created_at
+              - '-created_at'
+              - updated_at
+              - '-updated_at'
+          description: Value to sort by. Defaults to ascending; prepend with `-` to sort descending. Valid values are `created_at`, `updated_at`
         - $ref: '#/components/parameters/CreatedAts'
         - $ref: '#/components/parameters/UpdatedAts'
         - $ref: '#/components/parameters/LabelSelector'
@@ -2706,21 +2721,21 @@ paths:
             type: array
             items:
               type: string
-          description: Comma-delimited list of GUIDs to filter by
+          description: Comma-delimited list of guids to filter by
         - name: names
           in: query
           schema:
             type: array
             items:
               type: string
-          description: Comma-delimited list of domain names to filter by
+          description: Comma-delimited list of domain names to filter by (case-insensitive)
         - name: organization_guids
           in: query
           schema:
             type: array
             items:
               type: string
-          description: Comma-delimited list of owning organization GUIDs to filter by
+          description: Comma-delimited list of owning organization guids to filter by
       responses:
         '200':
           description: OK
@@ -2736,20 +2751,20 @@ paths:
                       total_results: 3
                       total_pages: 2
                       first:
-                        href: https://api.example.org?page=1&per_page=2
+                        href: https://api.example.org/v3/domains?page=1&per_page=2
                       last:
-                        href: https://api.example.org?page=2&per_page=2
+                        href: https://api.example.org/v3/domains?page=2&per_page=2
                       next:
-                        href: https://api.example.org?page=2&per_page=2
+                        href: https://api.example.org/v3/domains?page=2&per_page=2
                       previous: null
                     resources:
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 3a5d3d89-3f89-4f05-8188-8a2b298c79d5
                         created_at: '2019-03-08T01:06:19Z'
                         updated_at: '2019-03-08T01:06:19Z'
                         name: test-domain.com
                         internal: false
                         router_group:
-                          guid: 123e4567-e89b-12d3-a456-426614174000
+                          guid: 5806148f-cce6-4d86-7fbd-aa269e3f6f3f
                         supported_protocols:
                           - tcp
                         metadata:
@@ -2767,6 +2782,29 @@ paths:
                             href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/route_reservations
                           router_group:
                             href: https://api.example.org/routing/v1/router_groups/5806148f-cce6-4d86-7fbd-aa269e3f6f3f
+                      - guid: 9b2f3d89-3f89-4f05-8188-8a2b298c79d5
+                        created_at: '2026-04-21T10:15:30Z'
+                        updated_at: '2026-04-21T10:15:30Z'
+                        name: apps.identity
+                        internal: false
+                        router_group: null
+                        supported_protocols:
+                          - http
+                        enforce_route_policies: true
+                        route_policies_scope: org
+                        metadata:
+                          labels: {}
+                          annotations: {}
+                        relationships:
+                          organization:
+                            data: null
+                          shared_organizations:
+                            data: []
+                        links:
+                          self:
+                            href: https://api.example.org/v3/domains/9b2f3d89-3f89-4f05-8188-8a2b298c79d5
+                          route_reservations:
+                            href: https://api.example.org/v3/domains/9b2f3d89-3f89-4f05-8188-8a2b298c79d5/route_reservations
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2785,7 +2823,10 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
     post:
       summary: Create a domain
-      description: Create a domain.
+      description: |-
+        Create a domain.
+
+        **Permitted roles:** Admin, Org Manager *(when an `organization` relationship is provided)*
       operationId: createDomain
       tags:
         - Domains
@@ -2798,6 +2839,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Domain'
+              examples:
+                default:
+                  summary: default
+                  value:
+                    guid: 3a5d3d89-3f89-4f05-8188-8a2b298c79d5
+                    created_at: '2019-03-08T01:06:19Z'
+                    updated_at: '2019-03-08T01:06:19Z'
+                    name: test-domain.com
+                    internal: false
+                    router_group: null
+                    supported_protocols:
+                      - http
+                    metadata:
+                      labels: {}
+                      annotations: {}
+                    relationships:
+                      organization:
+                        data:
+                          guid: 3a3f3d89-3f89-4f05-8188-751b298c79d5
+                      shared_organizations:
+                        data:
+                          - guid: 404f3d89-3f89-4a72-8188-751b298d88d5
+                          - guid: 416d3d89-3f89-4b67-a189-123b298d3592
+                    links:
+                      self:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5
+                      organization:
+                        href: https://api.example.org/v3/organizations/3a3f3d89-3f89-4f05-8188-751b298c79d5
+                      route_reservations:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/route_reservations
+                      shared_organizations:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/relationships/shared_organizations
           links:
             organization:
               operationId: getOrganization
@@ -2821,7 +2894,10 @@ paths:
   /v3/domains/{guid}:
     get:
       summary: Get a domain
-      description: Retrieve a domain.
+      description: |-
+        Retrieve a domain.
+
+        **Permitted roles:** Admin, Admin Read-Only, Global Auditor, Org Auditor, Org Billing Manager *(can only view domains without an organization relationship)*, Org Manager, Space Auditor, Space Developer, Space Manager, Space Supporter
       operationId: getDomain
       tags:
         - Domains
@@ -2834,6 +2910,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Domain'
+              examples:
+                default:
+                  summary: default
+                  value:
+                    guid: 3a5d3d89-3f89-4f05-8188-8a2b298c79d5
+                    created_at: '2019-03-08T01:06:19Z'
+                    updated_at: '2019-03-08T01:06:19Z'
+                    name: test-domain.com
+                    internal: false
+                    router_group: null
+                    supported_protocols:
+                      - http
+                    metadata:
+                      labels: {}
+                      annotations: {}
+                    relationships:
+                      organization:
+                        data:
+                          guid: 3a3f3d89-3f89-4f05-8188-751b298c79d5
+                      shared_organizations:
+                        data:
+                          - guid: 404f3d89-3f89-4a72-8188-751b298d88d5
+                          - guid: 416d3d89-3f89-4b67-a189-123b298d3592
+                    links:
+                      self:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5
+                      organization:
+                        href: https://api.example.org/v3/organizations/3a3f3d89-3f89-4f05-8188-751b298c79d5
+                      route_reservations:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/route_reservations
+                      shared_organizations:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/relationships/shared_organizations
           links:
             organization:
               operationId: getOrganization
@@ -2848,32 +2956,17 @@ paths:
           $ref: '#/components/responses/NotFound'
     patch:
       summary: Update a domain
-      description: Update a domain.
+      description: |-
+        Update a domain.
+
+        **Permitted roles:** Admin, Org Manager *(if domain is scoped to organization managed by the org manager)*
       operationId: updateDomain
       tags:
         - Domains
       parameters:
         - $ref: '#/components/parameters/Guid'
       requestBody:
-        description: Domain object that needs to be updated
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                metadata:
-                  $ref: '#/components/schemas/Metadata'
-              description: Request schema for updating a domain
-            examples:
-              default:
-                summary: default
-                value:
-                  metadata:
-                    labels:
-                      key: value
-                    annotations:
-                      note: detailed information
+        $ref: '#/components/requestBodies/DomainUpdateRequestBody'
       responses:
         '200':
           description: Successfully updated domain
@@ -2881,6 +2974,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Domain'
+              examples:
+                default:
+                  summary: default
+                  value:
+                    guid: 3a5d3d89-3f89-4f05-8188-8a2b298c79d5
+                    created_at: '2019-03-08T01:06:19Z'
+                    updated_at: '2019-03-08T01:06:19Z'
+                    name: test-domain.com
+                    internal: false
+                    router_group: null
+                    supported_protocols:
+                      - http
+                    metadata:
+                      labels:
+                        key: value
+                      annotations:
+                        note: detailed information
+                    relationships:
+                      organization:
+                        data:
+                          guid: 3a3f3d89-3f89-4f05-8188-751b298c79d5
+                      shared_organizations:
+                        data:
+                          - guid: 404f3d89-3f89-4a72-8188-751b298d88d5
+                          - guid: 416d3d89-3f89-4b67-a189-123b298d3592
+                    links:
+                      self:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5
+                      organization:
+                        href: https://api.example.org/v3/organizations/3a3f3d89-3f89-4f05-8188-751b298c79d5
+                      route_reservations:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/route_reservations
+                      shared_organizations:
+                        href: https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/relationships/shared_organizations
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2899,7 +3026,10 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
     delete:
       summary: Delete a domain
-      description: Delete a domain.
+      description: |-
+        Delete a domain.
+
+        **Permitted roles:** Admin, Org Manager *(if domain is scoped to organization managed by the org manager)*
       operationId: deleteDomain
       tags:
         - Domains
@@ -2927,32 +3057,38 @@ paths:
   /v3/domains/{guid}/relationships/shared_organizations:
     post:
       summary: Share a domain
-      description: This endpoint shares an organization-scoped domain to other organizations specified by a list of organization guids. This will allow any of the other organizations to use the organization-scoped domain.
+      description: |-
+        This endpoint shares an organization-scoped domain to other organizations specified by a list of organization guids. This will allow any of the other organizations to use the organization-scoped domain.
+
+        **Permitted roles:** Admin, Org Manager
       operationId: shareDomain
       tags:
         - Domains
       parameters:
         - $ref: '#/components/parameters/Guid'
       requestBody:
-        description: List of organizations to share the domain with
+        description: The organization guids with which to share the domain
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - data
               properties:
                 data:
                   type: array
                   items:
                     $ref: '#/components/schemas/Relationship'
-              description: Organization relationships; each organization will be entitled to manage this isolation segment
+                  description: The organization guids with which to share the domain
+              description: A to-many relationship containing the organization guids with which to share the domain
             examples:
               default:
                 summary: default
                 value:
                   data:
-                    - guid: 123e4567-e89b-12d3-a456-426614174000
-                    - guid: 123e4567-e89b-12d3-a456-426614174000
+                    - guid: 404f3d89-3f89-4a72-8188-751b298d88d5
+                    - guid: 416d3d89-3f89-4b67-a189-123b298d3592
       responses:
         '200':
           description: Successfully shared domain
@@ -2963,19 +3099,16 @@ paths:
                 properties:
                   data:
                     type: array
-                  items:
-                    type: object
-                    properties:
-                      guid:
-                        type: string
-                        format: uuid
+                    items:
+                      $ref: '#/components/schemas/Relationship'
+                    description: The organizations the domain is shared with
               examples:
                 default:
                   summary: default
                   value:
                     data:
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 404f3d89-3f89-4a72-8188-751b298d88d5
+                      - guid: 416d3d89-3f89-4b67-a189-123b298d3592
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2987,7 +3120,10 @@ paths:
   /v3/domains/{guid}/relationships/shared_organizations/{org_guid}:
     delete:
       summary: Unshare a domain
-      description: This endpoint removes an organization from the list of organizations an organization-scoped domain is shared with. This prevents the organization from using the organization-scoped domain.
+      description: |-
+        This endpoint removes an organization from the list of organizations an organization-scoped domain is shared with. This prevents the organization from using the organization-scoped domain.
+
+        **Permitted roles:** Admin, Org Manager *(can be in either the domain's owning organization or the organization it has been shared to)*
       operationId: unshareDomain
       tags:
         - Domains
@@ -2999,7 +3135,7 @@ paths:
           schema:
             type: string
             format: uuid
-          description: The GUID of the organization to unshare the domain from
+          description: The guid of the organization to unshare the domain from
       responses:
         '204':
           description: Successfully unshared domain
@@ -4035,14 +4171,29 @@ paths:
   /v3/isolation_segments:
     get:
       summary: List isolation segments
-      description: Retrieves all isolation segments to which the user has access. For admin, this is all the isolation segments in the system. For anyone else, this is the isolation segments in the allowed list for any organization to which the user belongs.
+      description: |-
+        Retrieves all isolation segments to which the user has access. For admin, this is all the isolation segments in the system. For anyone else, this is the isolation segments in the allowed list for any organization to which the user belongs.
+
+        **Permitted roles:** All Roles
       operationId: listIsolationSegments
       tags:
         - Isolation Segments
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
-        - $ref: '#/components/parameters/OrderBy'
+        - name: order_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - created_at
+              - '-created_at'
+              - updated_at
+              - '-updated_at'
+              - name
+              - '-name'
+          description: Value to sort by; defaults to ascending. Prepend with `-` to sort descending. Valid values are `created_at`, `updated_at`, and `name`
         - $ref: '#/components/parameters/CreatedAts'
         - $ref: '#/components/parameters/UpdatedAts'
         - $ref: '#/components/parameters/LabelSelector'
@@ -4052,21 +4203,21 @@ paths:
             type: array
             items:
               type: string
-          description: Comma-delimited list of isolation segment guids to filter by.
+          description: Comma-delimited list of isolation segment guids to filter by
         - name: names
           in: query
           schema:
             type: array
             items:
               type: string
-          description: Comma-delimited list of isolation segment names to filter by.
+          description: Comma-delimited list of isolation segment names to filter by (case-insensitive)
         - name: organization_guids
           in: query
           schema:
             type: array
             items:
               type: string
-          description: Comma-delimited list of organization guids to filter by.
+          description: Comma-delimited list of organization guids to filter by
       responses:
         '200':
           description: OK
@@ -4089,7 +4240,7 @@ paths:
                         href: https://api.example.org/v3/isolation_segments?page=2&per_page=5
                       previous: null
                     resources:
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: b19f6525-cbd3-4155-b156-dc0c2a431b4c
                         name: an_isolation_segment
                         created_at: '2016-10-19T20:25:04Z'
                         updated_at: '2016-11-08T16:41:26Z'
@@ -4101,7 +4252,7 @@ paths:
                         metadata:
                           annotations: {}
                           labels: {}
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 68d54d31-9b3a-463b-ba94-e8e4c32edbac
                         name: an_isolation_segment1
                         created_at: '2016-10-19T20:29:19Z'
                         updated_at: '2016-11-08T16:41:26Z'
@@ -4113,7 +4264,7 @@ paths:
                         metadata:
                           annotations: {}
                           labels: {}
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: ecdc67c3-a71e-43ff-bddf-048930b8cd03
                         name: an_isolation_segment2
                         created_at: '2016-10-19T20:29:22Z'
                         updated_at: '2016-11-08T16:41:26Z'
@@ -4125,7 +4276,7 @@ paths:
                         metadata:
                           annotations: {}
                           labels: {}
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 424c89e4-4353-46b7-9bf4-f90bd9bacac0
                         name: an_isolation_segment3
                         created_at: '2016-10-19T20:29:27Z'
                         updated_at: '2016-11-08T16:41:26Z'
@@ -4137,7 +4288,7 @@ paths:
                         metadata:
                           annotations: {}
                           labels: {}
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 0a79fcec-a648-4eb8-a6c3-2b5be39047c7
                         name: an_isolation_segment4
                         created_at: '2016-10-19T20:29:33Z'
                         updated_at: '2016-11-08T16:41:26Z'
@@ -4167,7 +4318,10 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
     post:
       summary: Create an isolation segment
-      description: Create an isolation segment.
+      description: |-
+        Create an isolation segment.
+
+        **Permitted roles:** Admin
       operationId: createIsolationSegment
       tags:
         - Isolation Segments
@@ -4184,7 +4338,7 @@ paths:
                 default:
                   summary: default
                   value:
-                    guid: 123e4567-e89b-12d3-a456-426614174000
+                    guid: b19f6525-cbd3-4155-b156-dc0c2a431b4c
                     name: an_isolation_segment
                     created_at: '2016-10-19T20:25:04Z'
                     updated_at: '2016-11-08T16:41:26Z'
@@ -4213,7 +4367,10 @@ paths:
   /v3/isolation_segments/{guid}:
     get:
       summary: Get an isolation segment
-      description: Retrieve an isolation segment to which the user has access. For admin, this is any isolation segment in the system. For anyone else, this is an isolation segment in the allowed list for any organization to which the user belongs.
+      description: |-
+        Retrieve an isolation segment to which the user has access. For admin, this is any isolation segment in the system. For anyone else, this is an isolation segment in the allowed list for any organization to which the user belongs.
+
+        **Permitted roles:** All Roles
       operationId: getIsolationSegment
       tags:
         - Isolation Segments
@@ -4230,7 +4387,7 @@ paths:
                 default:
                   summary: default
                   value:
-                    guid: 123e4567-e89b-12d3-a456-426614174000
+                    guid: b19f6525-cbd3-4155-b156-dc0c2a431b4c
                     name: an_isolation_segment
                     created_at: '2016-10-19T20:25:04Z'
                     updated_at: '2016-11-08T16:41:26Z'
@@ -4250,7 +4407,10 @@ paths:
           $ref: '#/components/responses/NotFound'
     patch:
       summary: Update an isolation segment
-      description: Update an isolation segment.
+      description: |-
+        Update an isolation segment.
+
+        **Permitted roles:** Admin
       operationId: updateIsolationSegment
       tags:
         - Isolation Segments
@@ -4266,9 +4426,10 @@ paths:
               properties:
                 name:
                   type: string
-                  description: The name of the isolation segment
+                  description: Name of the isolation segment; isolation segment names must be unique across the entire system, and case is ignored when checking for uniqueness
                 metadata:
                   $ref: '#/components/schemas/Metadata'
+                  description: Labels and annotations applied to the isolation segment
             examples:
               default:
                 summary: default
@@ -4285,8 +4446,8 @@ paths:
                 default:
                   summary: default
                   value:
-                    guid: 123e4567-e89b-12d3-a456-426614174000
-                    name: <%= name %>
+                    guid: b19f6525-cbd3-4155-b156-dc0c2a431b4c
+                    name: my_isolation_segment
                     created_at: '2016-10-19T20:25:04Z'
                     updated_at: '2016-11-08T16:41:26Z'
                     links:
@@ -4315,7 +4476,10 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
     delete:
       summary: Delete an isolation segment
-      description: An isolation segment cannot be deleted if it is entitled to any organization.
+      description: |-
+        An isolation segment cannot be deleted if it is entitled to any organization.
+
+        **Permitted roles:** Admin
       operationId: deleteIsolationSegment
       tags:
         - Isolation Segments
@@ -4336,27 +4500,31 @@ paths:
           $ref: '#/components/responses/500'
   /v3/isolation_segments/{guid}/relationships/organizations:
     post:
-      summary: Entitle organizations for isolation segment
-      description: This endpoint entitles the specified organizations for the isolation segment. In the case where the specified isolation segment is the system-wide shared segment, and if an organization is not already entitled for any other isolation segment, then the shared isolation segment automatically gets assigned as the default for that organization.
+      summary: Entitle organizations for an isolation segment
+      description: |-
+        This endpoint entitles the specified organizations for the isolation segment. In the case where the specified isolation segment is the system-wide shared segment, and if an organization is not already entitled for any other isolation segment, then the shared isolation segment automatically gets assigned as the default for that organization.
+
+        **Permitted roles:** Admin
       operationId: entitleOrganizationsForIsolationSegment
       tags:
         - Isolation Segments
       parameters:
         - $ref: '#/components/parameters/Guid'
       requestBody:
-        description: List of organizations to entitle
+        description: Organization relationships; each organization will be entitled to manage this isolation segment
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/RelationshipToMany'
+              description: Organization relationships; each organization will be entitled to manage this isolation segment
             examples:
               default:
                 summary: default
                 value:
                   data:
-                    - guid: 123e4567-e89b-12d3-a456-426614174000
-                    - guid: 123e4567-e89b-12d3-a456-426614174000
+                    - guid: 68d54d31-9b3a-463b-ba94-e8e4c32edbac
+                    - guid: b19f6525-cbd3-4155-b156-dc0c2a431b4c
       responses:
         '200':
           description: OK
@@ -4369,8 +4537,8 @@ paths:
                   summary: default
                   value:
                     data:
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 68d54d31-9b3a-463b-ba94-e8e4c32edbac
+                      - guid: b19f6525-cbd3-4155-b156-dc0c2a431b4c
                     links:
                       self:
                         href: https://api.example.org/v3/isolation_segments/bdeg4371-cbd3-4155-b156-dc0c2a431b4c/relationships/organizations
@@ -4386,14 +4554,15 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
     get:
       summary: List organizations relationship
-      description: This endpoint lists the organizations entitled for the isolation segment. For an Admin, this will list all entitled organizations in the system. For any other user, this will list only the entitled organizations to which the user belongs.
+      description: |-
+        This endpoint lists the organizations entitled for the isolation segment. For an Admin, this will list all entitled organizations in the system. For any other user, this will list only the entitled organizations to which the user belongs.
+
+        **Permitted roles:** All Roles
       operationId: listOrganizationsForIsolationSegment
       tags:
         - Isolation Segments
       parameters:
         - $ref: '#/components/parameters/Guid'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
       responses:
         '200':
           description: OK
@@ -4406,8 +4575,8 @@ paths:
                   summary: default
                   value:
                     data:
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 68d54d31-9b3a-463b-ba94-e8e4c32edbac
+                      - guid: b19f6525-cbd3-4155-b156-dc0c2a431b4c
                     links:
                       self:
                         href: https://api.example.org/v3/isolation_segments/bdeg4371-cbd3-4155-b156-dc0c2a431b4c/relationships/organizations
@@ -4422,7 +4591,10 @@ paths:
   /v3/isolation_segments/{guid}/relationships/organizations/{org_guid}:
     delete:
       summary: Revoke entitlement to isolation segment for an organization
-      description: This endpoint revokes the entitlement for the specified organization to the isolation segment. If the isolation segment is assigned to a space within an organization, the entitlement cannot be revoked. If the isolation segment is the organization’s default, the entitlement cannot be revoked.
+      description: |-
+        This endpoint revokes the entitlement for the specified organization to the isolation segment. If the isolation segment is assigned to a space within an organization, the entitlement cannot be revoked. If the isolation segment is the organization's default, the entitlement cannot be revoked.
+
+        **Permitted roles:** Admin
       operationId: revokeIsolationSegmentForOrganization
       tags:
         - Isolation Segments
@@ -4434,7 +4606,7 @@ paths:
           schema:
             type: string
             format: uuid
-          description: The GUID of the organization to revoke entitlement from.
+          description: The guid of the organization to revoke entitlement from
       responses:
         '204':
           description: No Content
@@ -4449,14 +4621,15 @@ paths:
   /v3/isolation_segments/{guid}/relationships/spaces:
     get:
       summary: List spaces relationship
-      description: This endpoint lists the spaces to which the isolation segment is assigned. For an Admin, this will list all associated spaces in the system. For an org manager, this will list only those associated spaces belonging to orgs for which the user is a manager. For any other user, this will list only those associated spaces to which the user has access.
+      description: |-
+        This endpoint lists the spaces to which the isolation segment is assigned. For an Admin, this will list all associated spaces in the system. For an org manager, this will list only those associated spaces belonging to orgs for which the user is a manager. For any other user, this will list only those associated spaces to which the user has access.
+
+        **Permitted roles:** All Roles
       operationId: listSpacesForIsolationSegment
       tags:
         - Isolation Segments
       parameters:
         - $ref: '#/components/parameters/Guid'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
       responses:
         '200':
           description: OK
@@ -4469,8 +4642,8 @@ paths:
                   summary: default
                   value:
                     data:
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 885735b5-aea4-4cf5-8e44-961af0e41920
+                      - guid: d4c91047-7b29-4fda-b7f9-04033e5c9c9f
                     links:
                       self:
                         href: https://api.example.org/v3/isolation_segments/bdeg4371-cbd3-4155-b156-dc0c2a431b4c/relationships/spaces
@@ -4483,14 +4656,44 @@ paths:
   /v3/isolation_segments/{guid}/organizations:
     get:
       summary: List organizations for isolation segment
-      description: This endpoint lists the organizations entitled for the isolation segment. For an Admin, this will list all entitled organizations in the system. For any other user, this will list only the entitled organizations to which the user belongs.
+      description: |-
+        Retrieve the organizations entitled to the isolation segment. Return only the organizations the user has access to.
+
+        **Permitted roles:** Admin, Admin Read-Only, Global Auditor, Org Auditor, Org Billing Manager, Org Manager
       operationId: listOrganizationsForIsolationSegmentShort
       tags:
         - Isolation Segments
       parameters:
         - $ref: '#/components/parameters/Guid'
+        - name: names
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of organization names to filter by (case-insensitive)
+        - name: guids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of organization guids to filter by
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
+        - name: order_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - created_at
+              - '-created_at'
+              - updated_at
+              - '-updated_at'
+              - name
+              - '-name'
+          description: Value to sort by; defaults to ascending. Prepend with `-` to sort descending. Valid values are `created_at`, `updated_at`, and `name`
       responses:
         '200':
           description: OK
@@ -4512,7 +4715,7 @@ paths:
                       next: null
                       previous: null
                     resources:
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 885735b5-aea4-4cf5-8e44-961af0e41920
                         created_at: '2017-02-01T01:33:58Z'
                         updated_at: '2017-02-01T01:33:58Z'
                         name: org1
@@ -4529,11 +4732,11 @@ paths:
                         relationships:
                           quota:
                             data:
-                              guid: 123e4567-e89b-12d3-a456-426614174000
+                              guid: b7887f5c-34bb-40c5-9778-577572e4fb2d
                         metadata:
                           labels: {}
                           annotations: {}
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: d4c91047-7b29-4fda-b7f9-04033e5c9c9f
                         created_at: '2017-02-02T00:14:30Z'
                         updated_at: '2017-02-02T00:14:30Z'
                         name: org2
@@ -4541,7 +4744,7 @@ paths:
                         relationships:
                           quota:
                             data:
-                              guid: 123e4567-e89b-12d3-a456-426614174000
+                              guid: b7887f5c-34bb-40c5-9778-577572e4fb2d
                         links:
                           self:
                             href: https://api.example.org/v3/organizations/d4c91047-7b29-4fda-b7f9-04033e5c9c9f
@@ -5295,6 +5498,432 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/500'
+  /v3/route_policies:
+    get:
+      summary: List route policies
+      description: |-
+        Retrieve all route policies the user has access to.
+
+        **Filtering examples**
+
+        - **Filter by route**: `GET /v3/route_policies?route_guids=89b32bd6-688f-4424-b94f-2e2c86495a5f`
+        - **Filter by space**: `GET /v3/route_policies?space_guids=3fa85f64-5717-4562-b3fc-2c963f66afa6`
+        - **Filter by source type**: `GET /v3/route_policies?sources=cf:any`
+        - **Find policies referencing a specific app**: `GET /v3/route_policies?source_guids=d76446a1-f429-4444-8797-be2f78b75b08`
+        - **Include source resources**: `GET /v3/route_policies?include=source` (batch-loads the app, space, or org referenced in each policy's source)
+        - **Include route and source**: `GET /v3/route_policies?include=route,source`
+
+        **This feature is experimental and is subject to change.**
+
+        **Permitted roles:** Admin, Admin Read-Only, Global Auditor, Org Manager, Org Auditor, Org Billing Manager *(will receive an empty list)*, Space Auditor, Space Developer, Space Manager, Space Supporter
+      operationId: listRoutePolicies
+      tags:
+        - Route Policies
+      parameters:
+        - name: guids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of route policy guids to filter by
+        - name: route_guids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of route guids to filter by
+        - name: space_guids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of space guids to filter by (filters by the route's space)
+        - name: sources
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of exact source strings to filter by (e.g., `cf:any`, `cf:app:guid`)
+        - name: source_guids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of GUIDs to filter by; matches the GUID portion of the source (e.g. the app, space, or org GUID)
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: order_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - created_at
+              - '-created_at'
+              - updated_at
+              - '-updated_at'
+          description: Value to sort by. Defaults to ascending; prepend with `-` to sort descending. Valid values are `created_at`, `updated_at`
+        - $ref: '#/components/parameters/LabelSelector'
+        - name: include
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - route
+                - source
+          description: Optionally include related resources in the response; valid values are `route` and `source` (source includes the app, space, or organization based on the source type)
+        - $ref: '#/components/parameters/CreatedAts'
+        - $ref: '#/components/parameters/UpdatedAts'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutePolicyList'
+              examples:
+                default:
+                  summary: default
+                  value:
+                    pagination:
+                      total_results: 3
+                      total_pages: 2
+                      first:
+                        href: https://api.example.org/v3/route_policies?page=1&per_page=2
+                      last:
+                        href: https://api.example.org/v3/route_policies?page=2&per_page=2
+                      next:
+                        href: https://api.example.org/v3/route_policies?page=2&per_page=2
+                      previous: null
+                    resources:
+                      - guid: a4ad8bc1-67a6-4ffa-95b7-f8cf04ad7d4f
+                        created_at: '2026-04-21T10:15:30Z'
+                        updated_at: '2026-04-21T10:15:30Z'
+                        source: cf:app:d76446a1-f429-4444-8797-be2f78b75b08
+                        metadata:
+                          labels: {}
+                          annotations: {}
+                        relationships:
+                          route:
+                            data:
+                              guid: 89b32bd6-688f-4424-b94f-2e2c86495a5f
+                          app:
+                            data:
+                              guid: d76446a1-f429-4444-8797-be2f78b75b08
+                          space:
+                            data: null
+                          organization:
+                            data: null
+                        links:
+                          self:
+                            href: https://api.example.org/v3/route_policies/a4ad8bc1-67a6-4ffa-95b7-f8cf04ad7d4f
+                          route:
+                            href: https://api.example.org/v3/routes/89b32bd6-688f-4424-b94f-2e2c86495a5f
+                          app:
+                            href: https://api.example.org/v3/apps/d76446a1-f429-4444-8797-be2f78b75b08
+                      - guid: f2b5d8c3-92a1-4e3f-b847-9c8f1d2e3a4b
+                        created_at: '2026-04-21T11:20:45Z'
+                        updated_at: '2026-04-21T11:20:45Z'
+                        source: cf:space:3fa85f64-5717-4562-b3fc-2c963f66afa6
+                        metadata:
+                          labels: {}
+                          annotations: {}
+                        relationships:
+                          route:
+                            data:
+                              guid: 89b32bd6-688f-4424-b94f-2e2c86495a5f
+                          app:
+                            data: null
+                          space:
+                            data:
+                              guid: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                          organization:
+                            data: null
+                        links:
+                          self:
+                            href: https://api.example.org/v3/route_policies/f2b5d8c3-92a1-4e3f-b847-9c8f1d2e3a4b
+                          route:
+                            href: https://api.example.org/v3/routes/89b32bd6-688f-4424-b94f-2e2c86495a5f
+                          space:
+                            href: https://api.example.org/v3/spaces/3fa85f64-5717-4562-b3fc-2c963f66afa6
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      summary: Create a route policy
+      description: |-
+        Create a route policy granting the given source access to a route on an identity-aware domain.
+
+        **Validation rules**
+
+        - The route's domain must have `enforce_route_policies` set to `true`
+        - The route's domain must not be internal (internal routes bypass GoRouter)
+        - The `source` must be unique per route (duplicate sources are rejected)
+        - If the route already has a `cf:any` policy, no other sources can be added
+        - If adding `cf:any`, the route must not have any existing policies
+        - The source GUID is not checked for existence at creation time; stale references are tolerated, and sources referencing resources the caller cannot see are accepted but do not appear under `?include=source`
+        - The `app`, `space`, and `organization` relationships are derived from `source` and cannot be set directly
+
+        **Common use cases**
+
+        - Allow a frontend app to call a backend API: create a policy with `source` of `cf:app:<frontend-app-guid>` on the backend route
+        - Allow all apps in a space to access a shared service: create a policy with `source` of `cf:space:<space-guid>` on the shared service route
+        - Open a route to any caller (public API): create a policy with `source` of `cf:any`
+
+        **This feature is experimental and is subject to change.**
+
+        **Permitted roles:** Admin, Space Developer *(can create policies for routes in spaces they can write to)*
+      operationId: createRoutePolicy
+      tags:
+        - Route Policies
+      requestBody:
+        $ref: '#/components/requestBodies/RoutePolicyCreateRequestBody'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutePolicy'
+              examples:
+                default:
+                  summary: default
+                  value:
+                    guid: a4ad8bc1-67a6-4ffa-95b7-f8cf04ad7d4f
+                    created_at: '2026-04-21T10:15:30Z'
+                    updated_at: '2026-04-21T10:15:30Z'
+                    source: cf:app:d76446a1-f429-4444-8797-be2f78b75b08
+                    metadata:
+                      labels:
+                        team: frontend
+                      annotations:
+                        description: Allow frontend app to call backend API
+                    relationships:
+                      route:
+                        data:
+                          guid: 89b32bd6-688f-4424-b94f-2e2c86495a5f
+                      app:
+                        data:
+                          guid: d76446a1-f429-4444-8797-be2f78b75b08
+                      space:
+                        data: null
+                      organization:
+                        data: null
+                    links:
+                      self:
+                        href: https://api.example.org/v3/route_policies/a4ad8bc1-67a6-4ffa-95b7-f8cf04ad7d4f
+                      route:
+                        href: https://api.example.org/v3/routes/89b32bd6-688f-4424-b94f-2e2c86495a5f
+                      app:
+                        href: https://api.example.org/v3/apps/d76446a1-f429-4444-8797-be2f78b75b08
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v3/route_policies/{guid}:
+    get:
+      summary: Get a route policy
+      description: |-
+        Retrieve a single route policy.
+
+        **This feature is experimental and is subject to change.**
+
+        **Permitted roles:** Admin, Admin Read-Only, Global Auditor, Org Manager, Org Auditor, Org Billing Manager *(will not be able to see any route policies)*, Space Auditor, Space Developer, Space Manager, Space Supporter
+      operationId: getRoutePolicy
+      tags:
+        - Route Policies
+      parameters:
+        - $ref: '#/components/parameters/Guid'
+        - name: include
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - route
+                - source
+          description: Optionally include a list of unique related resources in the response; valid values are `route` and `source` (source includes the app, space, or organization referenced by the source field)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutePolicy'
+              examples:
+                default:
+                  summary: default
+                  value:
+                    guid: a4ad8bc1-67a6-4ffa-95b7-f8cf04ad7d4f
+                    created_at: '2026-04-21T10:15:30Z'
+                    updated_at: '2026-04-21T10:15:30Z'
+                    source: cf:app:d76446a1-f429-4444-8797-be2f78b75b08
+                    metadata:
+                      labels: {}
+                      annotations: {}
+                    relationships:
+                      route:
+                        data:
+                          guid: 89b32bd6-688f-4424-b94f-2e2c86495a5f
+                      app:
+                        data:
+                          guid: d76446a1-f429-4444-8797-be2f78b75b08
+                      space:
+                        data: null
+                      organization:
+                        data: null
+                    links:
+                      self:
+                        href: https://api.example.org/v3/route_policies/a4ad8bc1-67a6-4ffa-95b7-f8cf04ad7d4f
+                      route:
+                        href: https://api.example.org/v3/routes/89b32bd6-688f-4424-b94f-2e2c86495a5f
+                      app:
+                        href: https://api.example.org/v3/apps/d76446a1-f429-4444-8797-be2f78b75b08
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    patch:
+      summary: Update a route policy
+      description: |-
+        Update the metadata of a route policy.
+
+        > **Note:** This endpoint only supports updating metadata (labels and annotations). The `source` and route relationship are immutable after creation. To change the source, delete the policy and create a new one.
+
+        **This feature is experimental and is subject to change.**
+
+        **Permitted roles:** Admin, Space Developer *(can update policies for routes in spaces they can write to)*
+      operationId: updateRoutePolicy
+      tags:
+        - Route Policies
+      parameters:
+        - $ref: '#/components/parameters/Guid'
+      requestBody:
+        $ref: '#/components/requestBodies/RoutePolicyUpdateRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutePolicy'
+              examples:
+                default:
+                  summary: default
+                  value:
+                    guid: a4ad8bc1-67a6-4ffa-95b7-f8cf04ad7d4f
+                    created_at: '2026-04-21T10:15:30Z'
+                    updated_at: '2026-04-21T10:15:30Z'
+                    source: cf:app:d76446a1-f429-4444-8797-be2f78b75b08
+                    metadata:
+                      labels:
+                        team: backend
+                      annotations:
+                        note: Updated contact info
+                    relationships:
+                      route:
+                        data:
+                          guid: 89b32bd6-688f-4424-b94f-2e2c86495a5f
+                      app:
+                        data:
+                          guid: d76446a1-f429-4444-8797-be2f78b75b08
+                      space:
+                        data: null
+                      organization:
+                        data: null
+                    links:
+                      self:
+                        href: https://api.example.org/v3/route_policies/a4ad8bc1-67a6-4ffa-95b7-f8cf04ad7d4f
+                      route:
+                        href: https://api.example.org/v3/routes/89b32bd6-688f-4424-b94f-2e2c86495a5f
+                      app:
+                        href: https://api.example.org/v3/apps/d76446a1-f429-4444-8797-be2f78b75b08
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      summary: Delete a route policy
+      description: |-
+        Deleting a route policy removes the access control for that specific source. If this was the only policy on the route, the route will become inaccessible (no callers will be allowed) until new policies are added or a `cf:any` policy is created.
+
+        **This feature is experimental and is subject to change.**
+
+        **Permitted roles:** Admin, Space Developer *(can delete policies for routes in spaces they can write to)*
+      operationId: deleteRoutePolicy
+      tags:
+        - Route Policies
+      parameters:
+        - $ref: '#/components/parameters/Guid'
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v3/routes:
     get:
       summary: List routes
@@ -13738,7 +14367,10 @@ paths:
   /v3/domains/{guid}/route_reservations:
     get:
       summary: Check reserved routes for a domain
-      description: Check if a specific route for a domain exists, regardless of the user’s visibility for the route in case the route belongs to a space the user does not belong to.
+      description: |-
+        Check if a specific route for a domain exists, regardless of the user's visibility for the route in case the route belongs to a space the user does not belong to.
+
+        **Permitted roles:** Admin, Admin Read-Only, Global Auditor, Org Auditor, Org Billing Manager *(can only check if routes exist for a domain without an organization relationship)*, Org Manager, Space Auditor, Space Developer, Space Manager, Space Supporter
       operationId: checkReservedRoutesForDomain
       tags:
         - Domains
@@ -13746,19 +14378,22 @@ paths:
         - $ref: '#/components/parameters/Guid'
         - name: host
           in: query
+          required: false
           schema:
             type: string
-          description: Hostname to filter by
+          description: Hostname to filter by; defaults to empty string if not provided and only applicable to `http` routes
         - name: path
           in: query
+          required: false
           schema:
             type: string
-          description: Path to filter by
+          description: Path to filter by; defaults to empty string if not provided and only applicable to `http` routes
         - name: port
           in: query
+          required: false
           schema:
             type: integer
-          description: Port to filter by
+          description: Port to filter by; only applicable to `tcp` routes and required for `tcp` routes
       responses:
         '200':
           description: OK
@@ -13769,6 +14404,7 @@ paths:
                 properties:
                   matching_route:
                     type: boolean
+                    description: Whether a route matching the given host, path, and port exists for the domain
               examples:
                 default:
                   summary: default
@@ -13787,21 +14423,56 @@ paths:
         Retrieve all domains available in an organization for the current user. This will return unscoped domains (those without an owning organization), domains that are scoped to the given organization (owned by the given organization), and domains that have been shared with the organization.
 
         To retrieve the default domain for an organization, use the [get default domain](#get-default-domain) endpoint.
+
+        **Permitted roles:** All Roles
       operationId: listDomainsForOrganization
       tags:
         - Domains
       parameters:
-        - $ref: '#/components/parameters/Guid'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-        - $ref: '#/components/parameters/OrderBy'
+        - name: guid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The guid of the organization
+        - name: guids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of guids to filter by
         - name: names
           in: query
           schema:
             type: array
             items:
               type: string
-          description: Comma-delimited list of domain names to filter by
+          description: Comma-delimited list of domain names to filter by (case-insensitive)
+        - name: organization_guids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Comma-delimited list of owning organization guids to filter by
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: order_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - created_at
+              - '-created_at'
+              - updated_at
+              - '-updated_at'
+          description: Value to sort by. Defaults to ascending; prepend with `-` to sort descending. Valid values are `created_at`, `updated_at`
+        - $ref: '#/components/parameters/LabelSelector'
+        - $ref: '#/components/parameters/CreatedAts'
+        - $ref: '#/components/parameters/UpdatedAts'
       responses:
         '200':
           description: OK
@@ -13817,20 +14488,20 @@ paths:
                       total_results: 3
                       total_pages: 2
                       first:
-                        href: https://api.example.org?page=1&per_page=2
+                        href: https://api.example.org/v3/organizations/3a3f3d89-3f89-4f05-8188-751b298c79d5/domains?page=1&per_page=2
                       last:
-                        href: https://api.example.org?page=2&per_page=2
+                        href: https://api.example.org/v3/organizations/3a3f3d89-3f89-4f05-8188-751b298c79d5/domains?page=2&per_page=2
                       next:
-                        href: https://api.example.org?page=2&per_page=2
+                        href: https://api.example.org/v3/organizations/3a3f3d89-3f89-4f05-8188-751b298c79d5/domains?page=2&per_page=2
                       previous: null
                     resources:
-                      - guid: 123e4567-e89b-12d3-a456-426614174000
+                      - guid: 3a5d3d89-3f89-4f05-8188-8a2b298c79d5
                         created_at: '2019-03-08T01:06:19Z'
                         updated_at: '2019-03-08T01:06:19Z'
                         name: test-domain.com
                         internal: false
                         router_group:
-                          guid: 123e4567-e89b-12d3-a456-426614174000
+                          guid: 5806148f-cce6-4d86-7fbd-aa269e3f6f3f
                         supported_protocols:
                           - tcp
                         metadata:
@@ -14946,7 +15617,8 @@ components:
                 guid:
                   type: string
                   format: uuid
-              description: The guid of the desired router group to route `tcp` traffic through; if set, the domain will only be available for `tcp` traffic
+                  description: The guid of the desired router group to route `tcp` traffic through; if set, the domain will only be available for `tcp` traffic
+              description: The router group the domain routes `tcp` traffic through; if set, the domain will only be available for `tcp` traffic
             supported_protocols:
               type: array
               items:
@@ -14955,10 +15627,29 @@ components:
                   - http
                   - tcp
               description: Available protocols for routes using the domain, currently `http` and `tcp`
+            enforce_route_policies:
+              type: boolean
+              description: When `true`, GoRouter enforces route policies for routes on this domain. This field only appears in the response when set to `true`. Set at creation only; cannot be changed on update
+            route_policies_scope:
+              type: string
+              enum:
+                - any
+                - org
+                - space
+              description: 'Operator-defined boundary for allowed callers: `any`, `org`, or `space`. Required when `enforce_route_policies` is `true`. This field only appears when `enforce_route_policies` is `true`. Set at creation only; cannot be changed on update'
             relationships:
-              $ref: '#/components/schemas/Relationships'
+              type: object
+              properties:
+                organization:
+                  $ref: '#/components/schemas/RelationshipToOne'
+                  description: The organization the domain is scoped to; if set, the domain will only be available in that organization; otherwise, the domain will be globally available
+                shared_organizations:
+                  $ref: '#/components/schemas/RelationshipToMany'
+                  description: Organizations the domain is shared with; if set, the domain will be available in these organizations in addition to the organization the domain is scoped to
+              description: Relationships to the organization the domain is scoped to and the organizations the domain is shared with
             metadata:
               $ref: '#/components/schemas/Metadata'
+              description: Labels and annotations applied to the domain
             links:
               type: object
               properties:
@@ -14967,27 +15658,33 @@ components:
                   description: The URL to get this domain
                 organization:
                   $ref: '#/components/schemas/Link'
-                  description: The URL to get the organization for this domain
+                  description: The URL to get the organization this domain is scoped to; only present for organization-scoped domains
                 route_reservations:
                   $ref: '#/components/schemas/Link'
-                  description: The URL to get the route reservations for this domain
+                  description: The URL to check which routes are reserved for this domain
                 shared_organizations:
                   $ref: '#/components/schemas/Link'
-                  description: The URL to get the shared organizations for this domain
+                  description: The URL to get the organizations this domain is shared with; only present for organization-scoped domains
                 router_group:
                   $ref: '#/components/schemas/Link'
-                  description: The URL to get the router group for this domain
-      description: |
-        A domain is a fully qualified domain name that is used for application routes. A domain can be scoped to an organization, meaning it can be used to create routes for spaces inside that organization, or be left unscoped to allow all organizations access.
+                  description: The URL to get the router group for this domain; only present for domains associated with a router group
+              description: Links to related resources
+      description: |-
+        Domains represent a [fully qualified domain name](https://en.wikipedia.org/wiki/Fully_qualified_domain_name) that is used for application routes.
+
+        A domain can be scoped to an organization, meaning it can be used to create routes for spaces inside that organization, or be left unscoped to allow all organizations access.
     DomainList:
       type: object
       properties:
         pagination:
           $ref: '#/components/schemas/Pagination'
+          description: Pagination information for the list of domains
         resources:
           type: array
           items:
             $ref: '#/components/schemas/Domain'
+          description: List of domains
+      description: A paginated list of domains
     EnvironmentVariableGroup:
       type: object
       properties:
@@ -15793,9 +16490,10 @@ components:
         - properties:
             name:
               type: string
-              description: The name of the isolation segment
+              description: Name of the isolation segment
             metadata:
               $ref: '#/components/schemas/Metadata'
+              description: Labels and annotations on the isolation segment
             links:
               type: object
               properties:
@@ -15804,17 +16502,21 @@ components:
                   description: The URL to get this isolation segment
                 organizations:
                   $ref: '#/components/schemas/Link'
-                  description: The URL to get the organizations for this isolation segment
-      description: An isolation segment provides a dedicated pool of compute resources for an organization or space.
+                  description: The URL to get the organizations entitled to this isolation segment
+              description: Links to related resources
+      description: Isolation Segments provide dedicated pools of resources to which apps can be deployed to isolate workloads.
     IsolationSegmentList:
       type: object
       properties:
         pagination:
           $ref: '#/components/schemas/Pagination'
+          description: Pagination information for the list of isolation segments
         resources:
           type: array
           items:
             $ref: '#/components/schemas/IsolationSegment'
+          description: List of isolation segments
+      description: A paginated list of isolation segments
     Organization:
       type: object
       allOf:
@@ -17041,6 +17743,86 @@ components:
         Roles represent a set of permissions that can be granted to users. Roles are represented as a JSON object.
         A role consists of several required role fields and other attributes specific to the role.
         See Roles for specific roles.
+    RoutePolicy:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseSchema'
+        - properties:
+            source:
+              type: string
+              description: |-
+                The policy selector specifying who can access the route. Must be one of:
+                - `cf:app:<uuid>` (specific app)
+                - `cf:space:<uuid>` (all apps in a space)
+                - `cf:org:<uuid>` (all apps in an organization)
+                - `cf:any` (any caller - cannot be combined with other sources)
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+              description: Labels and annotations applied to the route policy
+            relationships:
+              type: object
+              properties:
+                route:
+                  $ref: '#/components/schemas/RelationshipToOne'
+                  description: The route this policy applies to
+                app:
+                  $ref: '#/components/schemas/RelationshipToOne'
+                  description: Read-only. Always present; `data` is `null` unless the source is `cf:app:<uuid>`
+                space:
+                  $ref: '#/components/schemas/RelationshipToOne'
+                  description: Read-only. Always present; `data` is `null` unless the source is `cf:space:<uuid>`
+                organization:
+                  $ref: '#/components/schemas/RelationshipToOne'
+                  description: Read-only. Always present; `data` is `null` unless the source is `cf:org:<uuid>`
+              description: Relationships to the route this policy applies to and to the app, space, or organization referenced by the source
+            links:
+              type: object
+              properties:
+                self:
+                  $ref: '#/components/schemas/Link'
+                  description: The URL to get this route policy
+                route:
+                  $ref: '#/components/schemas/Link'
+                  description: The URL to get the route this policy applies to
+                app:
+                  $ref: '#/components/schemas/Link'
+                  description: The URL to get the app referenced by the source; only present when the source is `cf:app:<uuid>`
+                space:
+                  $ref: '#/components/schemas/Link'
+                  description: The URL to get the space referenced by the source; only present when the source is `cf:space:<uuid>`
+                organization:
+                  $ref: '#/components/schemas/Link'
+                  description: The URL to get the organization referenced by the source; only present when the source is `cf:org:<uuid>`
+              description: Links to related resources. Always includes `self` and `route`; includes `app`, `space`, or `organization` when the source references that resource
+            included:
+              $ref: '#/components/schemas/IncludedResources'
+              description: Additional related resources included in the response when using the include parameter
+      description: |-
+        Route policies control which Cloud Foundry apps, spaces, or organizations can access routes on identity-aware domains. When a domain has `enforce_route_policies` enabled, GoRouter automatically enforces these access controls using mutual TLS (mTLS) to verify the identity of the calling application.
+
+        Route policies are defined using a `source` selector that specifies who can access the route:
+        - `cf:app:<uuid>` - Allow a specific app
+        - `cf:space:<uuid>` - Allow all apps in a space
+        - `cf:org:<uuid>` - Allow all apps in an organization
+        - `cf:any` - Allow any caller (cannot be combined with other sources on the same route)
+
+        > **Note:** Route policies can only be created for routes on domains where `enforce_route_policies` is `true` and the domain is not internal (internal routes use container-to-container networking and bypass GoRouter).
+
+        **This feature is experimental and is subject to change.**
+    RoutePolicyList:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutePolicy'
+          description: List of route policies
+        included:
+          $ref: '#/components/schemas/IncludedResources'
+          description: Additional related resources included in the response when using the include parameter
+      description: A list of route policies
     SecurityGroupList:
       type: object
       properties:
@@ -17919,34 +18701,56 @@ components:
             properties:
               name:
                 type: string
-                description: Name of the domain
+                description: Name of the domain; must be unique (case-insensitive)
               internal:
                 type: boolean
-                description: Whether the domain is used for internal (container-to-container) traffic
+                default: false
+                description: Whether the domain is used for internal (container-to-container) traffic, or external (user-to-container) traffic
               router_group:
                 type: object
                 properties:
                   guid:
                     type: string
                     format: uuid
-                description: 'The desired router group guid.  _note: creates a `tcp` domain; cannot be used when `internal` is set to `true` or domain is scoped to an org_'
+                    description: The desired router group guid
+                description: 'The desired router group. _note: creates a `tcp` domain; cannot be used when `internal` is set to `true` or domain is scoped to an org_'
+              enforce_route_policies:
+                type: boolean
+                default: false
+                description: When `true`, GoRouter enforces route policies for routes on this domain using mutual TLS (mTLS). Set at creation only; cannot be changed on update. Cannot be used with internal domains
+              route_policies_scope:
+                type: string
+                enum:
+                  - any
+                  - org
+                  - space
+                description: 'Operator-defined boundary for allowed callers: `any`, `org`, or `space`. Required when `enforce_route_policies` is `true`. Set at creation only; cannot be changed on update'
               relationships:
                 type: object
                 properties:
                   organization:
                     $ref: '#/components/schemas/RelationshipToOne'
-                    description: A relationship to the organization the domain will be scoped to;  _note cannot be used when `internal` is set to `true` or domain is associated with a router group_
+                    description: 'A relationship to the organization the domain will be scoped to; _note: cannot be used when `internal` is set to `true` or domain is associated with a router group_'
                   shared_organizations:
                     $ref: '#/components/schemas/RelationshipToMany'
-                    description: A relationship to organizations the domain will be shared with  _Note cannot be used without an organization relationship_
+                    description: 'A relationship to organizations the domain will be shared with. _Note: cannot be used without an organization relationship_'
+                description: Relationships to the organization the domain will be scoped to and the organizations the domain will be shared with
               metadata:
                 $ref: '#/components/schemas/Metadata'
+                description: Labels and annotations applied to the domain
           examples:
             default:
               summary: default
               value:
                 name: example.com
                 internal: false
+            identityAwareDomain:
+              summary: Identity-aware domain
+              value:
+                name: apps.identity
+                internal: false
+                enforce_route_policies: true
+                route_policies_scope: org
     DomainUpdateRequestBody:
       description: Domain object that needs to be updated
       required: true
@@ -17957,7 +18761,17 @@ components:
             properties:
               metadata:
                 $ref: '#/components/schemas/Metadata'
+                description: Labels and annotations applied to the domain
             description: Request schema for updating a domain
+          examples:
+            default:
+              summary: default
+              value:
+                metadata:
+                  labels:
+                    key: value
+                  annotations:
+                    note: detailed information
     DropletCreateRequestBody:
       description: Droplet object that needs to be created
       required: true
@@ -17995,6 +18809,7 @@ components:
                   web: bundle exec rackup config.ru -p $PORT
     IsolationSegmentCreate:
       description: Isolation segment to create
+      required: true
       content:
         application/json:
           schema:
@@ -18002,9 +18817,10 @@ components:
             properties:
               name:
                 type: string
-                description: Name of the isolation segment; isolation segment names must be unique across the entire system, and case is ignored when checking for uniqueness
+                description: Name of the isolation segment; must be unique (case-insensitive)
               metadata:
                 $ref: '#/components/schemas/Metadata'
+                description: Labels and annotations applied to the isolation segment
             required:
               - name
           examples:
@@ -18933,6 +19749,82 @@ components:
                   - web
                   - worker
                 memory_in_mb: 300
+    RoutePolicyCreateRequestBody:
+      description: Route policy to create
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              source:
+                type: string
+                description: The policy selector. Must be `cf:app:<uuid>`, `cf:space:<uuid>`, `cf:org:<uuid>`, or `cf:any`
+              relationships:
+                type: object
+                properties:
+                  route:
+                    $ref: '#/components/schemas/RelationshipToOne'
+                    description: The route this policy applies to
+                required:
+                  - route
+                description: A relationship to the route this policy applies to
+              metadata:
+                $ref: '#/components/schemas/Metadata'
+                description: Labels and annotations applied to the route policy
+            required:
+              - source
+              - relationships
+          examples:
+            default:
+              summary: Allow specific app
+              value:
+                source: cf:app:d76446a1-f429-4444-8797-be2f78b75b08
+                relationships:
+                  route:
+                    data:
+                      guid: 89b32bd6-688f-4424-b94f-2e2c86495a5f
+                metadata:
+                  labels:
+                    team: frontend
+                  annotations:
+                    description: Allow frontend app to call backend API
+            space:
+              summary: Allow all apps in a space
+              value:
+                source: cf:space:3fa85f64-5717-4562-b3fc-2c963f66afa6
+                relationships:
+                  route:
+                    data:
+                      guid: 89b32bd6-688f-4424-b94f-2e2c86495a5f
+            any:
+              summary: Allow any caller
+              value:
+                source: cf:any
+                relationships:
+                  route:
+                    data:
+                      guid: 89b32bd6-688f-4424-b94f-2e2c86495a5f
+    RoutePolicyUpdateRequestBody:
+      description: Route policy metadata to update
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              metadata:
+                $ref: '#/components/schemas/Metadata'
+                description: Labels and annotations applied to the route policy
+          examples:
+            default:
+              summary: default
+              value:
+                metadata:
+                  labels:
+                    team: backend
+                  annotations:
+                    note: Updated contact info
     ServiceBrokerUpdateRequestBody:
       description: Service broker object that needs to be updated
       required: true
